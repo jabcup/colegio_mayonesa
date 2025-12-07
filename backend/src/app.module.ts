@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+// import { join } from 'path';
+// import { ServeStaticModule } from '@nestjs/serve-static';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { RolesModule } from './roles/roles.module';
 import { HorariosModule } from './horarios/horarios.module';
 import { PersonalModule } from './personal/personal.module';
@@ -20,6 +21,18 @@ import { EstudianteCursoModule } from './estudiante-curso/estudiante-curso.modul
 
 @Module({
   imports: [
+    //Conexión con la base de datos
+    TypeOrmModule.forRoot({
+      type: 'mysql',
+      host: 'localhost',
+      port: 3306,
+      username: 'root',
+      password: '12345',
+      database: 'colegio',
+      autoLoadEntities: true,
+      synchronize: false,
+    }),
+    //Módulos
     RolesModule,
     HorariosModule,
     PersonalModule,
@@ -29,15 +42,13 @@ import { EstudianteCursoModule } from './estudiante-curso/estudiante-curso.modul
     PadreEstudianteModule,
     NotificacionesModule,
     PagosModule,
-    AsistenciasModule,
-    CalificacionesModule,
     MateriasModule,
     TutoresModule,
     CursosModule,
     AsignacionClasesModule,
+    AsistenciasModule,
+    CalificacionesModule,
     EstudianteCursoModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

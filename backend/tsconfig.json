@@ -10,7 +10,18 @@
     "skipLibCheck": true,
     "outDir": "./dist",
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    
+    // AÑADE ESTAS LÍNEAS:
+    "declaration": true,
+    "removeComments": true,
+    "baseUrl": "./",
+    "incremental": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictBindCallApply": false,
+    "noFallthroughCasesInSwitch": false
   },
   "exclude": ["node_modules", "dist"]
 }
