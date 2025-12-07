@@ -1,14 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { Personal } from './personal.entity';
+import { Usuarios } from '../usuarios/usuarios.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CreatePersonalDto } from './dto/create-personal.dto';
+import { CreatePersonalFullDto } from './dto/create-personal-full.dto';
+import { Roles } from 'src/roles/roles.entity';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class PersonalService {
   constructor(
     @InjectRepository(Personal)
     private readonly personalRepository: Repository<Personal>,
+    @InjectRepository(Usuarios)
+    private readonly usuarioRepository: Repository<Usuarios>,
+    @InjectRepository(Roles)
+    private readonly rolRepository: Repository<Roles>,
+
+    private dataSource: DataSource,
   ) {}
 
   async createPersonal(dtoPersonal: CreatePersonalDto): Promise<Personal> {
@@ -47,5 +57,50 @@ export class PersonalService {
     }
     personal.estado = 'inactivo';
     return this.personalRepository.save(personal);
+  }
+
+  async crearPersonalCompleto(dto: CreatePersonalFullDto) {
+    return this.dataSource.transaction(async (manager) => {
+      // const personal = manager.create(Personal, dto);
+
+      const personal = manager.create(Personal, {
+        nombres: dto.nombres,
+        apellidoPat: dto.apellidoPat,
+        apellidoMat: dto.apellidoMat,
+        telefono: dto.telefono,
+        identificacion: dto.identificacion,
+        direccion: dto.direccion,
+        correo: dto.correo,
+        fecha_nacimiento: dto.fecha_nacimiento,
+      });
+
+      const nuevoPersonal = await manager.save(personal);
+
+      const rol = await manager.findOne(Roles, {
+        where: { id: dto.idRol },
+      });
+
+      if (!rol) {
+        throw new Error('Rol no encontrado');
+      }
+
+      const hashPass = await bcrypt.hash(dto.identificacion, 10);
+
+      const usuario = manager.create(Usuarios, {
+        correo_institucional: `${nuevoPersonal.nombres.toLowerCase()}.${nuevoPersonal.apellidoPat.toLowerCase()}@mayonesa.com`,
+        contrasena: hashPass,
+        rol,
+        personal: nuevoPersonal,
+      });
+
+      await manager.save(usuario);
+
+      return {
+        message: 'Personal creado correctamente',
+        personal: nuevoPersonal,
+        usuario: usuario,
+        rol: rol,
+      };
+    });
   }
 }

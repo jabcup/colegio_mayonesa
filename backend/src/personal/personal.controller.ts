@@ -10,6 +10,7 @@ import {
 import { ApiOperation } from '@nestjs/swagger';
 import { CreatePersonalDto } from './dto/create-personal.dto';
 import { PersonalService } from './personal.service';
+import { CreatePersonalFullDto } from './dto/create-personal-full.dto';
 
 @Controller('personal')
 export class PersonalController {
@@ -24,6 +25,12 @@ export class PersonalController {
       message: 'Personal creado correctamente',
       personal,
     };
+  }
+
+  @Post('CrearPersonalCompleto')
+  @ApiOperation({ summary: 'Crear Personal Completo' })
+  async createPersonalCompleto(@Body() dto: CreatePersonalFullDto) {
+    return this.personalService.crearPersonalCompleto(dto);
   }
 
   @Get('MostrarPersonal')
