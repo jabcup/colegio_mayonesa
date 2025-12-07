@@ -1,21 +1,25 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 
-@Entity()
-export class Roles {
+@Entity('materias')
+export class Materias {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 150 })
+  @Column({
+    type: 'varchar',
+    length: 50,
+    nullable: false,
+  })
   nombre: string;
+
+  @CreateDateColumn({ type: 'timestamp' })
+  fechaCreacion: Date;
 
   @Column({ type: 'enum', enum: ['activo', 'inactivo'], default: 'activo' })
   estado: 'activo' | 'inactivo';
-
-  @CreateDateColumn({ type: 'timestamp' })
-  fecha_creacion: Date;
 }

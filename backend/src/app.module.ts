@@ -10,9 +10,33 @@ import { PadresModule } from './padres/padres.module';
 import { PadreEstudianteModule } from './padre-estudiante/padre-estudiante.module';
 import { NotificacionesModule } from './notificaciones/notificaciones.module';
 import { PagosModule } from './pagos/pagos.module';
+import { MateriasModule } from './materias/materias.module';
+import { TutoresModule } from './tutores/tutores.module';
+import { CursosModule } from './cursos/cursos.module';
+import { AsignacionClasesModule } from './asignacion-clases/asignacion-clases.module';
+import { AsistenciasModule } from './asistencias/asistencias.module';
+import { CalificacionesModule } from './calificaciones/calificaciones.module';
+import { EstudianteCursoModule } from './estudiante-curso/estudiante-curso.module';
 
 @Module({
-  imports: [RolesModule, HorariosModule, PersonalModule, UsuariosModule, EstudianteModule, PadresModule, PadreEstudianteModule, NotificacionesModule, PagosModule],
+  imports: [
+    RolesModule,
+    HorariosModule,
+    PersonalModule,
+    UsuariosModule,
+    EstudianteModule,
+    PadresModule,
+    PadreEstudianteModule,
+    NotificacionesModule,
+    PagosModule,
+    AsistenciasModule,
+    CalificacionesModule,
+    MateriasModule,
+    TutoresModule,
+    CursosModule,
+    AsignacionClasesModule,
+    EstudianteCursoModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
