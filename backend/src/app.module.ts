@@ -6,9 +6,13 @@ import { HorariosModule } from './horarios/horarios.module';
 import { PersonalModule } from './personal/personal.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { EstudianteModule } from './estudiante/estudiante.module';
+import { PadresModule } from './padres/padres.module';
+import { PadreEstudianteModule } from './padre-estudiante/padre-estudiante.module';
+import { NotificacionesModule } from './notificaciones/notificaciones.module';
+import { PagosModule } from './pagos/pagos.module';
 
 @Module({
-  imports: [RolesModule, HorariosModule, PersonalModule, UsuariosModule, EstudianteModule],
+  imports: [RolesModule, HorariosModule, PersonalModule, UsuariosModule, EstudianteModule, PadresModule, PadreEstudianteModule, NotificacionesModule, PagosModule],
   controllers: [AppController],
   providers: [AppService],
 })
