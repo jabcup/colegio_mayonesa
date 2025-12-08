@@ -31,6 +31,13 @@ export class Pagos {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   total: number;
 
+  @Column({
+    type: 'enum',
+    enum: ['pendiente', 'cancelado'],
+    default: 'pendiente',
+  })
+  deuda: 'pendiente' | 'cancelado';
+
   @CreateDateColumn({ type: 'timestamp' })
   fecha_creacion: Date;
 
