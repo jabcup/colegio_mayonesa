@@ -7,7 +7,7 @@ import { PadresService } from './padres.service';
 export class PadresController {
   constructor(private readonly padresService: PadresService){}
   @Post('CrearPadre')
-  @ApiOperation({ summary: 'Crear Padre' })
+  @ApiOperation({ summary: 'Crear  Padre' })
   async createPadre(@Body() createPadreDto: CreatePadreDto){
     const padre = await this.padresService.crear(createPadreDto);
     return {
