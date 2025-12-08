@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -18,7 +19,7 @@ export class Usuarios {
   @JoinColumn({ name: 'idPersonal' }) // Esto crea la columna personal_id
   personal: Personal;
 
-  @OneToOne(() => Roles, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Roles, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'idRol' }) // Esto crea la columna rol_id
   rol: Roles;
 
