@@ -1,7 +1,16 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateRolDto } from './dto/create-rol.dto';
 import { RolesService } from './roles.service';
+import { UpdateRolDto } from './dto/update-rol.dto';
 
 @Controller('roles')
 export class RolesController {
@@ -20,5 +29,17 @@ export class RolesController {
   @ApiOperation({ summary: 'Mostrar Roles' })
   listarRoles() {
     return this.rolService.getRoles();
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Actualizar Rol' })
+  update(@Param('id') id: string, @Body() dto: UpdateRolDto) {
+    return this.rolService.update(+id, dto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Eliminar Rol (lógico)' })
+  deleteRol(@Param('id') id: number) {
+    return this.rolService.deleteRol(id);
   }
 }
