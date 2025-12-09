@@ -9,8 +9,8 @@ import {
 import { Estudiante } from '../estudiante/estudiante.entity';
 import { Curso } from '../cursos/cursos.entity';
 
-@Entity('notificaciones')
-export class Notificaciones {
+@Entity('estudiante_curso')
+export class EstudianteCurso {
   @PrimaryGeneratedColumn()
   id: number;
 
