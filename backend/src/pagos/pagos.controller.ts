@@ -10,7 +10,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PagosService } from './pagos.service';
 import { CreatePagoDto } from './dto/create-pago.dto';
 import { UpdatePagoDto } from './dto/update-pago.dto';
@@ -44,6 +44,24 @@ export class PagosController {
     return this.service.update(id, dto);
   }
 
+  @Patch('estudiante/:idEstudiante/pagar_ultima_gestion')
+  @ApiResponse({
+    status: 200,
+    description: 'Cantidad de pagos actualizados',
+    schema: {
+      example: {
+        message: 'Se marcaron como cancelados 3 pagos pendientes del último año.',
+        updatedCount: 3,
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Cantidad de pagos actualizados' })
+    async pagarUltimaGestion(
+      @Param('idEstudiante', ParseIntPipe) idEstudiante: number,
+    ): Promise<{ message: string; updatedCount: number }> {
+    return this.service.pagarUltimaGestion(idEstudiante);
+  }
+  
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseIntPipe) id: number): Promise<void> {

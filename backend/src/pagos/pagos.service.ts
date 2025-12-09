@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MoreThanOrEqual, Repository } from 'typeorm';
 import { Pagos } from './pagos.entity';
 import { CreatePagoDto } from './dto/create-pago.dto';
 import { UpdatePagoDto } from './dto/update-pago.dto';
@@ -12,7 +12,40 @@ export class PagosService {
     @InjectRepository(Pagos)
     private readonly repo: Repository<Pagos>,
   ) {}
+async pagarUltimaGestion(idEstudiante: number): Promise<{ message: string; updatedCount: number }> {
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
+  const pagosPendientes = await this.repo.find({
+    where: {
+      estudiante: { id: idEstudiante },
+      deuda: 'pendiente',
+      fecha_creacion: MoreThanOrEqual(oneYearAgo),
+    },
+  });
+
+  if (pagosPendientes.length === 0) {
+    return { message: 'No hay pagos pendientes del último año.', updatedCount: 0 };
+  }
+
+  for (const p of pagosPendientes) {
+    const descActual       = Number(p.descuento);
+    const descuentoAdicional = Number((Number(p.cantidad) * 0.1).toFixed(2));
+    const nuevoDescuento   = Number((descActual + descuentoAdicional).toFixed(2));
+    const nuevoTotal       = Number((Number(p.cantidad) - nuevoDescuento).toFixed(2));
+
+    await this.repo.update(p.id, {
+      descuento: nuevoDescuento,
+      total: nuevoTotal,
+      deuda: 'cancelado',
+    });
+  }
+
+  return {
+    message: `Se marcaron como cancelados ${pagosPendientes.length} pagos con un 10 % de descuento adicional.`,
+    updatedCount: pagosPendientes.length,
+  };
+}
   async create(dto: CreatePagoDto): Promise<PagoResponseDto> {
     const pago = this.repo.create({
       estudiante: { id: dto.idEstudiante } as any,
