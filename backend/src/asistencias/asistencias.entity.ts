@@ -7,6 +7,7 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 import { AsignacionClase } from '../asignacion-clases/asignacionCursos.entity';
+import { Estudiante } from '../estudiante/estudiante.entity';
 
 @Entity('asistencias')
 export class Asistencias {
@@ -17,8 +18,12 @@ export class Asistencias {
   @JoinColumn({ name: 'idAsignacion' })
   asignacionClase: AsignacionClase;
 
-  @Column({ type: 'bool', default: true })
-  asistencia: boolean;
+  @ManyToOne(() => Estudiante, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'idEstudiante' })
+  estudiante: Estudiante;
+
+  @Column({ type: 'enum', enum: ['presente', 'falta', 'ausente', 'justificativo'], default: 'presente' })
+  asistencia: 'presente' | 'falta' | 'ausente' | 'justificativo' ;
 
   @CreateDateColumn({ type: 'timestamp' })
   fecha_creacion: Date;
