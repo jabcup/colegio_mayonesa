@@ -10,8 +10,8 @@ import { Curso } from '../cursos/cursos.entity';
 import { Materias } from '../materias/materias.entity';
 import { Horarios } from '../horarios/horarios.entity';
 
-@Entity('asignacionClases')
-export class asignacionClase {
+@Entity('asignacion_clases')
+export class AsignacionClase {
   @PrimaryGeneratedColumn()
   id: number;
 
