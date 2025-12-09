@@ -1,4 +1,48 @@
-import { Controller } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+} from '@nestjs/common';
+import { ApiOperation } from '@nestjs/swagger';
+import { CreateNotificacionesDto } from './dto/create-notificaciones.dto';
+import { NotificacionesService } from './notificaciones.service';
+import { UpdateNotificacionesDto } from './dto/update-notificaciones.dto';
 
 @Controller('notificaciones')
-export class NotificacionesController {}
+export class NotificacionesController {
+    constructor(private readonly notificacionesService: NotificacionesService) { }
+
+    @Post('CrearNotificacion')
+    @ApiOperation({ summary: 'Crea una nueva notificacion' })
+    async createNotificacion(@Body() createNotificacionesDto: CreateNotificacionesDto) {
+        const notificacion = await this.notificacionesService.crearNotificacion(createNotificacionesDto);
+        return {
+            message: 'Notificacion enviada correctamente',
+            notificacion,
+        }
+    }
+
+    @Get('mostrarNotificaciones')
+    @ApiOperation({
+        summary: 'Muestra las notificaciones existentes'
+    })
+    listarNotificaciones() {
+        return this.notificacionesService.listarNotificaciones();
+    }
+
+    @Put (':id')
+    @ApiOperation({ summary: 'Actualizar Notificacion' })
+    update(@Param('id') id: string, @Body() dto: UpdateNotificacionesDto) {
+        return this.notificacionesService.actualizarNotificacion(+id, dto);
+    }
+    
+    @Delete(':id')
+    @ApiOperation({ summary: 'Eliminar Notificacion' })
+    eliminarNotificacion(@Param('id') id: string) {
+        return this.notificacionesService.eliminarNotificacion(+id);
+    }
+}

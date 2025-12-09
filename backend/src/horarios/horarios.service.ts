@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Horarios } from './horarios.entity';
 import { CreateHorarioDto } from './dto/create-horario.dto';
+import { UpdateHorarioDto } from './dto/update-horario.dto';
 
 @Injectable()
 export class HorariosService {
@@ -17,5 +18,26 @@ export class HorariosService {
 
   async listarHorarios(): Promise<Horarios[]>{
     return this.repo.find();
+  }
+
+  async findOne(id: number): Promise<Horarios> {
+    const horario = await this.repo.findOneBy({ id });
+    if (!horario) throw new Error('Horario no encontrado');
+    return horario;
+  }
+
+  async actualizarHorario(id: number, dto: UpdateHorarioDto): Promise<Horarios>{
+    await this.findOne(id); // Valida existencia
+    await this.repo.update(id, dto);
+    return this.findOne(id); // Devuelve horario actualizado
+  }
+
+  async eliminarHorario(id: number): Promise<Horarios>{
+    const horario = await this.repo.findOne({ where: { id } });
+    if (!horario) {
+      throw new Error('Horario no encontrado');
+    }
+    horario.estado = 'inactivo';
+    return this.repo.save(horario);
   }
 }

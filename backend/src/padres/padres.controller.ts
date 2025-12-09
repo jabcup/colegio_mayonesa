@@ -1,15 +1,16 @@
 import {
   Body,
-  Get,
-  Post,
   Controller,
-  Put,
-  Param,
   Delete,
+  Get,
+  Param,
+  Post,
+  Put,
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreatePadreDto } from './dto/create-padre.dto';
 import { PadresService } from './padres.service';
+import { UpdatePadreDto } from './dto/update-padre.dto';
 
 @Controller('padres')
 export class PadresController {
@@ -30,15 +31,15 @@ export class PadresController {
     return this.padresService.todos();
   }
 
-  @Put('EditarPadre/:id')
-  @ApiOperation({ summary: 'Editar Papi' })
-  updatePadre(@Param('id') id: number, @Body() dto: CreatePadreDto) {
-    return this.padresService.updatePadre(id, dto);
+  @Put(':id')
+  @ApiOperation({ summary: 'Actualizar padre' })
+  updatePadre(@Param('id') id: string, @Body() dto: UpdatePadreDto) {
+    return this.padresService.actualizar(+id, dto);
   }
 
-  @Delete('EliminarPadre/:id')
-  @ApiOperation({ summary: 'Eliminar Papasito (lógico)' })
-  deleteCurso(@Param('id') id: number) {
-    return this.padresService.deletePadre(id);
+  @Delete(':id')
+  @ApiOperation({ summary: 'Eliminar padre' })
+  eliminarPadre(@Param('id') id: string) {
+    return this.padresService.eliminar(+id);
   }
 }
