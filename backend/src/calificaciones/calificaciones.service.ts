@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Calificaciones } from './calificaciones.entity';
 import { CreateCalificacionDto } from './dto/create-calificacion.dto';
 import { AsignacionClase } from '../asignacion-clases/asignacionCursos.entity';
+import { Estudiante } from 'src/estudiante/estudiante.entity';
 
 @Injectable()
 export class CalificacionesService {
@@ -13,6 +14,9 @@ export class CalificacionesService {
 
     @InjectRepository(AsignacionClase)
     private readonly asignacionClaseRepository: Repository<AsignacionClase>,
+
+    @InjectRepository(Estudiante)
+    private readonly estudianteRepository: Repository<Estudiante>,
   ) {}
 
   async getCalificaciones(): Promise<Calificaciones[]> {
@@ -32,11 +36,22 @@ export class CalificacionesService {
       throw new Error('Asignacion no encontrada');
     }
 
+    const estudiante = await this.estudianteRepository.findOne({
+      where: { id: dto.idEstudiante },
+    });
+
+    if (!estudiante) {
+      throw new Error('Estudiante no encontrado');
+    }
+
+    const aprobacion = dto.calificacion >= 51 ? true : false;
+
     // Crear calificación
     const calificacion = this.calificacionesRepository.create({
       calificacion: dto.calificacion,
-      aprobacion: dto.aprobacion,
+      aprobacion: aprobacion,
       asignacionClase: asignacion,
+      estudiante: estudiante,
     });
 
     return this.calificacionesRepository.save(calificacion);
@@ -51,8 +66,10 @@ export class CalificacionesService {
       throw new Error('Calificacion no encontrada');
     }
 
+    const new_aprobacion = dto.calificacion >= 51 ? true : false;
+
     calificacion.calificacion = dto.calificacion;
-    calificacion.aprobacion = dto.aprobacion;
+    calificacion.aprobacion = new_aprobacion;
 
     return this.calificacionesRepository.save(calificacion);
   }
