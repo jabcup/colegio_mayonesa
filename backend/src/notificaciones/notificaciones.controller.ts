@@ -11,6 +11,7 @@ import { ApiOperation } from '@nestjs/swagger';
 import { CreateNotificacionesDto } from './dto/create-notificaciones.dto';
 import { NotificacionesService } from './notificaciones.service';
 import { UpdateNotificacionesDto } from './dto/update-notificaciones.dto';
+import { Estudiante } from '../estudiante/estudiante.entity';
 
 @Controller('notificaciones')
 export class NotificacionesController {
@@ -26,12 +27,12 @@ export class NotificacionesController {
         }
     }
 
-    @Get('mostrarNotificaciones')
-    @ApiOperation({
-        summary: 'Muestra las notificaciones existentes'
-    })
-    listarNotificaciones() {
-        return this.notificacionesService.listarNotificaciones();
+    @Get('Estudiante/:estudianteId')
+    @ApiOperation({ summary: 'Obtener Notificaciones por Estudiante' })
+    async obtenerNotificacionesPorEstudiante(@Param('estudianteId') estudianteId: number) {
+        const estudiante = new Estudiante();
+        estudiante.id = estudianteId;
+        return this.notificacionesService.obtenerNotificacionesPorEstudiante(estudiante);
     }
 
     @Put (':id')
