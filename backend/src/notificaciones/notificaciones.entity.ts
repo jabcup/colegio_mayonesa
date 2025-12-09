@@ -16,11 +16,11 @@ export class Notificaciones {
 
   @ManyToOne(() => Estudiante, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'idEstudiante' })
-  estudiante: Estudiante;
+  Estudiante: Estudiante;
 
   @ManyToOne(() => Personal, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'idPersonal' })
-  personal: Personal;
+  Personal: Personal;
 
   @Column({ type: 'varchar', length: 150 })
   asunto: string;
