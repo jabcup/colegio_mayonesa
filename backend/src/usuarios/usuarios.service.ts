@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { Usuarios } from './usuarios.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -6,6 +6,7 @@ import { UpdateCorreoUsuarioDto } from './dto/update-correo-usuario.dto';
 import { UpdateContrasenaUsuarioDto } from './dto/update-contrasena-usuario.dto';
 import * as bcrypt from 'bcrypt';
 import { UpdateUsuarioCompletoDto } from './dto/update-usuario.dto';
+
 @Injectable()
 export class UsuariosService {
   constructor(
@@ -89,5 +90,25 @@ export class UsuariosService {
     }
     usuario.estado = 'inactivo';
     return this.usuariosRepository.save(usuario);
+  }
+
+  async login(correo_institucional: string, contrasena: string) {
+    const usuario = await this.usuariosRepository.findOne({
+      where: { correo_institucional },
+    });
+    if (!usuario) {
+      throw new UnauthorizedException('Credenciales incorrectas');
+    }
+    if(usuario.estado === 'inactivo') {
+      throw new UnauthorizedException('Cuenta inactiva');
+    }
+    const passValido = await bcrypt.compare(contrasena, usuario.contrasena);
+    if (!passValido) {
+      throw new UnauthorizedException('Credenciales incorrectas');
+    }
+    return {
+      message: 'Inicio de sesión exitoso',
+      usuario: { id: usuario.id, correo: usuario.correo_institucional },
+    };
   }
 }
