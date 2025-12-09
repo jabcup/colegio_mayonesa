@@ -49,7 +49,6 @@ export class PadresService {
     const padre = await this.repo.findOneBy({ id });
     if (!padre) throw new Error('Padre no encontrado');
     return padre;
-    
   }
 
   async actualizar(id: number, dto: Partial<UpdatePadreDto>): Promise<Padres> {
