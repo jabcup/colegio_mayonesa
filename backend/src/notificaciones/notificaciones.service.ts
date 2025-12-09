@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Notificaciones } from './notificaciones.entity';
 import { CreateNotificacionesDto } from './dto/create-notificaciones.dto';
 import { UpdateNotificacionesDto } from './dto/update-notificaciones.dto';
+import { Estudiante } from '../estudiante/estudiante.entity';
 
 @Injectable()
 export class NotificacionesService {
@@ -17,8 +18,10 @@ export class NotificacionesService {
         return this.repo.save(nuevaNotificacion);
     }
 
-    async listarNotificaciones(): Promise<Notificaciones[]>{
-        return this.repo.find();
+    async obtenerNotificacionesPorEstudiante(estudiante: Estudiante): Promise<Notificaciones[]> {
+        return this.repo.find({
+            where: { Estudiante: estudiante, estado: 'activo' },
+        });
     }
 
     async findOne(id: number): Promise<Notificaciones> {
