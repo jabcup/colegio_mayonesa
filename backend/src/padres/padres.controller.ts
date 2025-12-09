@@ -14,20 +14,20 @@ import { UpdatePadreDto } from './dto/update-padre.dto';
 
 @Controller('padres')
 export class PadresController {
-  constructor(private readonly padresService: PadresService){}
+  constructor(private readonly padresService: PadresService) {}
   @Post('CrearPadre')
   @ApiOperation({ summary: 'Crear  Padre' })
-  async createPadre(@Body() createPadreDto: CreatePadreDto){
+  async createPadre(@Body() createPadreDto: CreatePadreDto) {
     const padre = await this.padresService.crear(createPadreDto);
     return {
       message: 'Padre creado correctamente',
       padre,
-    }
+    };
   }
 
   @Get('MostrarPadres')
   @ApiOperation({ summary: 'Mostrar padres' })
-  listarPadres(){
+  listarPadres() {
     return this.padresService.todos();
   }
 
