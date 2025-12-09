@@ -8,8 +8,8 @@ import {
 } from 'typeorm';
 import { AsignacionClase } from '../asignacion-clases/asignacionCursos.entity';
 
-@Entity('calificaciones')
-export class Calificaciones {
+@Entity('asistencias')
+export class Asistencias {
   @PrimaryGeneratedColumn()
   id: number;
 
