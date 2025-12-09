@@ -46,23 +46,23 @@ export class PadresService {
   }
 
   async findOne(id: number): Promise<Padres> {
-    const padre = await this.repo.findOneBy({ id });
+    const padre = await this.padreRepository.findOneBy({ id });
     if (!padre) throw new Error('Padre no encontrado');
     return padre;
   }
 
   async actualizar(id: number, dto: Partial<UpdatePadreDto>): Promise<Padres> {
     await this.findOne(id); // Valida existencia
-    await this.repo.update(id, dto);
+    await this.padreRepository.update(id, dto);
     return this.findOne(id); // Devuelve padre actualizado
   }
 
   async eliminar(id: number): Promise<void> {
-    const padre = await this.repo.findOne({ where: { id } });
+    const padre = await this.padreRepository.findOne({ where: { id } });
     if (!padre) {
       throw new Error('Padre no encontrado');
     }
     padre.estado = 'inactivo';
-    await this.repo.save(padre);
+    await this.padreRepository.save(padre);
   }
 }
