@@ -33,7 +33,7 @@ export class MateriasController {
 
   @Put('EditarMateria/:id')
   @ApiOperation({ summary: 'Editar Materia' })
-  updatePadre(@Param('id') id: number, @Body() dto: CreateMateriaDto) {
+  updateMateria(@Param('id') id: number, @Body() dto: CreateMateriaDto) {
     return this.materiaService.updateMateria(id, dto);
   }
 
