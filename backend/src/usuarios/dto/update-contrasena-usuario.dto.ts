@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class CreateMateriaDto {
+export class UpdateContrasenaUsuarioDto {
   @ApiProperty({
-    example: 'Física',
-    description: 'Asignaturas que se llevan en el colegio',
+    example: 'clave123',
+    description: 'Clave del usuario',
   })
   @IsNotEmpty()
   @IsString()
-  nombre: string;
+  contrasena: string;
 }

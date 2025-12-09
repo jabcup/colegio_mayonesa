@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class CreateMateriaDto {
+export class UpdateCorreoUsuarioDto {
   @ApiProperty({
-    example: 'Física',
-    description: 'Asignaturas que se llevan en el colegio',
+    example: 'juan.perez@mayo.com',
+    description: 'Corre Institucional del usuario',
   })
   @IsNotEmpty()
   @IsString()
-  nombre: string;
+  correo_institucional: string;
 }
