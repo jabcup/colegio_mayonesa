@@ -6,16 +6,16 @@ import {
   Column,
   CreateDateColumn,
 } from 'typeorm';
-import { asignacionClase } from '../asignacion-clases/asignacionCursos.entity';
+import { AsignacionClase } from '../asignacion-clases/asignacionCursos.entity';
 
 @Entity('calificaciones')
 export class Calificaciones {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => asignacionClase, { onDelete: 'CASCADE' })
+  @ManyToOne(() => AsignacionClase, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'idAsignacion' })
-  asignacionClase: asignacionClase;
+  asignacionClase: AsignacionClase;
 
   @Column({ type: 'bool', default: true })
   asistencia: boolean;
