@@ -21,7 +21,29 @@ export class CalificacionesService {
 
   async getCalificaciones(): Promise<Calificaciones[]> {
     return this.calificacionesRepository.find({
-      relations: ['asignacionClase'],
+      relations: ['asignacionClase', 'estudiante'],
+    });
+  }
+
+  async getCalificacionesPorAsignacion(
+    idAsignacion: number,
+  ): Promise<Calificaciones[]> {
+    return this.calificacionesRepository.find({
+      where: {
+        asignacionClase: { id: idAsignacion },
+      },
+      relations: ['asignacionClase', 'estudiante'],
+    });
+  }
+
+  async getCalificacionesPorEstudiante(
+    idEstudiante: number,
+  ): Promise<Calificaciones[]> {
+    return this.calificacionesRepository.find({
+      where: {
+        estudiante: { id: idEstudiante },
+      },
+      relations: ['asignacionClase', 'estudiante'],
     });
   }
 

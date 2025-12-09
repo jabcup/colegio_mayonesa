@@ -26,6 +26,28 @@ export class CalificacionesController {
     };
   }
 
+  @Get('BuscarCalificacionesAsignacion/:id')
+  @ApiOperation({ summary: 'Buscar calificaciones por asignacion' })
+  async getCalificacionesPorAsignacion(@Param('id') id: number) {
+    const calificaciones =
+      await this.calificacionesService.getCalificacionesPorAsignacion(id);
+    return {
+      message: 'Calificaciones por asignacion',
+      calificaciones,
+    };
+  }
+
+  @Get('BuscarCalificacionesEstudiante/:id')
+  @ApiOperation({ summary: 'Buscar calificaciones por estudiante' })
+  async getCalificacionesPorEstudiante(@Param('id') id: number) {
+    const calificaciones =
+      await this.calificacionesService.getCalificacionesPorEstudiante(id);
+    return {
+      message: 'Calificaciones por estudiante',
+      calificaciones,
+    };
+  }
+
   @Post()
   @ApiOperation({ summary: 'Crear calificacion' })
   async createCalificacion(
