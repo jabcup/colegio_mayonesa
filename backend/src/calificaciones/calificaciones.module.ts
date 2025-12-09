@@ -1,9 +1,14 @@
 import { Module } from '@nestjs/common';
 import { CalificacionesController } from './calificaciones.controller';
 import { CalificacionesService } from './calificaciones.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Calificaciones } from './calificaciones.entity';
+import { AsignacionClase } from 'src/asignacion-clases/asignacionCursos.entity';
 
 @Module({
+  imports: [TypeOrmModule.forFeature([Calificaciones, AsignacionClase])],
   controllers: [CalificacionesController],
-  providers: [CalificacionesService]
+  providers: [CalificacionesService],
+  exports: [CalificacionesService],
 })
 export class CalificacionesModule {}
