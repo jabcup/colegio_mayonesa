@@ -22,21 +22,26 @@ export class PagosController {
   constructor(private readonly service: PagosService) {}
 
   @Post()
+  @ApiOperation({summary: "Creación de un pago"})
   create(@Body() dto: CreatePagoDto): Promise<PagoResponseDto> {
     return this.service.create(dto);
   }
 
   @Get()
+  @ApiOperation({summary: "Obtener la lista de pagos"})
   findAll(): Promise<PagoResponseDto[]> {
+    //hay ponerle comentarios ñiñiñiñi - Chuma 2025
     return this.service.findAll();
   }
 
   @Get(':id')
+  @ApiOperation({summary: "Obtener un pago en especifico"})
   findOne(@Param('id', ParseIntPipe) id: number): Promise<PagoResponseDto> {
     return this.service.findOne(id);
   }
 
   @Patch(':id')
+  @ApiOperation({summary: "Actualizar datos de un pago"})
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePagoDto,
@@ -45,6 +50,7 @@ export class PagosController {
   }
 
   @Patch('estudiante/:idEstudiante/pagar_ultima_gestion')
+  @ApiOperation({summary: "Pagar todo un año de un estudiante"})
   @ApiResponse({
     status: 200,
     description: 'Cantidad de pagos actualizados',
@@ -63,6 +69,7 @@ export class PagosController {
   }
   
   @Delete(':id')
+  @ApiOperation({summary: "Eliminacion de un pago de la base de datos"})
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.service.remove(id);
