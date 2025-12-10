@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateEstudianteFullDto } from './dto/create-estudiante-full.dto';
 import { EstudianteService } from './estudiante.service';
@@ -19,6 +19,12 @@ export class EstudianteController {
       message: 'Estudiante creado exitosamente',
       estudiante,
     };
+  }
+
+  @Get('MostrarEstudiantes')
+  @ApiOperation({ summary: 'Mostrar Estudiantes' })
+  listarEstudiantes() {
+    return this.estudianteService.mostrarEstudiantes();
   }
 
 }

@@ -103,4 +103,9 @@ export class EstudianteService {
       };
     });
   }
+
+  async mostrarEstudiantes(): Promise<Estudiante[]> {
+    return this.estudianteRepository.find();
+  }
+
 }
