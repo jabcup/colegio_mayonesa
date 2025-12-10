@@ -34,6 +34,11 @@ export class ReportesService {
       query.andWhere('v.anioPago = :anio', { anio: params.anioPago });
     }
 
-    return query.getMany();
+    const resultados = await query.getMany();
+
+    return resultados.map((r, index) => ({
+      numero: index + 1,
+      ...r,
+    }));
   }
 }
