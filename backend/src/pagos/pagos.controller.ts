@@ -10,12 +10,26 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PagosService } from './pagos.service';
 import { CreatePagoDto } from './dto/create-pago.dto';
 import { UpdatePagoDto } from './dto/update-pago.dto';
 import { PagoResponseDto } from './dto/response-pago.dto';
+import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
 
+
+class SoloIdPersonal implements PipeTransform {
+  transform(value: any) {
+    const keys = Object.keys(value);
+    if (keys.length !== 1 || keys[0] !== 'idpersonal')
+      throw new BadRequestException('El body debe contener únicamente "idpersonal"');
+    if (typeof value.idpersonal !== 'number')
+      throw new BadRequestException('"idpersonal" debe ser un número');
+    return { idpersonal: value.idpersonal };   // devuelvo el objeto filtrado
+  }
+}
+
+interface SoloIdPersonalBody { idpersonal: number; }
 @ApiTags('Pagos')
 @Controller('pagos')
 export class PagosController {
@@ -39,6 +53,21 @@ export class PagosController {
   findOne(@Param('id', ParseIntPipe) id: number): Promise<PagoResponseDto> {
     return this.service.findOne(id);
   }
+
+@Patch('pagar/:id')
+@ApiOperation({ summary: 'Pagar (cancelar) un pago' })
+@ApiBody({ schema: { example: { idpersonal: 123 } } })
+async pagar(
+  @Param('id', ParseIntPipe) id: number,
+  @Body(SoloIdPersonal) dto: SoloIdPersonalBody,
+): Promise<{ok:boolean}> {
+  const pago = await this.service.pagar(id, dto);
+
+  return {
+      ok: true
+     } ;
+}
+
 
   @Patch(':id')
   @ApiOperation({summary: "Actualizar datos de un pago"})

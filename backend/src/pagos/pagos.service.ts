@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThanOrEqual, Repository } from 'typeorm';
 import { Pagos } from './pagos.entity';
 import { CreatePagoDto } from './dto/create-pago.dto';
 import { UpdatePagoDto } from './dto/update-pago.dto';
 import { PagoResponseDto } from './dto/response-pago.dto';
+import { plainToClass } from 'class-transformer';
+import { Personal } from 'src/personal/personal.entity';
 
 @Injectable()
 export class PagosService {
@@ -82,6 +84,17 @@ async pagarUltimaGestion(idEstudiante: number): Promise<{ message: string; updat
     });
     return this.findOne(id);
   }
+
+async pagar(idPago: number, dto: { idpersonal: number }): Promise<Pagos> {
+  const pago = await this.repo.findOneBy({ id: idPago });
+  if (!pago) throw new NotFoundException('Pago no encontrado');
+
+  pago.deuda = 'cancelado';         
+  pago.personal = { id: dto.idpersonal } as Personal;
+
+  return this.repo.save(pago);
+}
+
 
   async remove(id: number): Promise<void> {
     const pago = await this.findOne(id);
