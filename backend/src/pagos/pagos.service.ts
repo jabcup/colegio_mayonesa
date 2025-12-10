@@ -14,7 +14,11 @@ export class PagosService {
     @InjectRepository(Pagos)
     private readonly repo: Repository<Pagos>,
   ) {}
-async pagarUltimaGestion(idEstudiante: number): Promise<{ message: string; updatedCount: number }> {
+
+async pagarUltimaGestion(
+  idEstudiante: number,
+  idpersonal: number,
+): Promise<{ message: string; updatedCount: number }> {
   const oneYearAgo = new Date();
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
@@ -40,6 +44,7 @@ async pagarUltimaGestion(idEstudiante: number): Promise<{ message: string; updat
       descuento: nuevoDescuento,
       total: nuevoTotal,
       deuda: 'cancelado',
+      personal: { id: idpersonal } as Personal, // <-- guarda el cajero
     });
   }
 
@@ -48,6 +53,7 @@ async pagarUltimaGestion(idEstudiante: number): Promise<{ message: string; updat
     updatedCount: pagosPendientes.length,
   };
 }
+
   async create(dto: CreatePagoDto): Promise<PagoResponseDto> {
     const pago = this.repo.create({
       estudiante: { id: dto.idEstudiante } as any,

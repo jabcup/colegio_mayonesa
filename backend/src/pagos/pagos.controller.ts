@@ -41,12 +41,15 @@ async function esCajero(
   usuarioRepository: Repository<Usuarios>,
   idPersonal: number,
 ): Promise<boolean> {
-  const usuario = await usuarioRepository.findOne({
-    where: { personal: { id: idPersonal } },
-    relations: ['rol'],
-  });
-  return usuario?.rol?.nombre === 'cajero' && usuario.estado === 'activo';
+  const usuario = await usuarioRepository
+    .createQueryBuilder('u')
+    .leftJoinAndSelect('u.rol', 'r')
+    .where('u.idPersonal = :id', { id: idPersonal })
+    .getOne();
+
+  return usuario?.rol?.nombre === 'Cajero' && usuario.estado === 'activo';
 }
+
 
 @ApiTags('Pagos')
 @Controller('pagos')
@@ -103,6 +106,7 @@ if (!(await esCajero(this.usuariosRepo, dto.idpersonal))) {
   ): Promise<PagoResponseDto> {
     return this.service.update(id, dto);
   }
+
 @Patch('estudiante/:idEstudiante/pagar_ultima_gestion')
 @ApiOperation({summary: "Pagar todo un año de un estudiante"})
 @ApiBody({ schema: { example: { idpersonal: 123 } } })
@@ -123,7 +127,7 @@ async pagarUltimaGestion(
   if (!(await esCajero(this.usuariosRepo, dto.idpersonal))) {
     throw new ForbiddenException('El personal no es cajero o no está activo');
   }
-  return this.service.pagarUltimaGestion(idEstudiante);
+  return this.service.pagarUltimaGestion(idEstudiante, dto.idpersonal);
 }
   
   @Delete(':id')
