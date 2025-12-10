@@ -11,94 +11,68 @@ import { Usuarios } from 'src/usuarios/usuarios.entity';
 
 @Injectable()
 export class AsignacionClasesService {
-    constructor(
-        @InjectRepository(AsignacionClase)
-        private readonly asignacionRepository: Repository<AsignacionClase>,
-        @InjectRepository(Personal)
-        private readonly personalRepository: Repository<Personal>,
-        @InjectRepository(Curso)
-        private readonly cursoRepository: Repository<Curso>,
-        @InjectRepository(Materias)
-        private readonly materiaRepository: Repository<Materias>,
-        @InjectRepository(Horarios)
-        private readonly horarioRepository: Repository<Horarios>,
-        @InjectRepository(Usuarios)
-        private readonly usuariosRepository: Repository<Usuarios>,
-        private dataSource: DataSource,
-    ) { }
+  constructor(
+    @InjectRepository(AsignacionClase)
+    private readonly asignacionRepository: Repository<AsignacionClase>,
+    @InjectRepository(Personal)
+    private readonly personalRepository: Repository<Personal>,
+    @InjectRepository(Curso)
+    private readonly cursoRepository: Repository<Curso>,
+    @InjectRepository(Materias)
+    private readonly materiaRepository: Repository<Materias>,
+    @InjectRepository(Horarios)
+    private readonly horarioRepository: Repository<Horarios>,
+    private dataSource: DataSource,
+  ) {}
 
-    async createAsignacionFull(dto: CreateAsignacionFulDto) {
-        return this.dataSource.transaction(async (manager) => {
-            const asignacionExistente = await this.asignacionRepository.findOne({
-                where: {
-                    personal: { id: dto.idPersonal },
-                    curso: { id: dto.idCurso },
-                    materia: { id: dto.idMateria },
-                    horario: { id: dto.idHorario },
-                    dia: dto.dia,
-                },
-            });
+  async createAsignacionFull(dto: CreateAsignacionFulDto) {
+    return this.dataSource.transaction(async (manager) => {
+      const asignacion = manager.create(AsignacionClase, {
+        dia: dto.dia,
+      });
 
-            if (asignacionExistente) {
-                throw new Error('Esta asignación ya existe');
-            }
+      const nuevaAsignacion = await manager.save(asignacion);
 
-            const docente = await this.personalRepository.findOne({
-                where: { id: dto.idPersonal },
-            });
+      const docente = await manager.findOne(Personal, {
+        where: { id: dto.idPersonal },
+      });
 
-            if (!docente) {
-                throw new Error('Personal no encontrado');
-            }
+      if (!docente) {
+        throw new Error('Docente no encontrado');
+      }
 
-            const usuario = await this.usuariosRepository.findOne({
-                where: { personal: { id: dto.idPersonal } },
-                relations: ['rol'],
-            });
+      const curso = await manager.findOne(Curso, {
+        where: { id: dto.idCurso },
+      });
 
-            if (!usuario || usuario.rol.nombre.toLowerCase() !== 'docente') {
-                throw new Error('El personal no es un docente');
-            }
+      if (!curso) {
+        throw new Error('Curso no encontrado');
+      }
 
-            const curso = await this.cursoRepository.findOne({
-                where: { id: dto.idCurso },
-            });
+      const materia = await manager.findOne(Materias, {
+        where: { id: dto.idMateria },
+      });
 
-            if (!curso) {
-                throw new Error('Curso no encontrado');
-            }
+      if (!materia) {
+        throw new Error('Materia no encontrado');
+      }
 
-            const materia = await this.materiaRepository.findOne({
-                where: { id: dto.idMateria },
-            });
+      const horario = await manager.findOne(Horarios, {
+        where: { id: dto.idHorario },
+      });
 
-            if (!materia) {
-                throw new Error('Materia no encontrada');
-            }
+      if (!horario) {
+        throw new Error('Horario no encontrado');
+      }
 
-            const horario = await this.horarioRepository.findOne({
-                where: { id: dto.idHorario },
-            });
-
-            if (!horario) {
-                throw new Error('Horario no encontrado');
-            }
-
-            const asignacion = manager.create(AsignacionClase, {
-                dia: dto.dia,
-                personal: docente,
-                curso: curso,
-                materia: materia,
-                horario: horario,
-            });
-
-            const nuevaAsignacion = await manager.save(asignacion);
-
-            return {
-                message: 'Asignación de curso creada exitosamente',
-                asignacion: nuevaAsignacion,
-            };
-        });
-    }
-
+      return {
+        message: 'Asignacion de curso creado exitosamente',
+        asignacion: nuevaAsignacion,
+        docente: docente,
+        curso: curso,
+        materia: materia,
+        horario: horario,
+      };
+    });
+  }
 }
