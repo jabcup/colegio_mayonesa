@@ -99,7 +99,7 @@ export class UsuariosService {
     if (!usuario) {
       throw new UnauthorizedException('Credenciales incorrectas');
     }
-    if(usuario.estado === 'inactivo') {
+    if (usuario.estado === 'inactivo') {
       throw new UnauthorizedException('Cuenta inactiva');
     }
     const passValido = await bcrypt.compare(contrasena, usuario.contrasena);
