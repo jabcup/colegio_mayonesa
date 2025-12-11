@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Get, Param } from '@nestjs/common';
 import { AsignacionClasesService } from './asignacion-clases.service';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateAsignacionFulDto } from './dto/create-asignacion-full.dto';
@@ -31,5 +31,21 @@ export class AsignacionClasesController {
       message: 'Asignacion creada exitosamente',
       asignacion,
     };
+  }
+
+  @Get('por-docente/:idDocente')
+  async getCursosPorDocente(@Param('idDocente') idDocente: number) {
+    return this.asignacionService.getCursosPorDocente(Number(idDocente));
+  }
+
+  @Get('materias-por-docente-curso/:idDocente/:idCurso')
+  async getMateriasPorDocenteYCurso(
+    @Param('idDocente') idDocente: number,
+    @Param('idCurso') idCurso: number,
+  ) {
+    return this.asignacionService.getMateriasPorDocenteYCurso(
+      Number(idDocente),
+      Number(idCurso),
+    );
   }
 }

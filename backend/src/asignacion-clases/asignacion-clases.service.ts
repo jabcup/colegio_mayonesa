@@ -37,6 +37,35 @@ export class AsignacionClasesService {
       }),
     );
   }
+
+  async getCursosPorDocente(idDocente: number) {
+    return this.asignacionRepository
+      .createQueryBuilder('asignacion')
+      .leftJoin('asignacion.curso', 'curso')
+      .leftJoin('asignacion.personal', 'personal')
+      .where('personal.id = :idDocente', { idDocente })
+      .select([
+        'curso.id AS id',
+        'curso.nombre AS nombre',
+        'curso.paralelo AS paralelo',
+      ])
+      .distinct(true)
+      .getRawMany();
+  }
+
+  async getMateriasPorDocenteYCurso(idDocente: number, idCurso: number) {
+    return this.asignacionRepository
+      .createQueryBuilder('asignacion')
+      .leftJoin('asignacion.materia', 'materia')
+      .leftJoin('asignacion.personal', 'personal')
+      .leftJoin('asignacion.curso', 'curso')
+      .where('personal.id = :idDocente', { idDocente })
+      .andWhere('curso.id = :idCurso', { idCurso })
+      .select(['materia.id AS id', 'materia.nombre AS nombre'])
+      .distinct(true)
+      .getRawMany();
+  }
+
   // async createAsignacionFull(dto: CreateAsignacionFulDto) {
   //   return this.dataSource.transaction(async (manager) => {
   //     const asignacion = manager.create(AsignacionClase, {

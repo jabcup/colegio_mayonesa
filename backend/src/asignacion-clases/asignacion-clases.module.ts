@@ -10,15 +10,16 @@ import { AsignacionClase } from './asignacionCursos.entity';
 import { Usuarios } from 'src/usuarios/usuarios.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([
-    AsignacionClase,
-    Personal,
-    Curso,
-    Materias,
-    Horarios,
-    Usuarios,
-  ]),
-],
+  imports: [
+    TypeOrmModule.forFeature([
+      AsignacionClase,
+      Personal,
+      Curso,
+      Materias,
+      Horarios,
+      Usuarios,
+    ]),
+  ],
   controllers: [AsignacionClasesController],
   providers: [AsignacionClasesService],
   exports: [AsignacionClasesService],
