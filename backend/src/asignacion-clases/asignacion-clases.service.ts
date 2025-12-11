@@ -75,4 +75,36 @@ export class AsignacionClasesService {
       };
     });
   }
+
+  async findAllAsignaciones() {
+    const asignaciones = await this.asignacionRepository.find({
+      relations: ['personal', 'curso', 'materia', 'horario'],
+    });
+    return asignaciones;
+  }
+
+  async findAsignacionById(id: number) {
+    const asignacion = await this.asignacionRepository.findOne({
+      where: { id },
+      relations: ['personal', 'curso', 'materia', 'horario'],
+    });
+    return asignacion;
+  }
+
+  async updateAsignacion(id: number, dia: string) {
+    const asignacion = await this.asignacionRepository.findOne({
+      where: { id },
+    });
+    if (!asignacion) {
+      throw new Error('Asignacion no encontrada');
+    }
+    asignacion.dia = dia;
+    const resultado = await this.asignacionRepository.save(asignacion);
+    return resultado;
+  }
+
+  async deleteAsignacion(id: number) {
+    const resultado = await this.asignacionRepository.delete(id);
+    return resultado;
+  }
 }
