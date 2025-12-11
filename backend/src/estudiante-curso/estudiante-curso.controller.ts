@@ -1,4 +1,28 @@
-import { Controller } from '@nestjs/common';
+import { Body, Controller, Delete, Post, Put, Param } from '@nestjs/common';
+import { ApiOperation } from '@nestjs/swagger';
+import { UpdateEstudianteFullDto } from './dto/update-estudiante-full.dto';
 
 @Controller('estudiante-curso')
-export class EstudianteCursoController {}
+export class EstudianteCursoController {
+    constructor() {}
+    @Put('ActualizarEstudianteCurso/:id')
+    @ApiOperation({ summary: 'Actualizar Estudiante Curso' })
+    async updateEstudianteCurso(
+        @Param('id') id: number,
+        @Body() updateEstudianteDto: UpdateEstudianteFullDto,
+    ) {
+        // Lógica para actualizar el estudiante en el curso
+        return {
+            message: 'Estudiante en curso actualizado exitosamente',
+        };
+    }
+
+    @Delete('EliminarEstudianteCurso/:id')
+    @ApiOperation({ summary: 'Eliminar Estudiante Curso' })
+    removeEstudianteCurso(@Param('id') id: number) {
+        // Lógica para eliminar el estudiante del curso
+        return {
+            message: 'Estudiante eliminado del curso exitosamente',
+        };
+    }
+}

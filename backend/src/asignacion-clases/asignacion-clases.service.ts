@@ -6,6 +6,7 @@ import { Personal } from 'src/personal/personal.entity';
 import { AsignacionClase } from './asignacionCursos.entity';
 import { DataSource, Repository } from 'typeorm';
 import { CreateAsignacionFulDto } from './dto/create-asignacion-full.dto';
+import { UpdateAsignacionFulDto } from './dto/update-asignacion-full.dto';
 import { Horarios } from 'src/horarios/horarios.entity';
 import { Usuarios } from 'src/usuarios/usuarios.entity';
 
@@ -23,7 +24,7 @@ export class AsignacionClasesService {
     @InjectRepository(Horarios)
     private readonly horarioRepository: Repository<Horarios>,
     private dataSource: DataSource,
-  ) {}
+  ) { }
 
   async createAsignacionFull(dto: CreateAsignacionFulDto) {
     return this.dataSource.transaction(async (manager) => {
@@ -91,20 +92,28 @@ export class AsignacionClasesService {
     return asignacion;
   }
 
-  async updateAsignacion(id: number, dia: string) {
+  async updateAsignacion(id: number, dto: UpdateAsignacionFulDto) {
+    return this.dataSource.transaction(async (manager) => {
+      const asignacion = await manager.findOne(AsignacionClase, {
+        where: { id },
+      });
+      if (!asignacion) {
+        throw new Error('Asignacion no encontrada');
+      }
+      asignacion.dia = dto.dia || asignacion.dia;
+      return await manager.save(asignacion);
+    });
+  }
+
+  async deleteAsignacion(id: number){
     const asignacion = await this.asignacionRepository.findOne({
       where: { id },
     });
     if (!asignacion) {
       throw new Error('Asignacion no encontrada');
     }
-    asignacion.dia = dia;
-    const resultado = await this.asignacionRepository.save(asignacion);
-    return resultado;
+    asignacion.estado = 'inactivo';
+    return await this.asignacionRepository.save(asignacion);
   }
 
-  async deleteAsignacion(id: number) {
-    const resultado = await this.asignacionRepository.delete(id);
-    return resultado;
   }
-}
