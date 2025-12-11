@@ -5,6 +5,7 @@ import { DataSource, Repository } from 'typeorm';
 import { Curso } from '../cursos/cursos.entity';
 import { EstudianteCurso } from 'src/estudiante-curso/estudiante_curso.entity';
 import { UpdateEstudianteFullDto } from './dto/update-estudiante-full.dto';
+import { EstudianteCursoController } from './estudiante-curso.controller';
 
 @Injectable()
 export class EstudianteCursoService {
@@ -16,9 +17,16 @@ export class EstudianteCursoService {
         @InjectRepository(Curso)
         private readonly cursoRepository: Repository<Curso>,
         private dataSource: DataSource,
-    ) {}
+    ) { }
 
-    async FindOneEst(id: number ): Promise<EstudianteCurso> {
+    async getEstudiantesPorCurso(idCurso: number) {
+        return this.estudianteCursoRepository.find({
+            where: { curso: { id: idCurso }, estado: 'activo' },
+            relations: ['estudiante'], // Para traer datos del estudiante
+        });
+    }
+
+    async FindOneEst(id: number): Promise<EstudianteCurso> {
         const estudianteCurso = await this.estudianteCursoRepository.findOne({
             where: { id },
             relations: ['estudiante', 'curso'],
@@ -29,7 +37,7 @@ export class EstudianteCursoService {
         return estudianteCurso;
     }
 
-    async FindOneCurso(id: number ): Promise<EstudianteCurso> {
+    async FindOneCurso(id: number): Promise<EstudianteCurso> {
         const estudianteCurso = await this.estudianteCursoRepository.findOne({
             where: { id },
             relations: ['curso', 'estudiante'],

@@ -8,17 +8,20 @@ import { Materias } from 'src/materias/materias.entity';
 import { Personal } from 'src/personal/personal.entity';
 import { AsignacionClase } from './asignacionCursos.entity';
 import { Usuarios } from 'src/usuarios/usuarios.entity';
+import { EstudianteCurso } from 'src/estudiante-curso/estudiante_curso.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([
-    AsignacionClase,
-    Personal,
-    Curso,
-    Materias,
-    Horarios,
-    Usuarios,
-  ]),
-],
+  imports: [
+    TypeOrmModule.forFeature([
+      AsignacionClase,
+      Personal,
+      Curso,
+      Materias,
+      Horarios,
+      Usuarios,
+      EstudianteCurso,
+    ]),
+  ],
   controllers: [AsignacionClasesController],
   providers: [AsignacionClasesService],
   exports: [AsignacionClasesService],

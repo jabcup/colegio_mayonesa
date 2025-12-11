@@ -6,7 +6,8 @@ import {
   Column,
   CreateDateColumn,
 } from 'typeorm';
-import { AsignacionClase } from '../asignacion-clases/asignacionCursos.entity';
+// import { AsignacionClase } from '../asignacion-clases/asignacionCursos.entity';
+import { Materias } from '../materias/materias.entity';
 import { Estudiante } from '../estudiante/estudiante.entity';
 
 @Entity('calificaciones')
@@ -14,9 +15,13 @@ export class Calificaciones {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => AsignacionClase, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'idAsignacion' })
-  asignacionClase: AsignacionClase;
+  // @ManyToOne(() => AsignacionClase, { onDelete: 'CASCADE' })
+  // @JoinColumn({ name: 'idAsignacion' })
+  // asignacionClase: AsignacionClase;
+
+  @ManyToOne(() => Materias, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'idMateria' })
+  materia: Materias;
 
   @ManyToOne(() => Estudiante, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'idEstudiante' })

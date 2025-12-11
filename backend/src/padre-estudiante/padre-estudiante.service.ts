@@ -11,31 +11,40 @@ export class PadreEstudianteService {
     private estudianteTutorRepository: Repository<EstudianteTutor>,
   ) {}
 
-  async listarPadresEstudiantes() {
+  async listarEstudiantesPadres() {
     return await this.estudianteTutorRepository.find({
       relations: ['tutor', 'estudiante'],
     });
   }
 
-  async listarPadresEstudiantesActivos() {
+  async listarEstudiantePadresActivos() {
     return await this.estudianteTutorRepository.find({
       where: { estado: 'activo' },
       relations: ['tutor', 'estudiante'],
     });
   }
-
-  async listarTodosPadreEstudianteEspecifico(idEstudiante: number) {
+  //Lista a un estudiante y todo su historial de padres asignados
+  async listarTodosEstudiantePadresEspecifico(idEstudiante: number) {
     return await this.estudianteTutorRepository.find({
       where: { estudiante: { id: idEstudiante } },
       relations: ['tutor', 'estudiante'],
     });
   }
-  async listarUltimoPadreEstudianteEspecifico(idEstudiante: number) {
+  //Lista a un estudiante y el padre asignado actual
+
+  async listarUltimoEstudiantePadreEspecifico(idEstudiante: number) {
     return await this.estudianteTutorRepository.find({
       where: {
         estado: 'activo',
         estudiante: { id: idEstudiante },
       },
+      relations: ['tutor', 'estudiante'],
+    });
+  }
+  // Muestra a un padre y todos sus estudiantes actuales
+  async listarPadreEstudiantes(idPadre: number) {
+    return await this.estudianteTutorRepository.find({
+      where: { tutor: { id: idPadre }, estado: 'activo' },
       relations: ['tutor', 'estudiante'],
     });
   }

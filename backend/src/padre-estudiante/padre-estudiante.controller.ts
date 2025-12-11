@@ -12,13 +12,13 @@ export class PadreEstudianteController {
   @Get('todos')
   @ApiOperation({ summary: 'Obtener todos los Padres-Estudiantes' })
   listarPadresEstudiantes() {
-    return this.padreEstudianteService.listarPadresEstudiantes();
+    return this.padreEstudianteService.listarEstudiantesPadres();
   }
 
   @Get('Activos')
   @ApiOperation({ summary: 'Obtener todos los Padres-Estudiantes Activos' })
   listarPadresEstudiantesActivos() {
-    return this.padreEstudianteService.listarPadresEstudiantesActivos();
+    return this.padreEstudianteService.listarEstudiantePadresActivos();
   }
 
   @Get(':idEstudiante/todos')
@@ -26,7 +26,7 @@ export class PadreEstudianteController {
     summary: 'Obtener un estudiante con todos sus padres',
   })
   listarTodosPadreEstudiante(@Param('idEstudiante') idEstudiante: number) {
-    return this.padreEstudianteService.listarTodosPadreEstudianteEspecifico(
+    return this.padreEstudianteService.listarTodosEstudiantePadresEspecifico(
       idEstudiante,
     );
   }
@@ -36,9 +36,17 @@ export class PadreEstudianteController {
     summary: 'Obtener un estudiante con el ultimo padre',
   })
   listarUltimoPadreEstudiante(@Param('idEstudiante') idEstudiante: number) {
-    return this.padreEstudianteService.listarUltimoPadreEstudianteEspecifico(
+    return this.padreEstudianteService.listarUltimoEstudiantePadreEspecifico(
       idEstudiante,
     );
+  }
+
+  @Get(':idPadre')
+  @ApiOperation({
+    summary: 'Obtener un padre con todos sus estudiantes',
+  })
+  listarPadreEstudiantes(@Param('idPadre') idPadre: number) {
+    return this.padreEstudianteService.listarPadreEstudiantes(idPadre);
   }
   @Post('AsignarPadreEstudiante')
   @ApiOperation({ summary: 'Asignar a un estudiante un padre' })

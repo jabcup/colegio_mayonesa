@@ -22,8 +22,12 @@ export class Asistencias {
   @JoinColumn({ name: 'idEstudiante' })
   estudiante: Estudiante;
 
-  @Column({ type: 'enum', enum: ['presente', 'falta', 'ausente', 'justificativo'], default: 'presente' })
-  asistencia: 'presente' | 'falta' | 'ausente' | 'justificativo' ;
+  @Column({
+    type: 'enum',
+    enum: ['presente', 'falta', 'ausente', 'justificativo'],
+    default: 'presente',
+  })
+  asistencia: 'presente' | 'falta' | 'ausente' | 'justificativo';
 
   @CreateDateColumn({ type: 'timestamp' })
   fecha_creacion: Date;

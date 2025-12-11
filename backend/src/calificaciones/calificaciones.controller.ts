@@ -48,6 +48,23 @@ export class CalificacionesController {
     };
   }
 
+  @Get('BuscarCalificacionesPorCursoYMateria/:idCurso/:idMateria')
+  @ApiOperation({ summary: 'Buscar calificaciones por curso y materia' })
+  async getCalificacionesPorCursoYMateria(
+    @Param('idCurso') idCurso: number,
+    @Param('idMateria') idMateria: number,
+  ) {
+    const calificaciones =
+      await this.calificacionesService.getCalificacionesPorCursoYMateria(
+        idCurso,
+        idMateria,
+      );
+    return {
+      message: 'Calificaciones por curso y materia',
+      calificaciones,
+    };
+  }
+
   @Post()
   @ApiOperation({ summary: 'Crear calificacion' })
   async createCalificacion(
