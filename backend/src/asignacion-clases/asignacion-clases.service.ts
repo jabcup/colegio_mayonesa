@@ -87,4 +87,15 @@ export class AsignacionClasesService {
   //     };
   //   });
   // }
+
+
+
+  async getHorarioDocente(idPersonal: number): Promise<AsignacionClase[]> {
+    return this.asignacionRepository.find({
+      where: { personal: { id: idPersonal } },
+      relations: ['personal', 'curso', 'materia', 'horario'],
+      order: { dia: 'ASC', horario: { horario: 'ASC' } },    
+    });
+  }
+  
 }

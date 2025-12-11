@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
 import { AsignacionClasesService } from './asignacion-clases.service';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateAsignacionFulDto } from './dto/create-asignacion-full.dto';
@@ -32,4 +32,10 @@ export class AsignacionClasesController {
       asignacion,
     };
   }
+
+  @Get('horario/:idPersonal')
+  async getHorarioDocente(@Param('idPersonal', ParseIntPipe) idPersonal: number) {
+    return this.asignacionService.getHorarioDocente(idPersonal);
+  }
+  
 }
