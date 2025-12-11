@@ -25,12 +25,7 @@ export class AsignacionClasesService {
     private readonly materiaRepository: Repository<Materias>,
     @InjectRepository(Horarios)
     private readonly horarioRepository: Repository<Horarios>,
-<<<<<<< HEAD
   ) {}
-=======
-    private dataSource: DataSource,
-  ) { }
->>>>>>> charu
 
   async createAsignacionFull(
     dtoAsignacion: CreateAsignacionFulDto,
@@ -101,55 +96,4 @@ export class AsignacionClasesService {
       relations: ['materia', 'horario'], //Si se desea tener datos del docente se debe agregar personal al relation
     });
   }
-
-  // async createAsignacionFull(dto: CreateAsignacionFulDto) {
-  //   return this.dataSource.transaction(async (manager) => {
-  //     const asignacion = manager.create(AsignacionClase, {
-  //       dia: dto.dia,
-  //     });
-
-  //     const nuevaAsignacion = await manager.save(asignacion);
-
-  //     const docente = await manager.findOne(Personal, {
-  //       where: { id: dto.idPersonal },
-  //     });
-
-  //     if (!docente) {
-  //       throw new Error('Docente no encontrado');
-  //     }
-
-  //     const curso = await manager.findOne(Curso, {
-  //       where: { id: dto.idCurso },
-  //     });
-
-  //     if (!curso) {
-  //       throw new Error('Curso no encontrado');
-  //     }
-
-  //     const materia = await manager.findOne(Materias, {
-  //       where: { id: dto.idMateria },
-  //     });
-
-  //     if (!materia) {
-  //       throw new Error('Materia no encontrado');
-  //     }
-
-  //     const horario = await manager.findOne(Horarios, {
-  //       where: { id: dto.idHorario },
-  //     });
-
-  //     if (!horario) {
-  //       throw new Error('Horario no encontrado');
-  //     }
-
-  //     return {
-  //       message: 'Asignacion de curso creado exitosamente',
-  //       asignacion: nuevaAsignacion,
-  //       docente: docente,
-  //       curso: curso,
-  //       materia: materia,
-  //       horario: horario,
-  //     };
-  //   });
-  // }
 }
