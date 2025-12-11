@@ -7,72 +7,72 @@ import { AsignacionClase } from './asignacionCursos.entity';
 import { DataSource, Repository } from 'typeorm';
 import { CreateAsignacionFulDto } from './dto/create-asignacion-full.dto';
 import { Horarios } from 'src/horarios/horarios.entity';
+import { Usuarios } from 'src/usuarios/usuarios.entity';
 
 @Injectable()
 export class AsignacionClasesService {
-    constructor(
-        @InjectRepository(AsignacionClase)
-        private readonly asignacionRepository: Repository<AsignacionClase>,
-        @InjectRepository(Personal)
-        private readonly personalRepository: Repository<Personal>,
-        @InjectRepository(Curso)
-        private readonly cursoRepository: Repository<Curso>,
-        @InjectRepository(Materias)
-        private readonly materiaRepository: Repository<Materias>,
-        @InjectRepository(Horarios)
-        private readonly horarioRepository: Repository<Horarios>,
-        private dataSource: DataSource,
-    ) {}
+  constructor(
+    @InjectRepository(AsignacionClase)
+    private readonly asignacionRepository: Repository<AsignacionClase>,
+    @InjectRepository(Personal)
+    private readonly personalRepository: Repository<Personal>,
+    @InjectRepository(Curso)
+    private readonly cursoRepository: Repository<Curso>,
+    @InjectRepository(Materias)
+    private readonly materiaRepository: Repository<Materias>,
+    @InjectRepository(Horarios)
+    private readonly horarioRepository: Repository<Horarios>,
+    private dataSource: DataSource,
+  ) {}
 
-    async createAsignacionFull (dto: CreateAsignacionFulDto) {
-        return this.dataSource.transaction(async (manager) => {
+  async createAsignacionFull(dto: CreateAsignacionFulDto) {
+    return this.dataSource.transaction(async (manager) => {
+      const asignacion = manager.create(AsignacionClase, {
+        dia: dto.dia,
+      });
 
-            const asignacion = manager.create(AsignacionClase, {
-                dia: dto.dia,
-            });
+      const nuevaAsignacion = await manager.save(asignacion);
 
-            const nuevaAsignacion = await manager.save(asignacion);
+      const docente = await manager.findOne(Personal, {
+        where: { id: dto.idPersonal },
+      });
 
-            const docente = await manager.findOne(Personal, {
-                where: { id: dto.idPersonal },
-            });
+      if (!docente) {
+        throw new Error('Docente no encontrado');
+      }
 
-            if(!docente) {
-                throw new Error('Docente no encontrado');
-            }
+      const curso = await manager.findOne(Curso, {
+        where: { id: dto.idCurso },
+      });
 
-            const curso = await manager.findOne(Curso, {
-                where: { id: dto.idCurso },
-            });
+      if (!curso) {
+        throw new Error('Curso no encontrado');
+      }
 
-            if(!curso) {
-                throw new Error ('Curso no encontrado');
-            }
+      const materia = await manager.findOne(Materias, {
+        where: { id: dto.idMateria },
+      });
 
-            const materia = await manager.findOne(Materias, {
-                where: { id: dto.idMateria },
-            });
+      if (!materia) {
+        throw new Error('Materia no encontrado');
+      }
 
-            if(!materia){
-                throw new Error('Materia no encontrado');
-            }
+      const horario = await manager.findOne(Horarios, {
+        where: { id: dto.idHorario },
+      });
 
-            const horario = await manager.findOne(Horarios, {
-                where: { id: dto.idHorario },
-            });
+      if (!horario) {
+        throw new Error('Horario no encontrado');
+      }
 
-            if(!horario) {
-                throw new Error('Horario no encontrado');
-            }
-
-            return {
-                message: 'Asignacion de curso creado exitosamente',
-                asignacion: asignacion,
-                docente: docente,
-                curso: curso,
-                materia: materia,
-                horario: horario,
-            };
-        });
-    }
+      return {
+        message: 'Asignacion de curso creado exitosamente',
+        asignacion: nuevaAsignacion,
+        docente: docente,
+        curso: curso,
+        materia: materia,
+        horario: horario,
+      };
+    });
+  }
 }

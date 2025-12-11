@@ -7,6 +7,7 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 import { AsignacionClase } from '../asignacion-clases/asignacionCursos.entity';
+import { Estudiante } from '../estudiante/estudiante.entity';
 
 @Entity('calificaciones')
 export class Calificaciones {
@@ -17,8 +18,12 @@ export class Calificaciones {
   @JoinColumn({ name: 'idAsignacion' })
   asignacionClase: AsignacionClase;
 
-  @Column({ type: 'varchar', length: 150 })
-  calificacion: string;
+  @ManyToOne(() => Estudiante, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'idEstudiante' })
+  estudiante: Estudiante;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  calificacion: number;
 
   @Column({ type: 'bool', default: true })
   aprobacion: boolean;
