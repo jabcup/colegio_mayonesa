@@ -31,7 +31,7 @@ export class PadresController {
     return this.padresService.todos();
   }
 
-  @Put(':id')
+  @Put('editar:id')
   @ApiOperation({ summary: 'Actualizar padre' })
   updatePadre(@Param('id') id: string, @Body() dto: UpdatePadreDto) {
     return this.padresService.actualizar(+id, dto);
