@@ -1,45 +1,71 @@
 "use client";
 
 import Navbar from "@/app/components/Navbar/navbar";
-import { Button, CircularProgress, Typography } from "@mui/material";
+import { Button, CircularProgress, TextField, Typography } from "@mui/material";
 import FormEstudiante from "../components/estudiante/form";
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import TableEstudiante from "../components/estudiante/table";
 
-interface Estudiante {
+interface EstudianteFull {
   id: number;
-  nombres: string;
-  apellidoPat: string;
-  apellidoMat: string;
-  identificacion: string;
-  correo: string;
-  correo_institucional: string;
-  rude: string;
-  direccion: string;
-  telefono_referencia: string;
-  fecha_nacimiento: string;
-  sexo: string;
-  nacionalidad: string;
-  relacion?: string; // opcional si no se usa
-  estado: string;
-  fecha_creacion: string;
+  estudiante: {
+    id: number;
+    nombres: string;
+    apellidoPat: string;
+    apellidoMat: string;
+    identificacion: string;
+    correo: string;
+    correo_institucional: string;
+    rude: string;
+    direccion: string;
+    telefono_referencia: string;
+    fecha_nacimiento: string;
+    sexo: string;
+    nacionalidad: string;
+    fecha_creacion: string;
+    estado: string;
+  };
+  tutor: {
+    id: number;
+    nombres: string;
+    apellidoPat: string;
+    apellidoMat: string;
+    telefono: string;
+    fecha_creacion?: string;
+    estado?: string;
+  };
+  relacion: string;
+  fecha_creacion?: string;
+  estado?: string;
 }
 
 export default function EstudiantesPage() {
-  const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
+  const [estudiantes, setEstudiantes] = useState<EstudianteFull[]>([]);
+  const [filtered, setFiltered] = useState<EstudianteFull[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     cargarEstudiantes();
   }, []);
 
+  useEffect(() => {
+    // Filtrar estudiantes cada vez que cambia el search
+    const s = search.toLowerCase();
+    const filteredList = estudiantes.filter((e) => {
+      const fullName = `${e.estudiante.nombres} ${e.estudiante.apellidoPat} ${e.estudiante.apellidoMat}`.toLowerCase();
+      return fullName.includes(s) || e.estudiante.identificacion.includes(s) || e.estudiante.correo.includes(s);
+    });
+    setFiltered(filteredList);
+  }, [search, estudiantes]);
+
   const cargarEstudiantes = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/estudiante/MostrarEstudiantes");
-      setEstudiantes(Array.isArray(res.data) ? res.data : []); // Protección
+      const res = await api.get("/padre-estudiante/todos");
+      setEstudiantes(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(err);
       alert("Error al cargar estudiantes");
@@ -50,11 +76,10 @@ export default function EstudiantesPage() {
 
   const crearEstudiante = async (data: unknown) => {
     try {
-      const res = await api.post("/estudiante/CrearEstudianteCompleto", data);
+      await api.post("/estudiante/CrearEstudianteCompleto", data);
       alert("Estudiante creado exitosamente");
-      cargarEstudiantes(); // recargar lista
-      console.log(res.data);
-    } catch (err: unknown) {
+      cargarEstudiantes();
+    } catch (err) {
       console.error(err);
       alert("Error al crear el estudiante");
     }
@@ -67,6 +92,14 @@ export default function EstudiantesPage() {
       <Typography variant="h3" sx={{ mb: 2 }}>
         Estudiantes
       </Typography>
+
+      <TextField
+        label="Buscar estudiante (nombre, CI o Correo)"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        fullWidth
+        sx={{ mb: 2 }}
+      />
 
       <Button
         variant="contained"
@@ -84,8 +117,8 @@ export default function EstudiantesPage() {
 
       {loading ? (
         <CircularProgress />
-      ) : estudiantes.length > 0 ? (
-        <TableEstudiante estudiantes={estudiantes} />
+      ) : filtered.length > 0 ? (
+        <TableEstudiante estudiantes={filtered} />
       ) : (
         <Typography>No hay estudiantes para mostrar</Typography>
       )}
