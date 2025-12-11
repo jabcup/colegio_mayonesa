@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { AsignacionClasesService } from './asignacion-clases.service';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateAsignacionFulDto } from './dto/create-asignacion-full.dto';
@@ -31,5 +31,12 @@ export class AsignacionClasesController {
       message: 'Asignacion creada exitosamente',
       asignacion,
     };
+  }
+  @Get('estudiante/:id')
+  @ApiOperation({
+    summary: 'Obtener asignaciones de clase por ID de estudiante',
+  })
+  getPorEstudiante(@Param('id') id: number) {
+    return this.asignacionService.getAsignacionesPorEstudiante(id);
   }
 }
