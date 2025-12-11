@@ -24,7 +24,7 @@ export class PadresService {
     const padre = await this.padreRepository.findOne({ where: { id } });
 
     if (!padre) {
-      throw new Error('Curso no encontrado');
+      throw new Error('Padre no encontrado');
     }
 
     // Mezcla los datos nuevos con los actuales

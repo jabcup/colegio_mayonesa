@@ -9,7 +9,7 @@ export class PadreEstudianteController {
   constructor(
     private readonly padreEstudianteService: PadreEstudianteService,
   ) {}
-  @Get()
+  @Get('todos')
   @ApiOperation({ summary: 'Obtener todos los Padres-Estudiantes' })
   listarPadresEstudiantes() {
     return this.padreEstudianteService.listarPadresEstudiantes();

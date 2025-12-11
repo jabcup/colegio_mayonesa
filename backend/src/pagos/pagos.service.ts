@@ -92,7 +92,7 @@ async pagarUltimaGestion(idEstudiante: number): Promise<{ message: string; updat
     return {
       id: p.id,
       idEstudiante: p.estudiante.id,
-      idPersonal: p.personal.id,
+      // idPersonal: p.personal.id,
       cantidad: p.cantidad,
       descuento: p.descuento,
       total: p.total,

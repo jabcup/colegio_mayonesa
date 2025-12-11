@@ -1,0 +1,119 @@
+
+:root {
+  --color-primary: #1976d2;
+  --color-primary-dark: #125ea8;
+
+  --color-error: #d32f2f;
+  --color-error-dark: #a82828;
+
+  --color-success: #2e7d69;
+  --color-success-dark: #256028;
+
+  --color-warning: #ed6c02;
+  --color-warning-dark: #c05602;
+
+  --color-default: #159cc5;
+  --color-default-dark: #0a5066;
+
+  --color-default2: #6e58ec;
+  --color-default2-dark: #41348b;
+
+  --radius: 6px;
+  --transition: 0.2s ease-in-out;
+  --font: 0.9rem;
+}
+
+.boton {
+  border: none;
+  cursor: pointer;
+  font-size: var(--font);
+  border-radius: var(--radius);
+  padding: 6px 16px;
+  transition: background var(--transition), border-color var(--transition), color var(--transition), transform var(--transition);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.small {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+}
+.medium {
+  padding: 6px 16px;
+  font-size: 0.9rem;
+}
+.large {
+  padding: 8px 22px;
+  font-size: 1rem;
+}
+
+.contained {
+  color: #fff;
+}
+
+.primary {
+  background: var(--color-primary);
+}
+.primary:hover {
+  background: var(--color-primary-dark);
+}
+
+.error {
+  background: var(--color-error);
+}
+.error:hover {
+  background: var(--color-error-dark);
+}
+
+.success {
+  background: var(--color-success);
+}
+.success:hover {
+  background: var(--color-success-dark);
+}
+
+.warning {
+  background: var(--color-warning);
+}
+.warning:hover {
+  background: var(--color-warning-dark);
+}
+
+.default {
+  background: var(--color-default);
+}
+.default:hover {
+  background: var(--color-default-dark);
+}
+
+.default2 {
+  background: var(--color-default2);
+}
+.default2:hover {
+  background: var(--color-default2-dark);
+}
+
+.outline {
+  background: transparent;
+  border: 2px solid currentColor;
+}
+
+.text {
+  background: transparent;
+  border: none;
+}
+
+.boton:active {
+  transform: scale(0.95);
+}
+
+.boton:focus-visible {
+  outline: 3px solid rgba(25, 118, 210, 0.4);
+}
+
+.boton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
