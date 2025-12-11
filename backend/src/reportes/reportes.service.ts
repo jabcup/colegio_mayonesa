@@ -79,7 +79,6 @@ export class ReportesService {
     curso?: string;
     paralelo?: string;
     gestion?: number;
-    idEstudiante?: number;
   }) {
     const query = this.calificacionesCursoRepo.createQueryBuilder('v');
 
@@ -93,10 +92,6 @@ export class ReportesService {
 
     if (params.gestion) {
       query.andWhere('v.gestion = :gestion', { gestion: params.gestion });
-    }
-
-    if (params.idEstudiante) {
-      query.andWhere('v.idEstudiante = :id', { id: params.idEstudiante });
     }
 
     const resultados = await query.getMany();
@@ -125,7 +120,6 @@ export class ReportesService {
     paralelo?: string;
     gestion?: number;
     mes?: number;
-    idEstudiante?: number;
   }) {
     const query = this.asistenciasCursoRepo.createQueryBuilder('v');
 
@@ -143,10 +137,6 @@ export class ReportesService {
 
     if (params.mes) {
       query.andWhere('MONTH(v.fecha) = :mes', { mes: params.mes });
-    }
-
-    if (params.idEstudiante) {
-      query.andWhere('v.idEstudiante = :id', { id: params.idEstudiante });
     }
 
     const resultados = await query.getMany();

@@ -1,6 +1,6 @@
 import { ViewEntity, ViewColumn } from 'typeorm';
 
-@ViewEntity({ name: 'vista_pagos_estudiantes' })
+@ViewEntity({ name: 'vista_pagos_estudiantes', synchronize: false })
 export class VistaPagosEstudiantesView {
   @ViewColumn()
   idUnico: number;

@@ -55,13 +55,11 @@ export class ReportesController {
     @Query('curso') curso?: string,
     @Query('paralelo') paralelo?: string,
     @Query('gestion') gestion?: number,
-    @Query('idEstudiante') idEstudiante?: number,
   ) {
     return this.reportesService.buscarCalificacionesPorCurso({
       curso,
       paralelo,
       gestion: Number(gestion),
-      idEstudiante: Number(idEstudiante),
     });
   }
 
@@ -88,14 +86,12 @@ export class ReportesController {
     @Query('paralelo') paralelo?: string,
     @Query('gestion') gestion?: number,
     @Query('mes') mes?: number,
-    @Query('idEstudiante') idEstudiante?: number,
   ) {
     return this.reportesService.buscarAsistenciasPorCurso({
       curso,
       paralelo,
       gestion: Number(gestion),
       mes: Number(mes),
-      idEstudiante: Number(idEstudiante),
     });
   }
 
