@@ -55,8 +55,13 @@ export default function EstudiantesPage() {
     // Filtrar estudiantes cada vez que cambia el search
     const s = search.toLowerCase();
     const filteredList = estudiantes.filter((e) => {
-      const fullName = `${e.estudiante.nombres} ${e.estudiante.apellidoPat} ${e.estudiante.apellidoMat}`.toLowerCase();
-      return fullName.includes(s) || e.estudiante.identificacion.includes(s) || e.estudiante.correo.includes(s);
+      const fullName =
+        `${e.estudiante.nombres} ${e.estudiante.apellidoPat} ${e.estudiante.apellidoMat}`.toLowerCase();
+      return (
+        fullName.includes(s) ||
+        e.estudiante.identificacion.includes(s) ||
+        e.estudiante.correo.includes(s)
+      );
     });
     setFiltered(filteredList);
   }, [search, estudiantes]);
