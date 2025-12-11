@@ -8,19 +8,6 @@ export class AsignacionClasesController {
   constructor(private readonly asignacionService: AsignacionClasesService) {}
   @Post('CrearAsignacion')
   @ApiOperation({ summary: 'Crear Asignacion' })
-  // async createAsignacion(
-  //   @Body() CreateAsignacionFullDto: CreateAsignacionFulDto,
-  // ) {
-  //   const asignacion = await this.asignacionService.createAsignacionFull(
-  //     CreateAsignacionFullDto,
-  //   );
-  //   return {
-  //     message: 'Asignacion creada exitosamente',
-  //     asignacion,
-  //   };
-  // }
-  @Post('CrearAsignacion')
-  @ApiOperation({ summary: 'Crear Asignacion' })
   async createAsignacion(
     @Body() CreateAsignacionFullDto: CreateAsignacionFulDto,
   ) {
@@ -38,4 +25,11 @@ export class AsignacionClasesController {
     return this.asignacionService.getHorarioDocente(idPersonal);
   }
   
+  @Get('estudiante/:id')
+  @ApiOperation({
+    summary: 'Obtener asignaciones de clase por ID de estudiante',
+  })
+  getPorEstudiante(@Param('id') id: number) {
+    return this.asignacionService.getAsignacionesPorEstudiante(id);
+  }
 }
