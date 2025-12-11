@@ -4,7 +4,7 @@ import { Type } from 'class-transformer';
 
 export class CreateCursoDto {
   @ApiProperty({
-    example: 'Matemáticas',
+    example: 'Primero Secundaria',
     description: 'Nombre del curso',
   })
   @IsNotEmpty()

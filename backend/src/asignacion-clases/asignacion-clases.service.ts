@@ -4,9 +4,10 @@ import { Curso } from 'src/cursos/cursos.entity';
 import { Materias } from 'src/materias/materias.entity';
 import { Personal } from 'src/personal/personal.entity';
 import { AsignacionClase } from './asignacionCursos.entity';
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateAsignacionFulDto } from './dto/create-asignacion-full.dto';
 import { Horarios } from 'src/horarios/horarios.entity';
+import { EstudianteCurso } from 'src/estudiante-curso/estudiante_curso.entity';
 
 @Injectable()
 export class AsignacionClasesService {
@@ -17,11 +18,12 @@ export class AsignacionClasesService {
     private readonly personalRepository: Repository<Personal>,
     @InjectRepository(Curso)
     private readonly cursoRepository: Repository<Curso>,
+    @InjectRepository(EstudianteCurso)
+    private readonly estudianteCursoRepository: Repository<EstudianteCurso>,
     @InjectRepository(Materias)
     private readonly materiaRepository: Repository<Materias>,
     @InjectRepository(Horarios)
     private readonly horarioRepository: Repository<Horarios>,
-    private dataSource: DataSource,
   ) {}
 
   async createAsignacionFull(
@@ -37,7 +39,6 @@ export class AsignacionClasesService {
       }),
     );
   }
-
   async getCursosPorDocente(idDocente: number) {
     return this.asignacionRepository
       .createQueryBuilder('asignacion')
@@ -64,6 +65,35 @@ export class AsignacionClasesService {
       .select(['materia.id AS id', 'materia.nombre AS nombre'])
       .distinct(true)
       .getRawMany();
+  }
+
+  async getAsignacionesPorEstudiante(idEstudiante: number) {
+    // 1. Obtener curso activo del estudiante usando QueryBuilder
+    const cursoActual: EstudianteCurso =
+      await this.estudianteCursoRepository.findOne({
+        where: {
+          estudiante: { id: idEstudiante },
+          estado: 'activo',
+        },
+        relations: ['curso', 'estudiante'],
+      });
+
+    if (!cursoActual) {
+      throw new Error('El estudiante no tiene curso activo asignado');
+    }
+    const idCurso = cursoActual.curso.id;
+
+    return this.asignacionRepository.find({
+      select: {
+        id: true,
+        dia: true,
+        curso: { nombre: true, paralelo: true },
+        materia: { nombre: true },
+        horario: { horario: true },
+      },
+      where: { curso: { id: idCurso } },
+      relations: ['materia', 'horario'], //Si se desea tener datos del docente se debe agregar personal al relation
+    });
   }
 
   // async createAsignacionFull(dto: CreateAsignacionFulDto) {

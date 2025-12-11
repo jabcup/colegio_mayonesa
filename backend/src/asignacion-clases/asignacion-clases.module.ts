@@ -8,6 +8,7 @@ import { Materias } from 'src/materias/materias.entity';
 import { Personal } from 'src/personal/personal.entity';
 import { AsignacionClase } from './asignacionCursos.entity';
 import { Usuarios } from 'src/usuarios/usuarios.entity';
+import { EstudianteCurso } from 'src/estudiante-curso/estudiante_curso.entity';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { Usuarios } from 'src/usuarios/usuarios.entity';
       Materias,
       Horarios,
       Usuarios,
+      EstudianteCurso,
     ]),
   ],
   controllers: [AsignacionClasesController],
