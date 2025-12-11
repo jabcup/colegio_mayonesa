@@ -7,7 +7,6 @@ import { AsignacionClase } from './asignacionCursos.entity';
 import { DataSource, Repository } from 'typeorm';
 import { CreateAsignacionFulDto } from './dto/create-asignacion-full.dto';
 import { Horarios } from 'src/horarios/horarios.entity';
-import { Usuarios } from 'src/usuarios/usuarios.entity';
 
 @Injectable()
 export class AsignacionClasesService {
