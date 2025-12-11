@@ -1,6 +1,6 @@
 import { ViewEntity, ViewColumn } from 'typeorm';
 
-@ViewEntity({ name: 'vista_tutores_curso' })
+@ViewEntity({ name: 'vista_tutores_cursos' })
 export class VistaTutoresCurso {
   @ViewColumn()
   idUnico: number;
