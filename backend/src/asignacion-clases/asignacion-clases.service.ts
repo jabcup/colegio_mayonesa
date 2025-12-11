@@ -4,7 +4,7 @@ import { Curso } from 'src/cursos/cursos.entity';
 import { Materias } from 'src/materias/materias.entity';
 import { Personal } from 'src/personal/personal.entity';
 import { AsignacionClase } from './asignacionCursos.entity';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { CreateAsignacionFulDto } from './dto/create-asignacion-full.dto';
 import { UpdateAsignacionFulDto } from './dto/update-asignacion-full.dto';
 import { Horarios } from 'src/horarios/horarios.entity';
@@ -25,8 +25,8 @@ export class AsignacionClasesService {
     private readonly materiaRepository: Repository<Materias>,
     @InjectRepository(Horarios)
     private readonly horarioRepository: Repository<Horarios>,
+    private dataSource: DataSource,
   ) {}
-
   async createAsignacionFull(
     dtoAsignacion: CreateAsignacionFulDto,
   ): Promise<AsignacionClase> {
@@ -95,5 +95,44 @@ export class AsignacionClasesService {
       where: { curso: { id: idCurso } },
       relations: ['materia', 'horario'], //Si se desea tener datos del docente se debe agregar personal al relation
     });
+  }
+
+  async findAllAsignaciones() {
+    const asignaciones = await this.asignacionRepository.find({
+      relations: ['personal', 'curso', 'materia', 'horario'],
+    });
+    return asignaciones;
+  }
+
+  async findAsignacionById(id: number) {
+    const asignacion = await this.asignacionRepository.findOne({
+      where: { id },
+      relations: ['personal', 'curso', 'materia', 'horario'],
+    });
+    return asignacion;
+  }
+
+  async updateAsignacion(id: number, dto: UpdateAsignacionFulDto) {
+    return this.dataSource.transaction(async (manager) => {
+      const asignacion = await manager.findOne(AsignacionClase, {
+        where: { id },
+      });
+      if (!asignacion) {
+        throw new Error('Asignacion no encontrada');
+      }
+      asignacion.dia = dto.dia || asignacion.dia;
+      return await manager.save(asignacion);
+    });
+  }
+
+  async deleteAsignacion(id: number) {
+    const asignacion = await this.asignacionRepository.findOne({
+      where: { id },
+    });
+    if (!asignacion) {
+      throw new Error('Asignacion no encontrada');
+    }
+    asignacion.estado = 'inactivo';
+    return await this.asignacionRepository.save(asignacion);
   }
 }
