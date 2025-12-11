@@ -6,19 +6,7 @@ import { CreateAsignacionFulDto } from './dto/create-asignacion-full.dto';
 @Controller('asignacion-clases')
 export class AsignacionClasesController {
   constructor(private readonly asignacionService: AsignacionClasesService) {}
-  @Post('CrearAsignacion')
-  @ApiOperation({ summary: 'Crear Asignacion' })
-  // async createAsignacion(
-  //   @Body() CreateAsignacionFullDto: CreateAsignacionFulDto,
-  // ) {
-  //   const asignacion = await this.asignacionService.createAsignacionFull(
-  //     CreateAsignacionFullDto,
-  //   );
-  //   return {
-  //     message: 'Asignacion creada exitosamente',
-  //     asignacion,
-  //   };
-  // }
+
   @Post('CrearAsignacion')
   @ApiOperation({ summary: 'Crear Asignacion' })
   async createAsignacion(

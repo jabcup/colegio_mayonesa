@@ -6,6 +6,7 @@ import { Personal } from 'src/personal/personal.entity';
 import { AsignacionClase } from './asignacionCursos.entity';
 import { Repository } from 'typeorm';
 import { CreateAsignacionFulDto } from './dto/create-asignacion-full.dto';
+import { UpdateAsignacionFulDto } from './dto/update-asignacion-full.dto';
 import { Horarios } from 'src/horarios/horarios.entity';
 import { EstudianteCurso } from 'src/estudiante-curso/estudiante_curso.entity';
 
@@ -24,7 +25,12 @@ export class AsignacionClasesService {
     private readonly materiaRepository: Repository<Materias>,
     @InjectRepository(Horarios)
     private readonly horarioRepository: Repository<Horarios>,
+<<<<<<< HEAD
   ) {}
+=======
+    private dataSource: DataSource,
+  ) { }
+>>>>>>> charu
 
   async createAsignacionFull(
     dtoAsignacion: CreateAsignacionFulDto,
