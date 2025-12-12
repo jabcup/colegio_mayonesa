@@ -20,6 +20,15 @@ export default function Navbar() {
         >
           Estudiantes
         </Button>
+
+        <Button
+          variant="outlined"
+          color="inherit"
+          onClick={() => router.push("/pago")}
+        >
+          Pagos
+        </Button>
+
         <Boton
           label="Crear Estudiante"
           color="success"
