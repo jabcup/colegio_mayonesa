@@ -3,7 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Calificaciones } from './calificaciones.entity';
 import { CreateCalificacionDto } from './dto/create-calificacion.dto';
-import { AsignacionClase } from '../asignacion-clases/asignacionCursos.entity';
+// import { AsignacionClase } from '../asignacion-clases/asignacionCursos.entity';
+import { Materias } from 'src/materias/materias.entity';
 import { Estudiante } from 'src/estudiante/estudiante.entity';
 
 @Injectable()
@@ -12,8 +13,11 @@ export class CalificacionesService {
     @InjectRepository(Calificaciones)
     private readonly calificacionesRepository: Repository<Calificaciones>,
 
-    @InjectRepository(AsignacionClase)
-    private readonly asignacionClaseRepository: Repository<AsignacionClase>,
+    // @InjectRepository(AsignacionClase)
+    // private readonly asignacionClaseRepository: Repository<AsignacionClase>,
+
+    @InjectRepository(Materias)
+    private readonly materiasRepository: Repository<Materias>,
 
     @InjectRepository(Estudiante)
     private readonly estudianteRepository: Repository<Estudiante>,
@@ -21,19 +25,49 @@ export class CalificacionesService {
 
   async getCalificaciones(): Promise<Calificaciones[]> {
     return this.calificacionesRepository.find({
-      relations: ['asignacionClase', 'estudiante'],
+      relations: ['materia', 'estudiante'], // asignacionClase
     });
   }
 
+  //CAMBIO DE MATERIA POR ASIGNACION
   async getCalificacionesPorAsignacion(
-    idAsignacion: number,
+    // idAsignacion: number,
+    idMateria: number,
   ): Promise<Calificaciones[]> {
     return this.calificacionesRepository.find({
       where: {
-        asignacionClase: { id: idAsignacion },
+        materia: { id: idMateria },
+        // asignacionClase: { id: idAsignacion },
       },
-      relations: ['asignacionClase', 'estudiante'],
+      relations: ['materia', 'estudiante'], // asignacionClase
     });
+  }
+
+  async getCalificacionesPorCursoYMateria(idCurso: number, idMateria: number) {
+    return this.calificacionesRepository
+      .createQueryBuilder('calificacion')
+      .leftJoinAndSelect('calificacion.estudiante', 'estudiante')
+      .leftJoinAndSelect('calificacion.materia', 'materia')
+      .leftJoin(
+        'asignacion_clases',
+        'asignacion',
+        'asignacion.idMateria = materia.id',
+      )
+      .leftJoin('asignacion.curso', 'curso')
+      .where('materia.id = :idMateria', { idMateria })
+      .andWhere('curso.id = :idCurso', { idCurso })
+      .select([
+        'calificacion.id',
+        'calificacion.calificacion',
+        'calificacion.aprobacion',
+        'estudiante.id',
+        'estudiante.nombres',
+        'estudiante.apellidoPat',
+        'estudiante.apellidoMat',
+        'materia.id',
+        'materia.nombre',
+      ])
+      .getRawMany();
   }
 
   async getCalificacionesPorEstudiante(
@@ -43,20 +77,28 @@ export class CalificacionesService {
       where: {
         estudiante: { id: idEstudiante },
       },
-      relations: ['asignacionClase', 'estudiante'],
+      relations: ['materia', 'estudiante'], // asignacionClase
     });
   }
 
   async createCalificacion(
     dto: CreateCalificacionDto,
   ): Promise<Calificaciones> {
-    const asignacion = await this.asignacionClaseRepository.findOne({
-      where: { id: dto.idAsignacion },
+    // const asignacion = await this.asignacionClaseRepository.findOne({
+    //   where: { id: dto.idAsignacion },
+    // });
+
+    const materia = await this.materiasRepository.findOne({
+      where: { id: dto.idMateria },
     });
 
-    if (!asignacion) {
-      throw new Error('Asignacion no encontrada');
+    if (!materia) {
+      throw new Error('Materia no encontrada');
     }
+
+    // if (!asignacion) {
+    //   throw new Error('Asignacion no encontrada');
+    // }
 
     const estudiante = await this.estudianteRepository.findOne({
       where: { id: dto.idEstudiante },
@@ -72,7 +114,8 @@ export class CalificacionesService {
     const calificacion = this.calificacionesRepository.create({
       calificacion: dto.calificacion,
       aprobacion: aprobacion,
-      asignacionClase: asignacion,
+      materia: materia,
+      //asignacionClase: asignacion,
       estudiante: estudiante,
     });
 

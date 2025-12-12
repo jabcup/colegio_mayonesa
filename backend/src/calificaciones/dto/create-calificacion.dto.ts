@@ -3,14 +3,23 @@ import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
 export class CreateCalificacionDto {
+  // @ApiProperty({
+  //   example: 1,
+  //   description: 'Id de la clase Asignada',
+  // })
+  // @IsNotEmpty()
+  // @Type(() => Number)
+  // @IsNumber()
+  // idAsignacion: number;
+
   @ApiProperty({
     example: 1,
-    description: 'Id de la clase Asignada',
+    description: 'Id de la Materia',
   })
   @IsNotEmpty()
   @Type(() => Number)
   @IsNumber()
-  idAsignacion: number;
+  idMateria: number;
 
   @ApiProperty({
     example: 1,

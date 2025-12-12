@@ -4,8 +4,9 @@ import { Curso } from 'src/cursos/cursos.entity';
 import { Materias } from 'src/materias/materias.entity';
 import { Personal } from 'src/personal/personal.entity';
 import { AsignacionClase } from './asignacionCursos.entity';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { CreateAsignacionFulDto } from './dto/create-asignacion-full.dto';
+import { UpdateAsignacionFulDto } from './dto/update-asignacion-full.dto';
 import { Horarios } from 'src/horarios/horarios.entity';
 import { EstudianteCurso } from 'src/estudiante-curso/estudiante_curso.entity';
 
@@ -24,8 +25,8 @@ export class AsignacionClasesService {
     private readonly materiaRepository: Repository<Materias>,
     @InjectRepository(Horarios)
     private readonly horarioRepository: Repository<Horarios>,
+    private dataSource: DataSource,
   ) {}
-
   async createAsignacionFull(
     dtoAsignacion: CreateAsignacionFulDto,
   ): Promise<AsignacionClase> {
@@ -38,6 +39,33 @@ export class AsignacionClasesService {
         horario: { id: dtoAsignacion.idHorario },
       }),
     );
+  }
+  async getCursosPorDocente(idDocente: number) {
+    return this.asignacionRepository
+      .createQueryBuilder('asignacion')
+      .leftJoin('asignacion.curso', 'curso')
+      .leftJoin('asignacion.personal', 'personal')
+      .where('personal.id = :idDocente', { idDocente })
+      .select([
+        'curso.id AS id',
+        'curso.nombre AS nombre',
+        'curso.paralelo AS paralelo',
+      ])
+      .distinct(true)
+      .getRawMany();
+  }
+
+  async getMateriasPorDocenteYCurso(idDocente: number, idCurso: number) {
+    return this.asignacionRepository
+      .createQueryBuilder('asignacion')
+      .leftJoin('asignacion.materia', 'materia')
+      .leftJoin('asignacion.personal', 'personal')
+      .leftJoin('asignacion.curso', 'curso')
+      .where('personal.id = :idDocente', { idDocente })
+      .andWhere('curso.id = :idCurso', { idCurso })
+      .select(['materia.id AS id', 'materia.nombre AS nombre'])
+      .distinct(true)
+      .getRawMany();
   }
 
   async getAsignacionesPorEstudiante(idEstudiante: number) {
@@ -69,17 +97,33 @@ export class AsignacionClasesService {
     });
   }
 
-  // async createAsignacionFull(dto: CreateAsignacionFulDto) {
-  //   return this.dataSource.transaction(async (manager) => {
-  //     const asignacion = manager.create(AsignacionClase, {
-  //       dia: dto.dia,
-  //     });
+  async findAllAsignaciones() {
+    const asignaciones = await this.asignacionRepository.find({
+      relations: ['personal', 'curso', 'materia', 'horario'],
+    });
+    return asignaciones;
+  }
 
-  //     const nuevaAsignacion = await manager.save(asignacion);
+  async findAsignacionById(id: number) {
+    const asignacion = await this.asignacionRepository.findOne({
+      where: { id },
+      relations: ['personal', 'curso', 'materia', 'horario'],
+    });
+    return asignacion;
+  }
 
-  //     const docente = await manager.findOne(Personal, {
-  //       where: { id: dto.idPersonal },
-  //     });
+  async updateAsignacion(id: number, dto: UpdateAsignacionFulDto) {
+    return this.dataSource.transaction(async (manager) => {
+      const asignacion = await manager.findOne(AsignacionClase, {
+        where: { id },
+      });
+      if (!asignacion) {
+        throw new Error('Asignacion no encontrada');
+      }
+      asignacion.dia = dto.dia || asignacion.dia;
+      return await manager.save(asignacion);
+    });
+  }
 
   //     if (!docente) {
   //       throw new Error('Docente no encontrado');
@@ -130,4 +174,14 @@ export class AsignacionClasesService {
     });
   }
   
+  async deleteAsignacion(id: number) {
+    const asignacion = await this.asignacionRepository.findOne({
+      where: { id },
+    });
+    if (!asignacion) {
+      throw new Error('Asignacion no encontrada');
+    }
+    asignacion.estado = 'inactivo';
+    return await this.asignacionRepository.save(asignacion);
+  }
 }
