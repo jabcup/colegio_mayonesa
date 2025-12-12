@@ -1,4 +1,3 @@
-// app/components/pago/form-pago.tsx
 "use client"
 
 import { useState } from "react"
@@ -38,8 +37,8 @@ export default function FormPago({ estudiantes, onClose, onCreate }: Props) {
         total: total
       })
       
-      onCreate() // Notifica éxito
-      onClose() // Cierra formulario
+      onCreate()
+      onClose()
     } catch (error) {
       alert("Error al crear pago")
       console.error(error)
