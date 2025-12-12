@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Post, Put, Param} from '@nestjs/common';
+import { Body, Controller, Get, Delete, Post, Put, Param} from '@nestjs/common';
 import { AsistenciasService } from './asistencias.service';
 import { CreateAsistenciaDto } from './dto/create-asistencia.dto';
 import { UpdateAsistenciaDto } from './dto/update-asistencia.dto';
@@ -7,6 +7,12 @@ import { ApiOperation } from '@nestjs/swagger';
 @Controller('asistencias')
 export class AsistenciasController {
     constructor(private readonly asistenciaService: AsistenciasService) { }
+
+    @Get('VerAsistencias')
+    @ApiOperation({ summary: 'Ver Asistencias' })
+    async getAsistencias() {
+        return this.asistenciaService.getAsistencias();
+    }
 
     @Post('CrearAsistencia')
     @ApiOperation({ summary: 'Crear Asistencia' })
