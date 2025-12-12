@@ -1,3 +1,5 @@
+'use client';
+
 import { api } from "@/app/lib/api";
 import {
   Dialog,
@@ -11,10 +13,25 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 
-interface Props {
-  open: boolean;
-  onClose: () => void;
-  onCreate: (data: unknown) => void;
+export interface UpdateCalificacionDto {
+  calificacion: number;
+}
+
+// Tipo que representa la fila mostrada en la tabla (y seleccionable para editar)
+export interface CalificacionFiltrada {
+  id: number;
+  calificacion: number;
+  aprobacion: boolean;
+  estudiante: {
+    id: number;
+    nombres: string;
+    apellidoPat: string;
+    apellidoMat: string;
+  };
+  materia: {
+    id: number;
+    nombre: string;
+  };
 }
 
 export interface AsignacionClase {
@@ -56,7 +73,20 @@ interface BackEstudianteCurso {
   };
 }
 
-export default function FormCalificacion({ open, onClose, onCreate }: Props) {
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  //Edit
+  selectedCalificacion: CalificacionFiltrada | null;
+  onCreate: (data: {
+    idMateria: number;
+    idEstudiante: number;
+    calificacion: number;
+  }) => void;
+  onUpdate?: (data: { calificacion: number }) => void;
+}
+
+export default function FormCalificacion({ open, onClose, onCreate, onUpdate, selectedCalificacion }: Props) {
   const [cursosDocente, setCursosDocente] = useState<AsignacionClase[]>([]);
   const [estudiantesCurso, setEstudiantesCurso] = useState<Estudiante[]>([]);
   const [materiasCurso, setMateriasCurso] = useState<MateriaDocente[]>([]);
@@ -74,6 +104,24 @@ export default function FormCalificacion({ open, onClose, onCreate }: Props) {
       cargarDatos();
     }
   }, [open]);
+
+  useEffect(() => {
+    if (selectedCalificacion) {
+      setForm({
+        idCurso: "", // puedes dejarlo vacío, porque no se usa en edición
+        idMateria: selectedCalificacion.materia.id.toString(),
+        idEstudiante: selectedCalificacion.estudiante.id.toString(),
+        calificacion: selectedCalificacion.calificacion.toString(),
+      });
+    } else {
+      setForm({
+        idCurso: "",
+        idMateria: "",
+        idEstudiante: "",
+        calificacion: "",
+      });
+    }
+  }, [selectedCalificacion]);
 
   const cargarDatos = async () => {
     setLoading(true);
@@ -141,45 +189,20 @@ export default function FormCalificacion({ open, onClose, onCreate }: Props) {
     }
   };
 
-//   const handleMateriaChange = async (
-//     e: React.ChangeEvent<HTMLInputElement>
-//   ) => {
-//     const idMateria = e.target.value; // mantener string
-//     setForm({ ...form, idMateria, idEstudiante: "" });
-
-//     const idDocente = 4;
-//     const idCurso = form.idCurso; // usar el curso seleccionado
-
-//     setLoading(true);
-//     try {
-//       const materiaRes = await api.get(
-//         `/asignacion-clases/materias-por-docente-curso/${idDocente}/${Number(
-//           idCurso
-//         )}`
-//       );
-//       const materiasMap = (materiaRes.data as BackMateriaDocente[]).map(
-//         (m) => ({
-//           idMateria: m.id,
-//           nombre: m.nombre,
-//         })
-//       );
-
-//       setMateriasCurso(materiasMap);
-//     } catch (err) {
-//       console.error(err);
-//       alert("Error al cargar las materias");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-const handleMateriaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const idMateria = e.target.value;
-  setForm({ ...form, idMateria, idEstudiante: "" });
-};
-
+  const handleMateriaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const idMateria = e.target.value;
+    setForm({ ...form, idMateria, idEstudiante: "" });
+  };
 
   const handleSubmit = () => {
+    if (selectedCalificacion && onUpdate) {
+      // Modo EDITAR
+      onUpdate({
+        calificacion: Number(form.calificacion),
+      });
+      return;
+    }
+
     const payload = {
       idMateria: Number(form.idMateria),
       idEstudiante: Number(form.idEstudiante),
@@ -197,9 +220,13 @@ const handleMateriaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     });
   };
 
+  const isEditing = Boolean(selectedCalificacion);
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle>Crear Calificación</DialogTitle>
+      <DialogTitle>
+        {isEditing ? "Editar Calificación" : "Registrar Calificación"}
+      </DialogTitle>
       <DialogContent
         sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
       >
@@ -213,6 +240,7 @@ const handleMateriaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               name="idCurso"
               value={form.idCurso}
               onChange={handleCursoChange}
+              disabled={isEditing}
             >
               {cursosDocente.map((c) => (
                 <MenuItem
@@ -230,7 +258,7 @@ const handleMateriaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               name="idMateria"
               value={form.idMateria}
               onChange={handleMateriaChange}
-              disabled={!form.idCurso}
+              disabled={!form.idCurso || isEditing}
             >
               {materiasCurso.map((m) => (
                 <MenuItem
@@ -248,7 +276,7 @@ const handleMateriaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               name="idEstudiante"
               value={form.idEstudiante}
               onChange={handleChange}
-              disabled={!form.idCurso}
+              disabled={!form.idCurso || isEditing}
             >
               {estudiantesCurso.map((e) => (
                 <MenuItem key={e.id} value={e.id}>
@@ -277,7 +305,7 @@ const handleMateriaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           }}
           variant="contained"
         >
-          Registrar Calificacion
+          {isEditing ? "Actualizar" : "Registrar"}
         </Button>
       </DialogActions>
     </Dialog>

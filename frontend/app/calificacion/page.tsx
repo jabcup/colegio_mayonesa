@@ -2,7 +2,13 @@
 
 import Navbar from "@/app/components/Navbar/navbar";
 
-import { Button, CircularProgress, MenuItem, TextField, Typography } from "@mui/material";
+import {
+  Button,
+  CircularProgress,
+  MenuItem,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 
@@ -57,6 +63,10 @@ interface BackAsignacionClase {
 interface BackMateriaDocente {
   id: number;
   nombre: string;
+}
+
+export interface UpdateCalificacionDto{
+  calificacion: number
 }
 
 export default function CalificacionPage() {
@@ -173,6 +183,7 @@ export default function CalificacionPage() {
     setFiltro({ ...filtro, idMateria });
   };
 
+  // Función para crear una nueva calificación
   const crearCalificacion = async (data: unknown) => {
     try {
       await api.post("/calificaciones", data);
@@ -182,6 +193,47 @@ export default function CalificacionPage() {
       alert("Error al crear la calificación");
     }
   };
+
+  // Funcion para eliminar una calificacion
+  const eliminarCalificacion = async (id: number) => {
+    if (!confirm("¿Seguro que deseas eliminar esta calificación?")) return;
+
+    try {
+      await api.delete(`/calificaciones/EliminarCalificacion/${id}`);
+      alert("Calificación eliminada");
+
+      cargarCalificaciones(); // recargar tabla
+    } catch (err) {
+      console.error(err);
+      alert("Error al eliminar");
+    }
+  };
+
+  // Funcion para editar una calificacion
+  const [selectedCalificacion, setSelectedCalificacion] =
+  useState<CalificacionFiltrada | null>(null);
+
+  const editarCalificacion = (calificacion: CalificacionFiltrada) => {
+    setSelectedCalificacion(calificacion);
+    setShowForm(true);
+  };
+
+  const actualizarCalificacion = async (data: UpdateCalificacionDto) => {
+    if (!selectedCalificacion) return;
+
+    try {
+      await api.put(`/calificaciones/EditarCalificacion/${selectedCalificacion.id}`, data);
+      alert("Calificación actualizada");
+
+      setShowForm(false);
+      setSelectedCalificacion(null);
+      cargarCalificaciones();
+    } catch (err) {
+      console.error(err);
+      alert("Error al actualizar");
+    }
+  };
+
 
   return (
     <>
@@ -231,13 +283,15 @@ export default function CalificacionPage() {
       {loading ? (
         <CircularProgress />
       ) : (
-        <TableCalificacion calificaciones={calificaciones} />
+        <TableCalificacion calificaciones={calificaciones} onEdit={editarCalificacion} onDelete={eliminarCalificacion} />
       )}
 
       <FormCalificacion
         open={showForm}
         onClose={() => setShowForm(false)}
         onCreate={crearCalificacion}
+        onUpdate={actualizarCalificacion}
+        selectedCalificacion={selectedCalificacion}
       />
     </>
   );

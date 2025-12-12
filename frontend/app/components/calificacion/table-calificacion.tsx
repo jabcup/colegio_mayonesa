@@ -10,6 +10,7 @@ import {
   Paper,
   MenuItem,
   TextField,
+  Button,
 } from "@mui/material";
 
 import { useState, useEffect } from "react";
@@ -33,10 +34,12 @@ interface CalificacionFiltrada {
 
 interface Props {
   calificaciones: CalificacionFiltrada[];
+  onEdit: (calificacion: CalificacionFiltrada) => void;
+  onDelete: (id: number) => void;
 }
 
 
-export default function TableCalificacion({ calificaciones }: Props) {
+export default function TableCalificacion({ calificaciones, onEdit, onDelete }: Props) {
   
   return (
     <>
@@ -48,6 +51,7 @@ export default function TableCalificacion({ calificaciones }: Props) {
               <TableCell>Estudiante</TableCell>
               <TableCell>Calificación</TableCell>
               <TableCell>Aprobación</TableCell>
+              <TableCell>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -59,6 +63,23 @@ export default function TableCalificacion({ calificaciones }: Props) {
                 </TableCell>
                 <TableCell>{c.calificacion}</TableCell>
                 <TableCell>{c.aprobacion ? "Aprobado" : "Reprobado"}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="outlined" 
+                    onClick={() => onEdit(c)}
+                  >
+                    Editar
+                  </Button>
+                  
+                  <Button 
+                    variant="outlined"
+                    color="error"
+                    onClick={() => onDelete(c.id)}
+                  >
+                    Eliminar
+                  </Button>
+
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
