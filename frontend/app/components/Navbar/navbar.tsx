@@ -27,6 +27,7 @@ export default function Navbar() {
           className="ml-2"
           onClick={() => router.push("/estudiante")}
         />
+        <Boton onClick={() => router.push("/padre-hijo")} label={"Hijos"} />
       </Toolbar>
     </AppBar>
   );
