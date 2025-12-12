@@ -6,8 +6,6 @@ import { Boton } from "../botones/botonNav";
 
 export default function Navbar() {
   const router = useRouter();
-
-<<<<<<< HEAD
     return (
         <AppBar position="static">
             <Toolbar>

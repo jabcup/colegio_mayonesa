@@ -32,7 +32,7 @@ export default function TablePagos({ pagos }: Props) {
 
   const handlePagar = async (pagoId: number) => {
     try {
-      await api.patch(`/pagos/pagar/${pagoId}`, { idpersonal: 6 })
+      await api.patch(`/pagos/pagar/${pagoId}`, { idpersonal: 5 })
       alert("Pago realizado")
       window.location.reload()
     } catch (error) {

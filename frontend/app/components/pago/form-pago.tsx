@@ -31,7 +31,7 @@ export default function FormPago({ estudiantes, onClose, onCreate }: Props) {
     try {
       await api.post("/pagos", {
         idEstudiante: Number(form.idEstudiante),
-        idPersonal: 6, // Hardcodeado
+        idPersonal: 5, // Hardcodeado
         cantidad: Number(form.cantidad),
         descuento: Number(form.descuento),
         total: total
