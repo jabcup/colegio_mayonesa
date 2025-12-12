@@ -4,6 +4,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  CreateDateColumn,
 } from 'typeorm';
 import { Personal } from '../personal/personal.entity';
 import { Curso } from '../cursos/cursos.entity';
@@ -33,4 +34,10 @@ export class AsignacionClase {
   @ManyToOne(() => Horarios, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'idHorario' })
   horario: Horarios;
+
+  @CreateDateColumn({ type: 'timestamp' })
+  fecha_creacion: Date;
+
+  @Column({ type: 'enum', enum: ['activo', 'inactivo'], default: 'activo' })
+  estado: 'activo' | 'inactivo';
 }

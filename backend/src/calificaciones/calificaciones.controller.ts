@@ -10,6 +10,7 @@ import {
 
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateCalificacionDto } from './dto/create-calificacion.dto';
+import { UpdateCalificacionDto } from './dto/update-calificacion.dto';
 import { CalificacionesService } from './calificaciones.service';
 
 @Controller('calificaciones')
@@ -48,6 +49,23 @@ export class CalificacionesController {
     };
   }
 
+  @Get('BuscarCalificacionesPorCursoYMateria/:idCurso/:idMateria')
+  @ApiOperation({ summary: 'Buscar calificaciones por curso y materia' })
+  async getCalificacionesPorCursoYMateria(
+    @Param('idCurso') idCurso: number,
+    @Param('idMateria') idMateria: number,
+  ) {
+    const calificaciones =
+      await this.calificacionesService.getCalificacionesPorCursoYMateria(
+        idCurso,
+        idMateria,
+      );
+    return {
+      message: 'Calificaciones por curso y materia',
+      calificaciones,
+    };
+  }
+
   @Post()
   @ApiOperation({ summary: 'Crear calificacion' })
   async createCalificacion(
@@ -66,7 +84,7 @@ export class CalificacionesController {
   @ApiOperation({ summary: 'Editar calificacion' })
   async updateCalificacion(
     @Param('id') id: number,
-    @Body() dto: CreateCalificacionDto,
+    @Body() dto: UpdateCalificacionDto,
   ) {
     const calificacion = await this.calificacionesService.updateCalificacion(
       id,
