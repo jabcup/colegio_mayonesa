@@ -6,6 +6,7 @@ import {
   Post,
   Put,
   Param,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { AsignacionClasesService } from './asignacion-clases.service';
 import { ApiOperation } from '@nestjs/swagger';
@@ -53,6 +54,18 @@ export class AsignacionClasesController {
       asignacion,
     };
   }
+
+  @Get('horario/:idPersonal')
+  async getHorarioDocente(@Param('idPersonal', ParseIntPipe) idPersonal: number) {
+    return this.asignacionService.getHorarioDocente(idPersonal);
+  }
+  
+  // @Get('estudiante/:id')
+  // @ApiOperation({
+  //   summary: 'Obtener asignaciones de clase por ID de estudiante',
+  // })
+  // getPorEstudiante(@Param('id') id: number) {
+  //   return this.asignacionService.getAsignacionesPorEstudiante(id);}
 
   @Put('ActualizarAsignacion/:id')
   @ApiOperation({ summary: 'Actualizar Asignacion' })

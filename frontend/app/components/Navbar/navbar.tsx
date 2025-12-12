@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { Boton } from "../botones/botonNav";
 
 export default function Navbar() {
-    const router = useRouter();
+  const router = useRouter();
 
+<<<<<<< HEAD
     return (
         <AppBar position="static">
             <Toolbar>
@@ -20,6 +21,7 @@ export default function Navbar() {
                 <Boton label="Calificaciones" color="success" size="medium" className="ml-2" onClick={() => router.push("/calificacion")} />
                 <Boton label="Reportes" color="success" size="medium" className="ml-2" onClick={() => router.push("/reporte")} />
                 <Boton label="Asistencias" color="success" size="medium" className="ml-2" onClick={() => router.push("/asistencias")} />
+                <Button variant="outlined" color="inherit" onClick={() => router.push("/pago")}> Pagos </Button>
             </Toolbar>
         </AppBar>
     );

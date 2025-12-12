@@ -125,6 +125,55 @@ export class AsignacionClasesService {
     });
   }
 
+  //     if (!docente) {
+  //       throw new Error('Docente no encontrado');
+  //     }
+
+  //     const curso = await manager.findOne(Curso, {
+  //       where: { id: dto.idCurso },
+  //     });
+
+  //     if (!curso) {
+  //       throw new Error('Curso no encontrado');
+  //     }
+
+  //     const materia = await manager.findOne(Materias, {
+  //       where: { id: dto.idMateria },
+  //     });
+
+  //     if (!materia) {
+  //       throw new Error('Materia no encontrado');
+  //     }
+
+  //     const horario = await manager.findOne(Horarios, {
+  //       where: { id: dto.idHorario },
+  //     });
+
+  //     if (!horario) {
+  //       throw new Error('Horario no encontrado');
+  //     }
+
+  //     return {
+  //       message: 'Asignacion de curso creado exitosamente',
+  //       asignacion: nuevaAsignacion,
+  //       docente: docente,
+  //       curso: curso,
+  //       materia: materia,
+  //       horario: horario,
+  //     };
+  //   });
+  // }
+
+
+
+  async getHorarioDocente(idPersonal: number): Promise<AsignacionClase[]> {
+    return this.asignacionRepository.find({
+      where: { personal: { id: idPersonal } },
+      relations: ['personal', 'curso', 'materia', 'horario'],
+      order: { dia: 'ASC', horario: { horario: 'ASC' } },    
+    });
+  }
+  
   async deleteAsignacion(id: number) {
     const asignacion = await this.asignacionRepository.findOne({
       where: { id },
