@@ -40,7 +40,13 @@ export default function Navbar() {
           className="ml-2"
           onClick={() => router.push("/asistencias")}
         />
-
+        <Boton
+          label="Hijos"
+          color="success"
+          size="medium"
+          className="ml-2"
+          onClick={() => router.push("/padre-hijo")}
+        />
         <Button
           variant="outlined"
           color="inherit"
