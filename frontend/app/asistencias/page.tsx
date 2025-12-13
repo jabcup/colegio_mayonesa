@@ -1,13 +1,16 @@
 "use client";
 
 import Navbar from "@/app/components/Navbar/navbar";
-import { Button, Typography } from "@mui/material";
-import FormAsistencia from "../components/asistencias/form-asistencia";
-import { useState } from "react";
-import TableAsistencias from "../components/asistencias/table-asistencias";
+import { Button, CircularProgress, TextField, Typography } from "@mui/material";
+import FormAsistencia from "../components/asistencia/form-asistencia";
+import { useEffect, useState } from "react";
 import { api } from "../lib/api";
-export default function AsistenciasPage() {
+import TableAsistencia from "../components/asistencia/table-asistencia";
+
+export default function AsistenciaPage() {
+    const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
+
     const crearAsistencia = async (data: unknown) => {
         try {
             await api.post("/asistencias", data);
@@ -24,10 +27,17 @@ export default function AsistenciasPage() {
             <Typography variant="h4" align="center" gutterBottom>
                 Página de Asistencias
             </Typography>
+
             <Button
                 variant="contained"
-                onClick={() => setShowForm(true)}>Mostrar Formulario de Asistencia</Button>
-            <TableAsistencias asistencias={[]} />
+                onClick={() => setShowForm(true)}
+                sx={{ mb: 2 }}
+            >
+                Realizar una Asistencia
+            </Button>
+
+            <TableAsistencia asistencias={[]} />
+
             <FormAsistencia
                 open={showForm}
                 onClose={() => setShowForm(false)}
@@ -35,4 +45,4 @@ export default function AsistenciasPage() {
             />
         </>
     );
-}
+};

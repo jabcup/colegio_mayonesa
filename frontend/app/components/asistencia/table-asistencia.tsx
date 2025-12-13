@@ -15,10 +15,9 @@ import {
 import { useState, useEffect } from "react";
 import { api } from "@/app/lib/api";
 
-interface CalificacionFiltrada {
+interface AsistenciaFiltrada {
   id: number;
-  calificacion: number;
-  aprobacion: boolean;
+  asistencia: string;
   estudiante: {
     id: number;
     nombres: string;
@@ -31,10 +30,9 @@ interface CalificacionFiltrada {
   };
 }
 
-interface CalificacionBackend {
-  calificacion_id: number;
-  calificacion_calificacion: string;
-  calificacion_aprobacion: number;
+interface AsistenciaBackend {
+  asistencia_id: number;
+  asistencia_asistencia: string;
   estudiante_id: number;
   estudiante_nombres: string;
   estudiante_apellidoPat: string;
@@ -44,7 +42,7 @@ interface CalificacionBackend {
 }
 
 interface Props {
-  calificaciones: CalificacionFiltrada[];
+  asistencias: AsistenciaFiltrada[];
 }
 
 export interface AsignacionClase {
@@ -53,8 +51,8 @@ export interface AsignacionClase {
   paralelo: string;
 }
 
-export interface MateriaDocente {
-  idMateria: number;
+export interface AsignacionDocente {
+  idAsignacion: number;
   nombre: string;
 }
 
@@ -64,22 +62,22 @@ interface BackAsignacionClase {
   paralelo: string;
 }
 
-interface BackMateriaDocente {
+interface BackAsignacionDocente {
   id: number;
   nombre: string;
 }
 
-export default function TableCalificacion({ calificaciones }: Props) {
+export default function TableAsistencia({ asistencias }: Props) {
   const [cursosDocente, setCursosDocente] = useState<AsignacionClase[]>([]);
-  const [materiasCurso, setMateriasCurso] = useState<MateriaDocente[]>([]);
+  const [asignacionesCurso, setAsignacionesCurso] = useState<AsignacionDocente[]>([]);
   const [loading, setLoading] = useState(false);
-  const [calificacionesFiltradas, setCalificacionesFiltradas] = useState<
-    CalificacionFiltrada[]
+  const [asistenciasFiltradas, setAsistenciasFiltradas] = useState<
+    AsistenciaFiltrada[]
   >([]);
 
   const [filtro, setFiltro] = useState({
     idCurso: "",
-    idMateria: "",
+    idAsignacion: "",
   });
 
   const cargarDatos = async () => {
@@ -104,23 +102,22 @@ export default function TableCalificacion({ calificaciones }: Props) {
     }
   };
 
-  const cargarCalificaciones = async () => {
-    if (!filtro.idCurso || !filtro.idMateria) return;
+  const cargarAsistencias = async () => {
+    if (!filtro.idCurso || !filtro.idAsignacion) return;
 
     setLoading(true);
     try {
       const res = await api.get(
-        `/calificaciones/BuscarCalificacionesPorCursoYMateria/${Number(
+        `/asistencias/BuscarAsistenciasPorCursoYMateria/${Number(
           filtro.idCurso
-        )}/${Number(filtro.idMateria)}`
+        )}/${Number(filtro.idAsignacion)}`
       );
 
-      const calificacionesMap: CalificacionFiltrada[] = (
-        res.data.calificaciones || []
-      ).map((c: CalificacionBackend) => ({
-        id: c.calificacion_id,
-        calificacion: Number(c.calificacion_calificacion),
-        aprobacion: Boolean(c.calificacion_aprobacion),
+      const asistenciasMap: AsistenciaFiltrada[] = (
+        res.data.asistencias || []
+      ).map((c: AsistenciaBackend) => ({
+        id: c.asistencia_id,
+        asistencia: c.asistencia_asistencia,
         estudiante: {
           id: c.estudiante_id,
           nombres: c.estudiante_nombres,
@@ -132,10 +129,10 @@ export default function TableCalificacion({ calificaciones }: Props) {
           nombre: c.materia_nombre,
         },
       }));
-      setCalificacionesFiltradas(calificacionesMap); // suponer que backend devuelve estudiantes con calificaciones
+      setAsistenciasFiltradas(asistenciasMap);
     } catch (err) {
       console.error(err);
-      alert("Error al cargar calificaciones");
+      alert("Error al cargar asistencias");
     } finally {
       setLoading(false);
     }
@@ -146,40 +143,40 @@ export default function TableCalificacion({ calificaciones }: Props) {
   }, []);
 
   useEffect(() => {
-    cargarCalificaciones();
-  }, [filtro.idCurso, filtro.idMateria]);
+    cargarAsistencias();
+  }, [filtro.idCurso, filtro.idAsignacion]);
 
   const handleCursoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const idCurso = e.target.value;
-    setFiltro({ ...filtro, idCurso, idMateria: "" });
+    setFiltro({ ...filtro, idCurso, idAsignacion: "" });
 
-    const idDocente = 4;
+    const idDocente = 1;
 
     setLoading(true);
     try {
-      const materiaRes = await api.get(
+      const asignacionRes = await api.get(
         `/asignacion-clases/materias-por-docente-curso/${idDocente}/${Number(
           idCurso
         )}`
       );
-      const materiasMap = (materiaRes.data as BackMateriaDocente[]).map(
+      const asignacionesMap = (asignacionRes.data as BackAsignacionDocente[]).map(
         (m) => ({
-          idMateria: m.id,
+          idAsignacion: m.id,
           nombre: m.nombre,
         })
       );
-      setMateriasCurso(materiasMap);
+      setAsignacionesCurso(asignacionesMap);
     } catch (err) {
       console.error(err);
-      alert("Error al cargar los estudiantes");
+      alert("Error al cargar las asignaciones");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleMateriaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const idMateria = e.target.value;
-    setFiltro({ ...filtro, idMateria });
+  const handleAsignacionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const idAsignacion = e.target.value;
+    setFiltro({ ...filtro, idAsignacion });
   };
   return (
     <>
@@ -200,13 +197,13 @@ export default function TableCalificacion({ calificaciones }: Props) {
       <TextField
         select
         label="Filtrar por Materia"
-        value={filtro.idMateria}
-        onChange={handleMateriaChange}
+        value={filtro.idAsignacion}
+        onChange={handleAsignacionChange}
         sx={{ mr: 2, mb: 2, minWidth: 200 }}
         disabled={!filtro.idCurso}
       >
-        {materiasCurso.map((m) => (
-          <MenuItem key={m.idMateria} value={m.idMateria.toString()}>
+        {asignacionesCurso.map((m) => (
+          <MenuItem key={m.idAsignacion} value={m.idAsignacion.toString()}>
             {m.nombre}
           </MenuItem>
         ))}
@@ -216,19 +213,17 @@ export default function TableCalificacion({ calificaciones }: Props) {
           <TableHead>
             <TableRow>
               <TableCell>Estudiante</TableCell>
-              <TableCell>Calificación</TableCell>
-              <TableCell>Aprobación</TableCell>
+              <TableCell>Asistencia</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {calificacionesFiltradas.map((c) => (
+            {asistenciasFiltradas.map((c) => (
               <TableRow key={c.id}>
                 <TableCell>
                   {c.estudiante.nombres} {c.estudiante.apellidoPat}{" "}
                   {c.estudiante.apellidoMat}
                 </TableCell>
-                <TableCell>{c.calificacion}</TableCell>
-                <TableCell>{c.aprobacion ? "Aprobado" : "Reprobado"}</TableCell>
+                <TableCell>{c.asistencia}</TableCell>
               </TableRow>
             ))}
           </TableBody>
