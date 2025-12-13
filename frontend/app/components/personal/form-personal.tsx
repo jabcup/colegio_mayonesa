@@ -1,0 +1,81 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import {
+  Container,
+  TextField,
+  Button,
+  Box,
+  Typography,
+  MenuItem
+} from "@mui/material"
+import { api } from "@/app/lib/api"
+
+const roles = [
+  { value: 1, label: "Administrador" },
+  { value: 2, label: "Docente" },
+  { value: 3, label: "Secretaria" }
+]
+
+export default function NuevoPersonalPage() {
+  const router = useRouter()
+  const [form, setForm] = useState({
+    idRol: 1,
+    nombres: "",
+    apellidoPat: "",
+    apellidoMat: "",
+    telefono: "",
+    identificacion: "",
+    direccion: "",
+    correo: "",
+    fecha_nacimiento: ""
+  })
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      await api.post("/personal/CrearPersonalCompleto", form)
+      router.push("/personal")
+    } catch {
+      alert("Error al crear personal")
+    }
+  }
+
+  return (
+    <Container maxWidth="sm" sx={{ mt: 4 }}>
+      <Typography variant="h4" mb={3}>
+        Nuevo Personal
+      </Typography>
+      <Box component="form" onSubmit={handleSubmit} display="flex" flexDirection="column" gap={2}>
+        <TextField select label="Rol" name="idRol" value={form.idRol} onChange={handleChange} required>
+          {roles.map((r) => (
+            <MenuItem key={r.value} value={r.value}>
+              {r.label}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField label="Nombres" name="nombres" value={form.nombres} onChange={handleChange} required />
+        <TextField label="Apellido Paterno" name="apellidoPat" value={form.apellidoPat} onChange={handleChange} required />
+        <TextField label="Apellido Materno" name="apellidoMat" value={form.apellidoMat} onChange={handleChange} required />
+        <TextField label="Teléfono" name="telefono" value={form.telefono} onChange={handleChange} required />
+        <TextField label="CI" name="identificacion" value={form.identificacion} onChange={handleChange} required />
+        <TextField label="Dirección" name="direccion" value={form.direccion} onChange={handleChange} required />
+        <TextField label="Correo" name="correo" type="email" value={form.correo} onChange={handleChange} required />
+        <TextField label="Fecha Nacimiento" name="fecha_nacimiento" type="date" value={form.fecha_nacimiento} onChange={handleChange} required InputLabelProps={{ shrink: true }} />
+        <Box display="flex" gap={2} justifyContent="flex-end">
+          <Button variant="outlined" onClick={() => router.back()}>
+            Cancelar
+          </Button>
+          <Button type="submit" variant="contained">
+            Guardar
+          </Button>
+        </Box>
+      </Box>
+    </Container>
+  )
+}
