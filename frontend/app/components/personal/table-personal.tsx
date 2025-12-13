@@ -29,19 +29,18 @@ interface Personal {
 
 interface Props {
   personal: Personal[]
+  onEdit: (p: Personal) => void
 }
 
-export default function TablePersonalActivo({ personal }: Props) {
-  const [selected, setSelected] = useState<Personal | null>(null)
-
+export default function TablePersonalActivo({ personal, onEdit }: Props) {
   const handleEditar = (p: Personal) => {
-    setSelected(p)
+    onEdit(p) 
   }
 
   const handleEliminar = async (id: number) => {
-    if (!confirm("¿Eliminar este registro?")) return
+    if (!confirm("¿Eliminar a este individuo?")) return
     try {
-      await api.delete(`/personal/${id}`)
+      await api.delete(`/personal/EliminarPersonal/${id}`)
       window.location.reload()
     } catch {
       alert("Error al eliminar")
@@ -49,47 +48,45 @@ export default function TablePersonalActivo({ personal }: Props) {
   }
 
   return (
-    <>
-      <TableContainer component={Paper} sx={{ mt: 2 }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Nombres</TableCell>
-              <TableCell>Ap. Paterno</TableCell>
-              <TableCell>Ap. Materno</TableCell>
-              <TableCell>Teléfono</TableCell>
-              <TableCell>CI</TableCell>
-              <TableCell>Correo</TableCell>
-              <TableCell>Acciones</TableCell>
+    <TableContainer component={Paper} sx={{ mt: 2 }}>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Nombres</TableCell>
+            <TableCell>Ap. Paterno</TableCell>
+            <TableCell>Ap. Materno</TableCell>
+            <TableCell>Teléfono</TableCell>
+            <TableCell>CI</TableCell>
+            <TableCell>Correo</TableCell>
+            <TableCell>Acciones</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {personal.map((p) => (
+            <TableRow key={p.id}>
+              <TableCell>{p.nombres}</TableCell>
+              <TableCell>{p.apellidoPat}</TableCell>
+              <TableCell>{p.apellidoMat}</TableCell>
+              <TableCell>{p.telefono}</TableCell>
+              <TableCell>{p.identificacion}</TableCell>
+              <TableCell>{p.correo}</TableCell>
+              <TableCell>
+                <Button size="small" onClick={() => handleEditar(p)}>
+                  Editar
+                </Button>
+                <Button
+                  size="small"
+                  color="error"
+                  onClick={() => handleEliminar(p.id)}
+                  sx={{ ml: 1 }}
+                >
+                  Eliminar
+                </Button>
+              </TableCell>
             </TableRow>
-          </TableHead>
-          <TableBody>
-            {personal.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell>{p.nombres}</TableCell>
-                <TableCell>{p.apellidoPat}</TableCell>
-                <TableCell>{p.apellidoMat}</TableCell>
-                <TableCell>{p.telefono}</TableCell>
-                <TableCell>{p.identificacion}</TableCell>
-                <TableCell>{p.correo}</TableCell>
-                <TableCell>
-                  <Button size="small" onClick={() => handleEditar(p)}>
-                    Editar
-                  </Button>
-                  <Button
-                    size="small"
-                    color="error"
-                    onClick={() => handleEliminar(p.id)}
-                    sx={{ ml: 1 }}
-                  >
-                    Eliminar
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   )
 }
