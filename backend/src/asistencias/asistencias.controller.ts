@@ -15,7 +15,10 @@ import { ApiOperation } from '@nestjs/swagger';
 
 @Controller('asistencias')
 export class AsistenciasController {
-  constructor(private readonly asistenciaService: AsistenciasService) {}
+  constructor(
+    private readonly asistenciasService: AsistenciasService,
+    private readonly asistenciaService: AsistenciasService,
+  ) {}
 
   @Get('VerAsistencias')
   @ApiOperation({ summary: 'Ver Asistencias' })
@@ -54,5 +57,44 @@ export class AsistenciasController {
   @ApiOperation({ summary: 'Eliminar Asistencia' })
   removeAsistencia(@Param('id') id: number) {
     return this.asistenciaService.remove(id);
+  }
+
+  @Get()
+  findAll() {
+    return this.asistenciasService.findAll();
+  }
+
+  @Post()
+  create(@Body() createAsistenciaDto: CreateAsistenciaDto) {
+    return this.asistenciasService.createAsistencia(createAsistenciaDto);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.asistenciasService.findOne(+id);
+  }
+
+  @Put(':id')
+  update(
+    @Param('id') id: string,
+    @Body() updateAsistenciaDto: UpdateAsistenciaDto,
+  ) {
+    return this.asistenciasService.updateAsistencia(+id, updateAsistenciaDto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.asistenciasService.remove(+id);
+  }
+
+  @Get('BuscarAsistenciasPorCursoYMateria/:idCurso/:idMateria')
+  buscarAsistenciasPorCursoYMateria(
+    @Param('idCurso') idCurso: string,
+    @Param('idMateria') idMateria: string,
+  ) {
+    return this.asistenciasService.buscarAsistenciasPorCursoYMateria(
+      +idCurso,
+      +idMateria,
+    );
   }
 }

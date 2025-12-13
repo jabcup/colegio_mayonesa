@@ -1,5 +1,3 @@
-"use client";
-
 import { api } from "@/app/lib/api";
 import {
   Dialog,
@@ -13,25 +11,10 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 
-export interface UpdateCalificacionDto {
-  calificacion: number;
-}
-
-// Tipo que representa la fila mostrada en la tabla (y seleccionable para editar)
-export interface CalificacionFiltrada {
-  id: number;
-  calificacion: number;
-  aprobacion: boolean;
-  estudiante: {
-    id: number;
-    nombres: string;
-    apellidoPat: string;
-    apellidoMat: string;
-  };
-  materia: {
-    id: number;
-    nombre: string;
-  };
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  onCreate: (data: unknown) => void;
 }
 
 export interface AsignacionClase {
@@ -40,8 +23,8 @@ export interface AsignacionClase {
   paralelo: string;
 }
 
-export interface MateriaDocente {
-  idMateria: number;
+export interface AsignacionDocente {
+  idAsignacion: number;
   nombre: string;
 }
 
@@ -58,7 +41,7 @@ interface BackAsignacionClase {
   paralelo: string;
 }
 
-interface BackMateriaDocente {
+interface BackAsignacionDocente {
   id: number;
   nombre: string;
 }
@@ -73,36 +56,17 @@ interface BackEstudianteCurso {
   };
 }
 
-interface Props {
-  open: boolean;
-  onClose: () => void;
-  //Edit
-  selectedCalificacion: CalificacionFiltrada | null;
-  onCreate: (data: {
-    idMateria: number;
-    idEstudiante: number;
-    calificacion: number;
-  }) => void;
-  onUpdate?: (data: { calificacion: number }) => void;
-}
-
-export default function FormCalificacion({
-  open,
-  onClose,
-  onCreate,
-  onUpdate,
-  selectedCalificacion,
-}: Props) {
+export default function FormAsistencia({ open, onClose, onCreate }: Props) {
   const [cursosDocente, setCursosDocente] = useState<AsignacionClase[]>([]);
   const [estudiantesCurso, setEstudiantesCurso] = useState<Estudiante[]>([]);
-  const [materiasCurso, setMateriasCurso] = useState<MateriaDocente[]>([]);
+  const [asignacionesCurso, setAsignacionesCurso] = useState<AsignacionDocente[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
-    idCurso: "", // Nuevo: curso seleccionado
-    idMateria: "", // Si quieres guardar la clase específica (materia + horario)
+    idCurso: "",
+    idAsignacion: "",
     idEstudiante: "",
-    calificacion: "",
+    asistencia: "presente",
   });
 
   useEffect(() => {
@@ -110,24 +74,6 @@ export default function FormCalificacion({
       cargarDatos();
     }
   }, [open]);
-
-  useEffect(() => {
-    if (selectedCalificacion) {
-      setForm({
-        idCurso: "", // puedes dejarlo vacío, porque no se usa en edición
-        idMateria: selectedCalificacion.materia.id.toString(),
-        idEstudiante: selectedCalificacion.estudiante.id.toString(),
-        calificacion: selectedCalificacion.calificacion.toString(),
-      });
-    } else {
-      setForm({
-        idCurso: "",
-        idMateria: "",
-        idEstudiante: "",
-        calificacion: "",
-      });
-    }
-  }, [selectedCalificacion]);
 
   const cargarDatos = async () => {
     setLoading(true);
@@ -157,9 +103,9 @@ export default function FormCalificacion({
 
   const handleCursoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const idCurso = e.target.value;
-    setForm({ ...form, idCurso, idMateria: "", idEstudiante: "" });
+    setForm({ ...form, idCurso, idAsignacion: "", idEstudiante: "" });
 
-    const idDocente = 4;
+    const idDocente = 1;
 
     setLoading(true);
     try {
@@ -175,18 +121,18 @@ export default function FormCalificacion({
 
       setEstudiantesCurso(estudiantesMap);
 
-      const materiaRes = await api.get(
+      const asignacionRes = await api.get(
         `/asignacion-clases/materias-por-docente-curso/${idDocente}/${Number(
           idCurso
         )}`
       );
-      const materiasMap = (materiaRes.data as BackMateriaDocente[]).map(
+      const asignacionesMap = (asignacionRes.data as BackAsignacionDocente[]).map(
         (m) => ({
-          idMateria: m.id,
+          idAsignacion: m.id,
           nombre: m.nombre,
         })
       );
-      setMateriasCurso(materiasMap);
+      setAsignacionesCurso(asignacionesMap);
     } catch (err) {
       console.error(err);
       alert("Error al cargar los estudiantes");
@@ -195,24 +141,16 @@ export default function FormCalificacion({
     }
   };
 
-  const handleMateriaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const idMateria = e.target.value;
-    setForm({ ...form, idMateria, idEstudiante: "" });
+  const handleAsignacionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const idAsignacion = e.target.value;
+    setForm({ ...form, idAsignacion, idEstudiante: "" });
   };
 
   const handleSubmit = () => {
-    if (selectedCalificacion && onUpdate) {
-      // Modo EDITAR
-      onUpdate({
-        calificacion: Number(form.calificacion),
-      });
-      return;
-    }
-
     const payload = {
-      idMateria: Number(form.idMateria),
+      idAsignacion: Number(form.idAsignacion),
       idEstudiante: Number(form.idEstudiante),
-      calificacion: Number(form.calificacion),
+      asistencia: form.asistencia,
     };
 
     console.log("Payload enviado:", payload);
@@ -220,19 +158,15 @@ export default function FormCalificacion({
 
     setForm({
       idCurso: "",
-      idMateria: "",
+      idAsignacion: "",
       idEstudiante: "",
-      calificacion: "",
+      asistencia: "presente",
     });
   };
 
-  const isEditing = Boolean(selectedCalificacion);
-
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle>
-        {isEditing ? "Editar Calificación" : "Registrar Calificación"}
-      </DialogTitle>
+      <DialogTitle>Crear Asistencia</DialogTitle>
       <DialogContent
         sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}
       >
@@ -246,12 +180,11 @@ export default function FormCalificacion({
               name="idCurso"
               value={form.idCurso}
               onChange={handleCursoChange}
-              disabled={isEditing}
             >
               {cursosDocente.map((c) => (
                 <MenuItem
                   key={c.idCurso}
-                  value={c.idCurso.toString()} // mantener string
+                  value={c.idCurso.toString()}
                 >
                   {c.nombre} - {c.paralelo}
                 </MenuItem>
@@ -261,15 +194,15 @@ export default function FormCalificacion({
             <TextField
               select
               label="Materia"
-              name="idMateria"
-              value={form.idMateria}
-              onChange={handleMateriaChange}
-              disabled={!form.idCurso || isEditing}
+              name="idAsignacion"
+              value={form.idAsignacion}
+              onChange={handleAsignacionChange}
+              disabled={!form.idCurso}
             >
-              {materiasCurso.map((m) => (
+              {asignacionesCurso.map((m) => (
                 <MenuItem
-                  key={m.idMateria}
-                  value={m.idMateria.toString()} // mantener string
+                  key={m.idAsignacion}
+                  value={m.idAsignacion.toString()}
                 >
                   {m.nombre}
                 </MenuItem>
@@ -282,7 +215,7 @@ export default function FormCalificacion({
               name="idEstudiante"
               value={form.idEstudiante}
               onChange={handleChange}
-              disabled={!form.idCurso || isEditing}
+              disabled={!form.idCurso}
             >
               {estudiantesCurso.map((e) => (
                 <MenuItem key={e.id} value={e.id}>
@@ -292,12 +225,17 @@ export default function FormCalificacion({
             </TextField>
 
             <TextField
-              label="Calificación"
-              name="calificacion"
-              type="number"
-              value={form.calificacion}
+              select
+              label="Asistencia"
+              name="asistencia"
+              value={form.asistencia}
               onChange={handleChange}
-            />
+            >
+              <MenuItem value="presente">Presente</MenuItem>
+              <MenuItem value="falta">Falta</MenuItem>
+              <MenuItem value="ausente">Ausente</MenuItem>
+              <MenuItem value="justificativo">Justificativo</MenuItem>
+            </TextField>
           </>
         )}
       </DialogContent>
@@ -311,7 +249,7 @@ export default function FormCalificacion({
           }}
           variant="contained"
         >
-          {isEditing ? "Actualizar" : "Registrar"}
+          Registrar Asistencia
         </Button>
       </DialogActions>
     </Dialog>
