@@ -44,7 +44,7 @@ export default function TableCalificacion({
   onEdit,
   onDelete,
 }: Props) {
-  // export 
+  // export
   interface MateriaDocente {
     idMateria: number;
     nombre: string;
@@ -61,7 +61,7 @@ export default function TableCalificacion({
     nombre: string;
   }
 
-  // export default 
+  // export default
   function TableCalificacion({ calificaciones }: Props) {
     const [cursosDocente, setCursosDocente] = useState<AsignacionClase[]>([]);
     const [materiasCurso, setMateriasCurso] = useState<MateriaDocente[]>([]);
@@ -112,22 +112,23 @@ export default function TableCalificacion({
 
         const calificacionesMap: CalificacionFiltrada[] = (
           res.data.calificaciones || []
+        )
           // Maybe se arregla con otro merge
-        ).map((c: CalificacionBackend) => ({
-          id: c.calificacion_id,
-          calificacion: Number(c.calificacion_calificacion),
-          aprobacion: Boolean(c.calificacion_aprobacion),
-          estudiante: {
-            id: c.estudiante_id,
-            nombres: c.estudiante_nombres,
-            apellidoPat: c.estudiante_apellidoPat,
-            apellidoMat: c.estudiante_apellidoMat,
-          },
-          materia: {
-            id: c.materia_id,
-            nombre: c.materia_nombre,
-          },
-        }));
+          .map((c: CalificacionBackend) => ({
+            id: c.calificacion_id,
+            calificacion: Number(c.calificacion_calificacion),
+            aprobacion: Boolean(c.calificacion_aprobacion),
+            estudiante: {
+              id: c.estudiante_id,
+              nombres: c.estudiante_nombres,
+              apellidoPat: c.estudiante_apellidoPat,
+              apellidoMat: c.estudiante_apellidoMat,
+            },
+            materia: {
+              id: c.materia_id,
+              nombre: c.materia_nombre,
+            },
+          }));
         setCalificacionesFiltradas(calificacionesMap); // suponer que backend devuelve estudiantes con calificaciones
       } catch (err) {
         console.error(err);
