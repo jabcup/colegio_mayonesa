@@ -14,9 +14,9 @@ import {
 import { useEffect, useState } from "react";
 import { api } from "@/app/lib/api";
 
-/* =====================
-   Configuración base
-===================== */
+/* =======================
+   Encabezados de Columnas y Filas
+======================= */
 
 const DIAS_SEMANA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
 
@@ -27,9 +27,6 @@ const HORARIOS_BASE = [
   "11:00 - 12:00",
 ];
 
-/* =====================
-   Interfaces
-===================== */
 
 interface Asignacion {
   id: number;
@@ -50,10 +47,6 @@ interface Asignacion {
 interface Props {
   idEstudiante: number;
 }
-
-/* =====================
-   Componente
-===================== */
 
 export default function TableHorario({ idEstudiante }: Props) {
   const [mapa, setMapa] = useState<Record<string, Record<string, Asignacion>>>(
