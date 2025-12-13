@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { Calificaciones } from './calificaciones.entity';
 import { CreateCalificacionDto } from './dto/create-calificacion.dto';
 // import { AsignacionClase } from '../asignacion-clases/asignacionCursos.entity';
@@ -80,6 +80,22 @@ export class CalificacionesService {
         estudiante: { id: idEstudiante },
       },
       relations: ['materia', 'estudiante'], // asignacionClase
+    });
+  }
+  async getCalificacionesPorEstudianteGestionActual(
+    idEstudiante: number,
+  ): Promise<Calificaciones[]> {
+    const gestionActual = new Date().getFullYear();
+
+    return this.calificacionesRepository.find({
+      where: {
+        estudiante: { id: idEstudiante },
+        fecha_creacion: Between(
+          new Date(gestionActual, 0, 1), // 1 enero del año actual
+          new Date(gestionActual, 11, 31, 23, 59, 59, 999), // 31 diciembre 23:59:59
+        ),
+      },
+      relations: ['materia', 'estudiante'],
     });
   }
 

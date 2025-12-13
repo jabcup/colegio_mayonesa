@@ -28,7 +28,7 @@ export class AsistenciasService {
 
   async createAsistencia(dto: CreateAsistenciaDto) {
     return this.dataSource.transaction(async (manager) => {
-      const fechaHoy = new Date().toISOString().split('T')[0];
+      // const fechaHoy = new Date().toISOString().split('T')[0];
       const asistenciaExistente = await this.asistenciaRepository.findOne({
         where: {
           asignacionClase: { id: dto.idAsignacion },

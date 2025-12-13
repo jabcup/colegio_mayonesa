@@ -65,7 +65,19 @@ export class CalificacionesController {
       calificaciones,
     };
   }
+  @Get('GestionActual/:idEstudiante')
+  @ApiOperation({ summary: 'Calificaciones del año actual' })
+  async getCalificacionesAño(@Param('idEstudiante') id: number) {
+    const calificaciones =
+      await this.calificacionesService.getCalificacionesPorEstudianteGestionActual(
+        id,
+      );
 
+    return {
+      message: `Calificaciones del año actual`,
+      calificaciones,
+    };
+  }
   @Post()
   @ApiOperation({ summary: 'Crear calificacion' })
   async createCalificacion(

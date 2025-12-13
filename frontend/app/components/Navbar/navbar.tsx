@@ -6,8 +6,6 @@ import { Boton } from "../botones/botonNav";
 
 export default function Navbar() {
   const router = useRouter();
-<<<<<<< HEAD
-
   return (
     <AppBar position="static">
       <Toolbar>
@@ -28,27 +26,37 @@ export default function Navbar() {
           className="ml-2"
           onClick={() => router.push("/estudiante")}
         />
+        <Boton
+          label="Calificaciones"
+          color="success"
+          size="medium"
+          className="ml-2"
+          onClick={() => router.push("/calificacion")}
+        />
+        <Boton
+          label="Reportes"
+          color="success"
+          size="medium"
+          className="ml-2"
+          onClick={() => router.push("/reporte")}
+        />
+        <Boton
+          label="Asistencias"
+          color="success"
+          size="medium"
+          className="ml-2"
+          onClick={() => router.push("/asistencias")}
+        />
+        <Button
+          variant="outlined"
+          color="inherit"
+          onClick={() => router.push("/pago")}
+        >
+          {" "}
+          Pagos{" "}
+        </Button>
         <Boton onClick={() => router.push("/padre-hijo")} label={"Hijos"} />
       </Toolbar>
     </AppBar>
   );
-=======
-    return (
-        <AppBar position="static">
-            <Toolbar>
-                <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                    Mayonesa
-                </Typography>
-                <Button variant="outlined" color="inherit" onClick={() => router.push("/estudiante")}>
-                    Estudiantes
-                </Button>
-                <Boton label="Crear Estudiante" color="success" size="medium" className="ml-2" onClick={() => router.push("/estudiante")} />
-                <Boton label="Calificaciones" color="success" size="medium" className="ml-2" onClick={() => router.push("/calificacion")} />
-                <Boton label="Reportes" color="success" size="medium" className="ml-2" onClick={() => router.push("/reporte")} />
-                <Boton label="Asistencias" color="success" size="medium" className="ml-2" onClick={() => router.push("/asistencias")} />
-                <Button variant="outlined" color="inherit" onClick={() => router.push("/pago")}> Pagos </Button>
-            </Toolbar>
-        </AppBar>
-    );
->>>>>>> samuel
 }
