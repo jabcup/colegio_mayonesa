@@ -6,7 +6,7 @@ import { api } from "@/app/lib/api";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 
-export default function LoginForm() {
+export default function LoginEst() {
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [error, setError] = useState("");
@@ -20,24 +20,22 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      const payload = { correo_institucional: correo, contrasena };
-      const res = await api.post("/usuarios/login", payload);
+      const payload = { correo_institucional: correo, rude: contrasena };
+      const res = await api.post("/estudiante/login", payload);
 
-      const usuario = res.data?.usuario ?? res.data;
+      const estudiante = res.data?.estudiante ?? res.data;
 
-      if (!usuario || !usuario.id) {
+      if (!estudiante || !estudiante.id) {
         setError("Credenciales inválidas");
         return;
       }
 
       // ✅ COOKIES CON PATH CORRECTO
-      Cookies.set("usuario_id", usuario.id.toString(), { expires: 1, path: "/" });
-      Cookies.set("usuario_correo", usuario.correo ?? correo, { expires: 1, path: "/" });
-      Cookies.set("usuario_rol", usuario.rol, { expires: 1, path: "/" });
-      Cookies.set("personal_id", usuario.idPersonal, { expires: 1, path: "/" });
+      Cookies.set("estudiante_id", estudiante.id.toString(), { expires: 1, path: "/" });
+      Cookies.set("estudiante_correo", estudiante.correo ?? correo, { expires: 1, path: "/" });
 
       // ✅ REDIRECCIÓN ABSOLUTA
-      router.replace("/estudiante");
+      router.replace("/familiares");
     } catch (err: any) {
       const serverMessage =
         err?.response?.data?.message ||
@@ -65,7 +63,7 @@ export default function LoginForm() {
         borderRadius: 2,
       }}
     >
-      <Typography variant="h5" align="center">Iniciar Sesión</Typography>
+      <Typography variant="h5" align="center">Acceso Familiar</Typography>
 
       {error && <Alert severity="error">{error}</Alert>}
 
@@ -96,9 +94,9 @@ export default function LoginForm() {
         size="small"
         color="inherit"
         variant="outlined"
-        onClick={() => router.push("/login")}
+        onClick={() => router.push("/")}
       >
-        Ingresar como Familiar
+        Ingresar como Administrador
       </Button>
     </Box>
   );

@@ -2,6 +2,7 @@ import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateEstudianteFullDto } from './dto/create-estudiante-full.dto';
 import { EstudianteService } from './estudiante.service';
+import { LoginEstudianteDto } from './dto/login-estudiante.dto';
 
 @Controller('estudiante')
 export class EstudianteController {
@@ -19,5 +20,13 @@ export class EstudianteController {
   @ApiOperation({ summary: 'Mostrar Estudiantes' })
   listarEstudiantes() {
     return this.estudianteService.mostrarEstudiantes();
+  }
+
+  @Post('login')
+  async login(@Body() loginDto: LoginEstudianteDto) {
+    return this.estudianteService.login(
+      loginDto.correo_institucional,
+      loginDto.rude,
+    );
   }
 }

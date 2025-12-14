@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Estudiante } from './estudiante.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -130,5 +131,27 @@ export class EstudianteService {
 
   async mostrarEstudiantes(): Promise<Estudiante[]> {
     return this.estudianteRepository.find();
+  }
+
+  async login(correo_institucional: string, rude: string) {
+    const estudiante = await this.estudianteRepository.findOne({
+      where: { correo_institucional },
+    });
+    if (!estudiante) {
+      throw new UnauthorizedException('Credenciales incorrectas');
+    }
+    if (estudiante.estado === 'inactivo') {
+      throw new UnauthorizedException('Cuenta inactiva');
+    }
+    if (estudiante.rude !== rude) {
+      throw new UnauthorizedException('Credenciales incorrectas');
+    }
+    return {
+      message: 'Inicio de sesión exitoso',
+      estudiante: {
+        id: estudiante.id,
+        correo: estudiante.correo_institucional,
+      },
+    };
   }
 }

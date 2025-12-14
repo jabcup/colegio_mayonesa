@@ -4,23 +4,21 @@ import { Button } from "@mui/material";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 
-export default function LogoutButton() {
+export default function LogoutButtonEst() {
   const router = useRouter();
 
   const handleLogout = () => {
     // ✅ Borra las cookies usadas en el layout
-    Cookies.remove("usuario_id", { path: "/" });
-    Cookies.remove("usuario_correo", { path: "/" });
-    Cookies.remove("usuario_rol", { path: "/" });
-    Cookies.remove("personal_id", { path: "/" });
+    Cookies.remove("estudiante_id", { path: "/" });
+    Cookies.remove("estudiante_correo", { path: "/" });
 
     // 🔄 Redirige al login
-    router.replace("/");
+    router.replace("/login");
   };
 
   return (
     <Button variant="outlined" color="error" onClick={handleLogout}>
-      Cerrar sesión
+      Cerrar acceso Familiar
     </Button>
   );
 }
