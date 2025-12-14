@@ -1,7 +1,12 @@
 "use client";
 
 import Navbar from "@/app/components/Navbar/navbar";
-import { Button, CircularProgress, TextField, Typography } from "@mui/material";
+import {
+  Button,
+  CircularProgress,
+  TextField,
+  Typography,
+} from "@mui/material";
 import FormEstudiante from "../components/estudiante/form";
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
@@ -41,6 +46,7 @@ interface EstudianteFull {
 }
 
 export default function EstudiantesPage() {
+
   const [estudiantes, setEstudiantes] = useState<EstudianteFull[]>([]);
   const [filtered, setFiltered] = useState<EstudianteFull[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,17 +58,18 @@ export default function EstudiantesPage() {
   }, []);
 
   useEffect(() => {
-    // Filtrar estudiantes cada vez que cambia el search
     const s = search.toLowerCase();
+
     const filteredList = estudiantes.filter((e) => {
       const fullName =
         `${e.estudiante.nombres} ${e.estudiante.apellidoPat} ${e.estudiante.apellidoMat}`.toLowerCase();
       return (
         fullName.includes(s) ||
-        e.estudiante.identificacion.includes(s) ||
-        e.estudiante.correo.includes(s)
+        e.estudiante.identificacion.toLowerCase().includes(s) ||
+        e.estudiante.correo.toLowerCase().includes(s)
       );
     });
+
     setFiltered(filteredList);
   }, [search, estudiantes]);
 
@@ -99,7 +106,7 @@ export default function EstudiantesPage() {
       </Typography>
 
       <TextField
-        label="Buscar estudiante (nombre, CI o Correo)"
+        label="Buscar estudiante (nombre, CI o correo)"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         fullWidth

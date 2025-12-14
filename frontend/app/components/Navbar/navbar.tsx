@@ -3,6 +3,7 @@
 import { AppBar, Box, Button, Toolbar, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { Boton } from "../botones/botonNav";
+import LogoutButton from "../botones/logout";
 
 export default function Navbar() {
   const router = useRouter();
@@ -62,7 +63,24 @@ export default function Navbar() {
         >
           Personal
         </Button>
-      </Toolbar>
-    </AppBar>
+
+
+          <Boton
+            label="Materias"
+            color="success"
+            size="medium"
+            className="ml-2"
+            onClick={() => router.push("/materias")}
+          />
+          <Boton
+            label="Horarios"
+            color="success"
+            size="medium"
+            className="ml-2"
+            onClick={() => router.push("/horarios")}
+          />
+          <LogoutButton />
+        </Toolbar>
+      </AppBar>
   );
 }

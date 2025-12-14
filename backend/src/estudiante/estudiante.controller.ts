@@ -2,24 +2,11 @@ import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateEstudianteFullDto } from './dto/create-estudiante-full.dto';
 import { EstudianteService } from './estudiante.service';
+import { LoginEstudianteDto } from './dto/login-estudiante.dto';
 
 @Controller('estudiante')
 export class EstudianteController {
   constructor(private readonly estudianteService: EstudianteService) {}
-
-  // @Post('CrearEstudianteCompleto')
-  // @ApiOperation({ summary: 'Crear Estudiante Completo' })
-  // async createEstudiante(
-  //   @Body() CreateEstudianteFullDto: CreateEstudianteFullDto,
-  // ) {
-  //   const estudiante = await this.estudianteService.createEstudianteFull(
-  //     CreateEstudianteFullDto,
-  //   );
-  //   return {
-  //     message: 'Estudiante creado exitosamente',
-  //     estudiante,
-  //   };
-  // }
 
   @Post('CrearEstudianteCompleto')
   @ApiOperation({
@@ -39,5 +26,12 @@ export class EstudianteController {
   @ApiOperation({ summary: 'Mostrar Estudiante' })
   async mostrarEstudiante(@Param('idEstudiante') id: number) {
     return this.estudianteService.mostrarEstudiante(id);
+  }
+  @Post('login')
+  async login(@Body() loginDto: LoginEstudianteDto) {
+    return this.estudianteService.login(
+      loginDto.correo_institucional,
+      loginDto.rude,
+    );
   }
 }
