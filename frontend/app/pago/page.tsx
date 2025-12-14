@@ -1,9 +1,7 @@
 "use client"
 
-//volver a poner la identificacion
-
 import { useState, useEffect } from "react"
-import { Button, TextField } from "@mui/material"
+import { Button, TextField, Autocomplete } from "@mui/material"
 import TablePagos from "@/app/components/pago/table-pago"
 import FormPago from "@/app/components/pago/form-pago"
 import { api } from "@/app/lib/api"
@@ -11,31 +9,18 @@ import { api } from "@/app/lib/api"
 export default function PagosPage() {
   const [showForm, setShowForm] = useState(false)
   const [busqueda, setBusqueda] = useState("")
-  const [busquedaTemp, setBusquedaTemp] = useState("") 
+  const [busquedaTemp, setBusquedaTemp] = useState("")
   const [data, setData] = useState({ pagos: [], estudiantes: [] })
+  const [estudianteSel, setEstudianteSel] = useState<{ id: number; label: string } | null>(null)
 
   useEffect(() => {
-    Promise.all([
-      api.get('/pagos'),
-      api.get('/estudiante/MostrarEstudiantes')
-    ]).then(([pagosRes, estudiantesRes]) => {
-      const pagos = pagosRes.data
-      const estudiantes = estudiantesRes.data
-      
-      const estudiantesMap = new Map(
-        estudiantes.map(est => [
-          est.id, 
-          { nombre: est.nombres, identificacion: est.identificacion }
-        ])
-      )
-      
-      const pagosCompletos = pagos.map(pago => ({
-        ...pago,
-        nombreEstudiante: estudiantesMap.get(pago.idEstudiante)?.nombre || 'Desconocido',
-        identificacion: estudiantesMap.get(pago.idEstudiante)?.identificacion || 'Sin CI'
-      }))
-      
-      setData({ pagos: pagosCompletos, estudiantes })
+    Promise.all([api.get('/pagos'), api.get('/estudiante/MostrarEstudiantes')]).then(([pagosRes, estRes]) => {
+      const estudiantes = estRes.data.map(e => ({ id: e.id, label: `${e.nombres} ${e.apellidoPat}` }))
+      const map = new Map(estRes.data.map(e => [e.id, e.identificacion]))
+      setData({
+        pagos: pagosRes.data.map(p => ({ ...p, nombreEstudiante: estudiantes.find(e => e.id === p.idEstudiante)?.label || 'Desconocido', identificacion: map.get(p.idEstudiante) })),
+        estudiantes
+      })
     })
   }, [])
 
@@ -44,33 +29,31 @@ export default function PagosPage() {
     return () => clearTimeout(timer)
   }, [busquedaTemp])
 
-  const pagosFiltrados = data.pagos.filter(pago => 
-    busqueda === "" || 
-    pago.nombreEstudiante.toLowerCase().includes(busqueda.toLowerCase()) ||
-    pago.identificacion.toLowerCase().includes(busqueda.toLowerCase())
+  const pagosFiltrados = data.pagos.filter(p =>
+    busqueda === "" ||
+    p.nombreEstudiante.toLowerCase().includes(busqueda.toLowerCase()) ||
+    p.identificacion?.toLowerCase().includes(busqueda.toLowerCase())
   )
 
+const handlePagarAnio = async () => {
+  if (!estudianteSel) return
+  try {
+    await api.patch(`/pagos/estudiante/${estudianteSel.id}/pagar_ultima_gestion`, { idpersonal: 1 })
+    alert("Año pagado")
+    window.location.reload()
+  } catch (error: any) {
+    console.error("Error completo:", error)
+    alert(`Error al pagar año: ${error.response?.data?.message || error.message}`)
+  }
+}
   const handleCreate = async () => {
-    const fresh = await Promise.all([
-      api.get('/pagos'),
-      api.get('/estudiante/MostrarEstudiantes')
-    ])
-    
-    const [pagosRes, estudiantesRes] = fresh
-    const estudiantesMap = new Map(
-      estudiantesRes.data.map(est => [
-        est.id, 
-        { nombre: est.nombres, identificacion: est.identificacion }
-      ])
-    )
-    
-    const pagosCompletos = pagosRes.data.map(pago => ({
-      ...pago,
-      nombreEstudiante: estudiantesMap.get(pago.idEstudiante)?.nombre || 'Desconocido',
-      identificacion: estudiantesMap.get(pago.idEstudiante)?.identificacion || 'Sin CI'
-    }))
-    
-    setData({ pagos: pagosCompletos, estudiantes: estudiantesRes.data })
+    const [pagosRes, estRes] = await Promise.all([api.get('/pagos'), api.get('/estudiante/MostrarEstudiantes')])
+    const estudiantes = estRes.data.map(e => ({ id: e.id, label: `${e.nombres} ${e.apellidoPat}` }))
+    const map = new Map(estRes.data.map(e => [e.id, e.identificacion]))
+    setData({
+      pagos: pagosRes.data.map(p => ({ ...p, nombreEstudiante: estudiantes.find(e => e.id === p.idEstudiante)?.label || 'Desconocido', identificacion: map.get(p.idEstudiante) })),
+      estudiantes
+    })
     setShowForm(false)
   }
 
@@ -78,28 +61,25 @@ export default function PagosPage() {
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Pagos</h1>
-        <Button variant="contained" onClick={() => setShowForm(true)}>
-          Nuevo Pago
+        <Button variant="contained" onClick={() => setShowForm(true)}>Nuevo Pago</Button>
+      </div>
+
+      <TextField fullWidth label="Buscar por nombre o identificación" value={busquedaTemp} onChange={e => setBusquedaTemp(e.target.value)} sx={{ mb: 3 }} />
+
+      <div className="flex items-center gap-3 mb-4">
+        <Autocomplete
+          options={data.estudiantes}
+          value={estudianteSel}
+          onChange={(e, v) => setEstudianteSel(v)}
+          renderInput={(params) => <TextField {...params} label="Estudiante" sx={{ width: 300 }} />}
+        />
+        <Button variant="outlined" onClick={handlePagarAnio} disabled={!estudianteSel}>
+          Pagar año actual
         </Button>
       </div>
 
-      <TextField
-        fullWidth
-        label="Buscar por nombre o identificación"
-        value={busquedaTemp}
-        onChange={(e) => setBusquedaTemp(e.target.value)}
-        sx={{ mb: 3 }}
-      />
-
-      {showForm && (
-        <FormPago 
-          estudiantes={data.estudiantes}
-          onClose={() => setShowForm(false)}
-          onCreate={handleCreate}
-        />
-      )}
-
-      <TablePagos pagos={pagosFiltrados} />
+      {showForm && <FormPago estudiantes={data.estudiantes} onClose={() => setShowForm(false)} onCreate={handleCreate} />}
+      <TablePagos pagos={pagosFiltrados} estudiantes={data.estudiantes} />
     </div>
   )
 }
