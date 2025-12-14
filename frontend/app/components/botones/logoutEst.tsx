@@ -3,6 +3,7 @@
 import { Button } from "@mui/material";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
+import { Boton } from "./botonNav";
 
 export default function LogoutButtonEst() {
   const router = useRouter();
@@ -15,10 +16,7 @@ export default function LogoutButtonEst() {
     // 🔄 Redirige al login
     router.replace("/login");
   };
-
   return (
-    <Button variant="outlined" color="error" onClick={handleLogout}>
-      Cerrar acceso Familiar
-    </Button>
+    <Boton label="Cerrar Sesión" color="error" size= "small" className="ml-2" onClick={handleLogout} />
   );
 }

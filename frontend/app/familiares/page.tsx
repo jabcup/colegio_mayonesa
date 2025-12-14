@@ -5,7 +5,7 @@ import LogoutButtonEst from '../components/botones/logoutEst'
 const pageFamiliares = () => {
   return (
     <>
-    <Navbar/>
+    {/* <Navbar/> */}
     <div>
       Bienvenidos Padres de Familia
     </div>
