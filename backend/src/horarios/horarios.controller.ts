@@ -14,7 +14,7 @@ import { UpdateHorarioDto } from './dto/update-horario.dto';
 
 @Controller('horarios')
 export class HorariosController {
-  constructor(private readonly horariosService: HorariosService) { }
+  constructor(private readonly horariosService: HorariosService) {}
   @Post('CrearHorario')
   @ApiOperation({ summary: 'Crea un nuevo periodo horario' })
   async createHorario(@Body() createHorarioDto: CreateHorarioDto) {
@@ -23,24 +23,36 @@ export class HorariosController {
     return {
       message: 'Horario creado correctamente',
       horario,
-    }
+    };
   }
 
   @Get('mostrarHorarios')
   @ApiOperation({
-    summary: 'Muestra los periodos existentes'
+    summary: 'Muestra los periodos existentes',
   })
   listarHorarios() {
     return this.horariosService.listarHorarios();
   }
 
-  @Put (':id')
+  @Get('mostrarHorariosInactivas')
+  @ApiOperation({ summary: 'Lista de materias inactivas' })
+  listarHorariosInactivas() {
+    return this.horariosService.listarHorariosInactivas();
+  }
+
+  @Put('reactivarHorario/:id')
+  @ApiOperation({ summary: 'Reactivar horario inactivo' })
+  reactivarHorario(@Param('id') id: number) {
+    return this.horariosService.reactivarHorario(id);
+  }
+
+  @Put('EditarHorario/:id')
   @ApiOperation({ summary: 'Actualizar Horario' })
   update(@Param('id') id: string, @Body() dto: UpdateHorarioDto) {
     return this.horariosService.actualizarHorario(+id, dto);
   }
 
-  @Delete(':id')
+  @Delete('EliminarHorario/:id')
   @ApiOperation({ summary: 'Eliminar Horario' })
   eliminarHorario(@Param('id') id: string) {
     return this.horariosService.eliminarHorario(+id);
