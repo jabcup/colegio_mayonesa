@@ -15,7 +15,6 @@ import TablePersonalActivo from "@/app/components/personal/table-personal"
 import PersonalForm from "@/app/components/personal/form-personal"
 import DetallePersonal from "../components/personal/detalle-personal"
 
-
 interface Personal {
   id: number
   idRol: number
@@ -37,7 +36,7 @@ export default function PersonalPage() {
   const [mostrarForm, setMostrarForm] = useState(false)
   const [editando, setEditando] = useState<Personal | undefined>()
   const [textoBusqueda, setTextoBusqueda] = useState("")
-  const [verPersonal, setVerPersonal] = useState<Personal | null>(null) // ← nuevo
+  const [verPersonal, setVerPersonal] = useState<Personal | null>(null)
 
   const fetchPersonal = () =>
     api
@@ -50,7 +49,6 @@ export default function PersonalPage() {
     fetchPersonal()
   }, [])
 
-  /* -------------------- BÚSQUEDA -------------------- */
   const personalFiltrado = useMemo(() => {
     if (!textoBusqueda) return personal
     const low = textoBusqueda.toLowerCase()
@@ -63,7 +61,6 @@ export default function PersonalPage() {
     )
   }, [personal, textoBusqueda])
 
-  /* -------------------- HANDLERS -------------------- */
   const despuesDeGuardar = () => {
     setMostrarForm(false)
     setEditando(undefined)
@@ -80,8 +77,8 @@ export default function PersonalPage() {
     setMostrarForm(true)
   }
 
-  const handleVer = (p: Personal) => setVerPersonal(p) // ← abre modal
-  const cerrarVer = () => setVerPersonal(null) // ← cierra modal
+  const handleVer = (p: Personal) => setVerPersonal(p)
+  const cerrarVer = () => setVerPersonal(null)
 
   if (loading)
     return <CircularProgress sx={{ display: "block", mx: "auto", mt: 4 }} />
@@ -95,7 +92,6 @@ export default function PersonalPage() {
         </Button>
       </Box>
 
-      {/* ------------ Buscador ------------ */}
       <TextField
         fullWidth
         label="Buscar por nombre, apellido o CI"
@@ -104,21 +100,18 @@ export default function PersonalPage() {
         sx={{ mb: 3 }}
       />
 
-      {/* ------------ Formulario colapsable ------------ */}
       <Collapse in={mostrarForm} unmountOnExit>
         <Box mb={3}>
           <PersonalForm personalToEdit={editando} onClose={despuesDeGuardar} />
         </Box>
       </Collapse>
 
-      {/* ------------ Tabla ------------ */}
       <TablePersonalActivo
         personal={personalFiltrado}
         onEdit={handleEditar}
         onView={handleVer}
       />
 
-      {/* ------------ Modal de detalle ------------ */}
       <DetallePersonal
         open={!!verPersonal}
         onClose={cerrarVer}

@@ -30,7 +30,7 @@ interface Personal {
 interface Props {
   personal: Personal[]
   onEdit: (p: Personal) => void
-  onView: (p: Personal) => void // ← nueva
+  onView: (p: Personal) => void 
 }
 
 export default function TablePersonalActivo({ personal, onEdit, onView }: Props) {
