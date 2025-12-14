@@ -185,6 +185,7 @@ export class EstudianteService {
         cantidad: 800,
         descuento: 0,
         total: 800,
+        concepto: 'Mensualidad',
         numero_pago: i,
       });
 

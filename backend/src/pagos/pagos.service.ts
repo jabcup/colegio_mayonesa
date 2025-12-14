@@ -56,7 +56,7 @@ export class PagosService {
   async create(dto: CreatePagoDto): Promise<PagoResponseDto> {
     const partial: DeepPartial<Pagos> = {
       estudiante: { id: dto.idEstudiante },
-      personal: { id: dto.idPersonal },
+      personal: dto.idPersonal ? { id: dto.idPersonal } as any : null,
       cantidad: dto.cantidad,
       descuento: dto.descuento,
       total: dto.total,
@@ -85,7 +85,7 @@ export class PagosService {
   async update(id: number, dto: UpdatePagoDto): Promise<PagoResponseDto> {
     await this.repo.update(id, {
       estudiante: dto.idEstudiante ? ({ id: dto.idEstudiante } as any) : undefined,
-      personal: dto.idPersonal ? ({ id: dto.idPersonal } as any) : undefined,
+      personal: dto.idPersonal !== undefined ? ({ id: dto.idPersonal } as any) : null,
       cantidad: dto.cantidad,
       descuento: dto.descuento,
       total: dto.total,
@@ -112,7 +112,7 @@ export class PagosService {
     return {
       id: p.id,
       idEstudiante: p.estudiante.id,
-      idPersonal: p.personal.id,
+      idPersonal: p.personal?.id ?? null,
       cantidad: p.cantidad,
       descuento: p.descuento,
       total: p.total,
