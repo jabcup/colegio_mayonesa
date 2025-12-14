@@ -7,6 +7,8 @@ export class PagoResponseDto {
   @ApiProperty() cantidad: number;
   @ApiProperty() descuento: number;
   @ApiProperty() total: number;
+  @ApiProperty() deuda: 'pendiente' | 'cancelado';
+  @ApiProperty() concepto: string;
   @ApiProperty() fecha_creacion: Date;
   @ApiProperty() estado: 'activo' | 'inactivo';
 }

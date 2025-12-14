@@ -38,6 +38,13 @@ export class Pagos {
   })
   deuda: 'pendiente' | 'cancelado';
 
+  @Column({
+    type: 'varchar',
+    length: 150,
+    nullable: false
+  })
+  concepto: string;
+  
   @CreateDateColumn({ type: 'timestamp' })
   fecha_creacion: Date;
 
