@@ -7,33 +7,17 @@ import { EstudianteService } from './estudiante.service';
 export class EstudianteController {
   constructor(private readonly estudianteService: EstudianteService) {}
 
-  // @Post('CrearEstudianteCompleto')
-  // @ApiOperation({ summary: 'Crear Estudiante Completo' })
-  // async createEstudiante(
-  //   @Body() CreateEstudianteFullDto: CreateEstudianteFullDto,
-  // ) {
-  //   const estudiante = await this.estudianteService.createEstudianteFull(
-  //     CreateEstudianteFullDto,
-  //   );
-  //   return {
-  //     message: 'Estudiante creado exitosamente',
-  //     estudiante,
-  //   };
-  // }
-
   @Post('CrearEstudianteCompleto')
-@ApiOperation({ summary: 'Crear estudiante, padre (si aplica), asignar curso y pagos' })
-async createEstudianteFull(
-  @Body() dto: CreateEstudianteFullDto,
-) {
-  return this.estudianteService.createEstudianteFull(dto);
-}
-
+  @ApiOperation({
+    summary: 'Crear estudiante, padre (si aplica), asignar curso y pagos',
+  })
+  async createEstudianteFull(@Body() dto: CreateEstudianteFullDto) {
+    return this.estudianteService.createEstudianteFull(dto);
+  }
 
   @Get('MostrarEstudiantes')
   @ApiOperation({ summary: 'Mostrar Estudiantes' })
   listarEstudiantes() {
     return this.estudianteService.mostrarEstudiantes();
   }
-
 }

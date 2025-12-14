@@ -11,6 +11,7 @@ export default function LoginForm() {
   const [contrasena, setContrasena] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -19,46 +20,30 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      // <-- usa el nombre que espera tu backend
-      const payload = {
-        correo_institucional: correo,
-        contrasena,
-      };
-
-      console.log("Enviando payload:", payload);
-
+      const payload = { correo_institucional: correo, contrasena };
       const res = await api.post("/usuarios/login", payload);
 
-      console.log("Respuesta login:", res);
-
-      // Ajusta según la forma real de respuesta del backend:
-      // Por ejemplo: { usuario: { id, correo } } o { data: { usuario: ... } } etc.
-      const usuario = res.data?.usuario ?? res.data?.data?.usuario ?? res.data;
+      const usuario = res.data?.usuario ?? res.data;
 
       if (!usuario || !usuario.id) {
-        // Si el backend devuelve un mensaje de error pero 200, muéstralo
-        const msg = res.data?.message || "Respuesta inesperada del servidor";
-        setError(msg);
-        setLoading(false);
+        setError("Credenciales inválidas");
         return;
       }
 
-      // Guardar cookies (duración 1 día)
-      Cookies.set("usuario_id", usuario.id.toString(), { expires: 1 });
-      Cookies.set("usuario_correo", usuario.correo ?? correo, { expires: 1 });
+      // ✅ COOKIES CON PATH CORRECTO
+      Cookies.set("usuario_id", usuario.id.toString(), { expires: 1, path: "/" });
+      Cookies.set("usuario_correo", usuario.correo ?? correo, { expires: 1, path: "/" });
+      Cookies.set("usuario_rol", usuario.rol, { expires: 1, path: "/" });
+      Cookies.set("personal_id", usuario.idPersonal, { expires: 1, path: "/" });
 
-      // redirigir
-      router.push("./estudiante");
+      // ✅ REDIRECCIÓN ABSOLUTA
+      router.replace("/estudiante");
     } catch (err: any) {
-      console.error("Error en login:", err);
-
-      // Si la API responde con status y data.message:
-      const serverMessage = err?.response?.data?.message || err?.response?.data?.error;
-      if (serverMessage) {
-        setError(serverMessage);
-      } else {
-        setError("Credenciales inválidas o error de conexión");
-      }
+      const serverMessage =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        "Credenciales inválidas";
+      setError(serverMessage);
     } finally {
       setLoading(false);
     }
@@ -80,9 +65,7 @@ export default function LoginForm() {
         borderRadius: 2,
       }}
     >
-      <Typography variant="h5" align="center">
-        Iniciar Sesión
-      </Typography>
+      <Typography variant="h5" align="center">Iniciar Sesión</Typography>
 
       {error && <Alert severity="error">{error}</Alert>}
 

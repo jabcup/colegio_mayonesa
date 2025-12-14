@@ -3,11 +3,13 @@
 import { AppBar, Box, Button, Toolbar, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { Boton } from "../botones/botonNav";
+import LogoutButton from "../botones/logout";
 
 export default function Navbar() {
     const router = useRouter();
 
     return (
+        <>
         <AppBar position="static">
             <Toolbar>
                 <Typography variant="h6" sx={{ flexGrow: 1 }}>
@@ -17,7 +19,9 @@ export default function Navbar() {
                     Estudiantes
                 </Button>
                 <Boton label="Crear Estudiante" color="success" size="medium" className="ml-2" onClick={() => router.push("/estudiante")} />
+                    <LogoutButton/>
             </Toolbar>
         </AppBar>
+        </>
     );
 }
