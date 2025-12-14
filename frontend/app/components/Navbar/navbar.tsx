@@ -15,10 +15,8 @@ export default function Navbar() {
                 <Typography variant="h6" sx={{ flexGrow: 1 }}>
                     Mayonesa
                 </Typography>
-                <Button variant="outlined" color="inherit" onClick={() => router.push("/estudiante")}>
-                    Estudiantes
-                </Button>
-                <Boton label="Crear Estudiante" color="success" size="medium" className="ml-2" onClick={() => router.push("/estudiante")} />
+                <Boton label="Estudiantes" color="success" size="medium" className="ml-2" onClick={() => router.push("/estudiante")} />
+                    <Boton label="Materias" color="success" size="medium" className="ml-2" onClick={() => router.push("/materias")} />
                     <LogoutButton/>
             </Toolbar>
         </AppBar>
