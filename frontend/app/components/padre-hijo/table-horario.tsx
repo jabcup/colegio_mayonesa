@@ -14,18 +14,8 @@ import {
 import { useEffect, useState } from "react";
 import { api } from "@/app/lib/api";
 
-/* =======================
-   Encabezados de Columnas y Filas
-======================= */
-
+//   Encabezados de Columnas y Filas
 const DIAS_SEMANA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
-
-const HORARIOS_BASE = [
-  "08:00 - 09:00",
-  "09:00 - 10:00",
-  "10:00 - 11:00",
-  "11:00 - 12:00",
-];
 
 
 interface Asignacion {
@@ -52,7 +42,13 @@ export default function TableHorario({ idEstudiante }: Props) {
   const [mapa, setMapa] = useState<Record<string, Record<string, Asignacion>>>(
     {}
   );
+  const [horarios, setHorarios] = useState<string[]>([]);
+  const ordenarHorarios = (a: string, b: string) => {
+    const [horaA] = a.split(" - ");
+    const [horaB] = b.split(" - ");
 
+    return horaA.localeCompare(horaB);
+  };
   useEffect(() => {
     if (!idEstudiante) return;
 
@@ -65,16 +61,23 @@ export default function TableHorario({ idEstudiante }: Props) {
         const asignaciones: Asignacion[] = res.data;
 
         const tempMapa: Record<string, Record<string, Asignacion>> = {};
+        const setHorariosUnicos = new Set<string>();
 
         asignaciones.forEach((a) => {
           const h = a.horario.horario;
           const d = a.dia;
 
+          setHorariosUnicos.add(h);
+
           if (!tempMapa[h]) tempMapa[h] = {};
           tempMapa[h][d] = a;
         });
 
+        const horariosOrdenados =
+          Array.from(setHorariosUnicos).sort(ordenarHorarios);
+
         setMapa(tempMapa);
+        setHorarios(horariosOrdenados);
       } catch (error) {
         console.error("Error cargando horario académico", error);
       }
@@ -104,7 +107,7 @@ export default function TableHorario({ idEstudiante }: Props) {
         </TableHead>
 
         <TableBody>
-          {HORARIOS_BASE.map((horario) => (
+          {horarios.map((horario) => (
             <TableRow key={horario}>
               <TableCell>
                 <strong>{horario}</strong>

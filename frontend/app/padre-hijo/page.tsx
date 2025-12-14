@@ -22,6 +22,7 @@ import { api } from "../lib/api";
 import Navbar from "../components/Navbar/navbar";
 import TableCalificaciones from "../components/padre-hijo/table-calificaciones";
 import TableHorario from "../components/padre-hijo/table-horario";
+import TableAsistencia from "../components/padre-hijo/table-asistencias";
 export interface Estudiante {
   id: number;
   nombres: string;
@@ -64,8 +65,9 @@ export default function PadreHijosPage() {
           {estudiante.identificacion} {estudiante.correo_institucional}
         </p>
       )}
-      {estudiante && <TableCalificaciones idEstudiante={estudiante.id} />}
-      {estudiante && <TableHorario idEstudiante={estudiante.id} />}
+      {/* {estudiante && <TableCalificaciones idEstudiante={estudiante.id} />}
+      {estudiante && <TableHorario idEstudiante={estudiante.id} />} */}
+      {estudiante && <TableAsistencia idEstudiante={estudiante.id} />}
     </>
   );
 }

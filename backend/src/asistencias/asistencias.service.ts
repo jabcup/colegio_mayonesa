@@ -195,4 +195,35 @@ export class AsistenciasService {
 
     return { asistencias: asistenciasMap };
   }
+
+  async obtenerAsistenciasSemanaLaboral(
+    idEstudiante: number,
+    fechaReferencia: Date,
+  ) {
+    const fecha = new Date(fechaReferencia);
+
+    const diaSemana = fecha.getDay();
+    const diffLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+
+    const lunes = new Date(fecha);
+
+    lunes.setDate(fecha.getDate() + diffLunes);
+    lunes.setHours(0, 0, 0, 0);
+
+    const viernes = new Date(lunes);
+    viernes.setDate(lunes.getDate() + 5);
+    viernes.setHours(23, 59, 59, 999);
+
+    return await this.asistenciaRepository.find({
+      where: {
+        estudiante: { id: idEstudiante },
+        fecha_creacion: Between(lunes, viernes),
+        estado: 'activo',
+      },
+      relations: ['asignacionClase'],
+      order: {
+        fecha_creacion: 'ASC',
+      },
+    });
+  }
 }

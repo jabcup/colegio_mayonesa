@@ -97,4 +97,15 @@ export class AsistenciasController {
       +idMateria,
     );
   }
+
+  @Get('asistenciaSemanal/:idEstudiante/:fecha')
+  async obtenerSemanaLaboral(
+    @Param('idEstudiante') idEstudiante: number,
+    @Param('fecha') fecha: string,
+  ) {
+    return await this.asistenciasService.obtenerAsistenciasSemanaLaboral(
+      idEstudiante,
+      new Date(fecha),
+    );
+  }
 }
