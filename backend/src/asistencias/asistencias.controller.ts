@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
 import { AsistenciasService } from './asistencias.service';
 import { CreateAsistenciaDto } from './dto/create-asistencia.dto';
 import { UpdateAsistenciaDto } from './dto/update-asistencia.dto';
@@ -15,6 +15,11 @@ export class AsistenciasController {
   @Post()
   create(@Body() createAsistenciaDto: CreateAsistenciaDto) {
     return this.asistenciasService.createAsistencia(createAsistenciaDto);
+  }
+
+  @Post('batch')
+  createBatch(@Body() dtos: CreateAsistenciaDto[]) {
+    return this.asistenciasService.createBatchAsistencias(dtos);
   }
 
   @Get(':id')
@@ -36,7 +41,16 @@ export class AsistenciasController {
   buscarAsistenciasPorCursoYMateria(
     @Param('idCurso') idCurso: string,
     @Param('idMateria') idMateria: string,
+    @Query('estudianteId') estudianteId: string,
+    @Query('fromDate') fromDate: string,
+    @Query('toDate') toDate: string,
   ) {
-    return this.asistenciasService.buscarAsistenciasPorCursoYMateria(+idCurso, +idMateria);
+    return this.asistenciasService.buscarAsistenciasPorCursoYMateria(
+      +idCurso,
+      +idMateria,
+      estudianteId ? +estudianteId : undefined,
+      fromDate,
+      toDate,
+    );
   }
 }
