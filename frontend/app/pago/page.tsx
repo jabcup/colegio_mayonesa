@@ -5,6 +5,7 @@ import { Button, TextField, Autocomplete } from "@mui/material"
 import TablePagos from "@/app/components/pago/table-pago"
 import FormPago from "@/app/components/pago/form-pago"
 import { api } from "@/app/lib/api"
+import Cookies from "js-cookie"
 
 export default function PagosPage() {
   const [showForm, setShowForm] = useState(false)
@@ -35,25 +36,27 @@ export default function PagosPage() {
     p.identificacion?.toLowerCase().includes(busqueda.toLowerCase())
   )
 
-const handlePagarAnio = async () => {
-  if (!estudianteSel) return
-  try {
-    await api.patch(`/pagos/estudiante/${estudianteSel.id}/pagar_ultima_gestion`, { idpersonal: 1 })
-    alert("Año pagado")
-    window.location.reload()
-  } catch (error: any) {
-    console.error("Error completo:", error)
-    alert(`Error al pagar año: ${error.response?.data?.message || error.message}`)
+  const personalId = Number(Cookies.get('personal_id') ?? 0)
+
+  if (showForm && !data.estudiantes.length)
+    return <div className="p-4">Cargando estudiantes...</div>
+
+  const handlePagarAnio = async () => {
+    if (!estudianteSel) return
+    try {
+      await api.patch(`/pagos/estudiante/${estudianteSel.id}/pagar_ultima_gestion`, { idpersonal: personalId })
+      alert("Año pagado")
+      window.location.reload()
+    } catch (error: any) {
+      console.error("Error completo:", error)
+      alert(`Error al pagar año: ${error.response?.data?.message || error.message}`)
+    }
   }
-}
+
   const handleCreate = async () => {
-    const [pagosRes, estRes] = await Promise.all([api.get('/pagos'), api.get('/estudiante/MostrarEstudiantes')])
-    const estudiantes = estRes.data.map(e => ({ id: e.id, label: `${e.nombres} ${e.apellidoPat}` }))
-    const map = new Map(estRes.data.map(e => [e.id, e.identificacion]))
-    setData({
-      pagos: pagosRes.data.map(p => ({ ...p, nombreEstudiante: estudiantes.find(e => e.id === p.idEstudiante)?.label || 'Desconocido', identificacion: map.get(p.idEstudiante) })),
-      estudiantes
-    })
+    const { data: pagos } = await api.get('/pagos')
+    const map = new Map(data.estudiantes.map(e => [e.id, e.label]))
+    setData(prev => ({ ...prev, pagos: pagos.map(p => ({ ...p, nombreEstudiante: map.get(p.idEstudiante) || 'Desconocido' })) }))
     setShowForm(false)
   }
 

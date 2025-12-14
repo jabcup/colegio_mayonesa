@@ -5,6 +5,7 @@ import { Button, Table, TableHead, TableRow, TableCell, TableBody, TableContaine
 import { api } from "@/app/lib/api"
 import DetallePago from "./detalle-pago"
 import FormPago from "./form-pago"
+import Cookies from "js-cookie"
 
 interface Pago {
   id: number
@@ -28,10 +29,15 @@ export default function TablePagos({ pagos, estudiantes }: Props) {
   const [anioFiltro, setAnioFiltro] = useState("")
   const [pagoAEditar, setPagoAEditar] = useState<Pago | undefined>()
 
-const visibles = pagos.filter(p => p.estado === 'activo')
-const filtered = anioFiltro
-  ? visibles.filter(p => new Date(p.fecha_creacion).getFullYear().toString() === anioFiltro)
-  : visibles
+  const visibles = pagos.filter(p => p.estado === 'activo')
+  const filtered = anioFiltro
+    ? visibles.filter(p => new Date(p.fecha_creacion).getFullYear().toString() === anioFiltro)
+    : visibles
+
+  const personalId = Number(Cookies.get('personal_id') ?? 0)
+  //eliminar esto
+  console.log('id del personal usando esto: ' + personalId)
+
   const handleVer = async (pagoId: number) => {
     try {
       const { data } = await api.get<Pago>(`/pagos/${pagoId}`)
@@ -43,7 +49,7 @@ const filtered = anioFiltro
 
   const handlePagar = async (pagoId: number) => {
     try {
-      await api.patch(`/pagos/pagar/${pagoId}`, { idpersonal: 1 })
+      await api.patch(`/pagos/pagar/${pagoId}`, { idpersonal: personalId })
       alert("Pago realizado")
       window.location.reload()
     } catch {

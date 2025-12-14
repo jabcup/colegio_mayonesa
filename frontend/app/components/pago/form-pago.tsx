@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button, TextField, MenuItem } from "@mui/material"
 import { api } from "@/app/lib/api"
+import Cookies from "js-cookie"
 
 interface Estudiante {
   id: number
@@ -37,6 +38,7 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
   })
 
   const esEdicion = !!pagoInicial
+  const personalId = Number(Cookies.get('personal_id') ?? 0)
 
   useEffect(() => {
     if (esEdicion) {
@@ -56,7 +58,7 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
     e.preventDefault()
     const payload = {
       idEstudiante: Number(form.idEstudiante),
-      idPersonal: 1,
+      idPersonal: personalId,
       cantidad: Number(form.cantidad),
       descuento: Number(form.descuento),
       total,
@@ -90,9 +92,21 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
           onChange={(e) => setForm({ ...form, idEstudiante: e.target.value })}
           required
           disabled={esEdicion}
+          SelectProps={{ MenuProps: { sx: { maxHeight: 300 } } }}
         >
-          {estudiantes.map((est) => (
-            <MenuItem key={est.id} value={est.id}>
+{estudiantes.map((est) => (
+  <MenuItem key={est.id} value={est.id} sx={{ minHeight: 36 }}>
+    {est.label}
+  </MenuItem>
+))}{estudiantes.map((est, idx) => {
+  console.log(idx, est) // ← verifica aquí
+  return (
+    <MenuItem key={est.id} value={est.id} sx={{ minHeight: 36 }}>
+      {est.nombres} {est.apellidoPat}
+    </MenuItem>
+  )
+})}          {estudiantes.map((est) => (
+            <MenuItem key={est.id} value={est.id} sx={{ minHeight: 36 }}>
               {est.nombres} {est.apellidoPat}
             </MenuItem>
           ))}
