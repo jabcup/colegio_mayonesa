@@ -1,17 +1,52 @@
-import React from 'react'
-import Navbar from '../components/Navbar/navbar'
-import LogoutButtonEst from '../components/botones/logoutEst'
+"use client";
+import { useEffect, useState } from "react";
+import NavbarFamiliares from "../components/Navbar/navbar-familiares";
+import TableCalificaciones from "../components/familiares/table-calificaciones";
+import TableHorario from "../components/familiares/table-horario";
+import { api } from "../lib/api";
+import TableAsistencia from "../components/familiares/table-asistencias";
+import Cookies from "js-cookie";
 
-const pageFamiliares = () => {
-  return (
-    <>
-    {/* <Navbar/> */}
-    <div>
-      Bienvenidos Padres de Familia
-    </div>
-    <LogoutButtonEst/>
-    </>
-  )
+export interface Estudiante {
+  id: number;
+  nombres: string;
+  apellidoPat: string;
+  apellidoMat: string;
+  identificacion: string;
+  correo_institucional: string;
 }
 
-export default pageFamiliares
+export default function FamiliaresPage() {
+  const [vista, setVista] = useState<string>("calificaciones");
+  const [estudiante, setEstudiante] = useState<Estudiante>();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const id = Cookies.get("estudiante_id");; // luego cambiar por el de local storage
+        const res = await api.get(`/estudiante/MostrarEstudiante/${id}`);
+        setEstudiante(res.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  return (
+    <>
+      <NavbarFamiliares onChangeVista={setVista} />
+
+      {vista === "calificaciones" && estudiante && (
+        <TableCalificaciones idEstudiante={estudiante.id} />
+      )}
+      {vista === "horarios" && estudiante && (
+        <TableHorario idEstudiante={estudiante.id} />
+      )}
+      {vista === "asistencias" && estudiante && (
+        <TableAsistencia idEstudiante={estudiante.id} />
+      )}
+    </>
+  );
+}

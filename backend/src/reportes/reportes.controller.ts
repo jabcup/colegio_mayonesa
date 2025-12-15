@@ -1,5 +1,6 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { ReportesService } from './reportes.service';
+import { Controller, Get, Query, Res } from '@nestjs/common';
+import { Response } from 'express';
+import { ReportesService, CalificacionReporte } from './reportes.service';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { VistaPagosEstudiantesView } from './entity/vista-pagos.entity';
 import { VistaPagosPorEstudiante } from './entity/vista-pagos-estudiante.entity';
@@ -45,6 +46,7 @@ export class ReportesController {
     return this.reportesService.buscarPagosPorEstudiante(Number(idEstudiante));
   }
 
+  // Get normal de Calificaciones por Curso
   @Get('CalificacionesPorCurso')
   @ApiOkResponse({
     description: 'Calificaciones de un curso',
@@ -61,6 +63,33 @@ export class ReportesController {
       paralelo,
       gestion: Number(gestion),
     });
+  }
+
+  // Get para descargar PDF de Calificaciones por Curso
+  @Get('CalificacionesPorCurso/pdf')
+  async getCalificacionesPorCursoPdf(
+    @Res() res: Response,
+    @Query('curso') curso?: string,
+    @Query('paralelo') paralelo?: string,
+    @Query('gestion') gestion?: number,
+  ) {
+    const datos: CalificacionReporte[] =
+      await this.reportesService.buscarCalificacionesPorCurso({
+        curso,
+        paralelo,
+        gestion,
+      });
+
+    // Generar PDF
+    const pdfBuffer =
+      await this.reportesService.generarPdfCalificacionesCurso(datos);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename=calificaciones.pdf',
+    );
+    res.send(pdfBuffer);
   }
 
   @Get('CalificacionesPorEstudiante')

@@ -9,6 +9,14 @@ import { VistaAsistenciasEstudiante } from './entity/vista-asistencias-estudiant
 import { VistaAsistenciasCurso } from './entity/vista-asistencias-curso.entity';
 import { VistaTutoresCurso } from './entity/vista-tutores-curso.entity';
 import { VistaEstudiantesCurso } from './entity/vista-estuidantes-curso.entity';
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+
+// Interfaz para los datos que se usarán en el PDF
+export interface CalificacionReporte {
+  estudiante: string; // nombre completo del estudiante
+  materia: string; // nombre de la materia
+  calificacion: number; // calificación obtenida
+}
 
 @Injectable()
 export class ReportesService {
@@ -101,7 +109,42 @@ export class ReportesService {
       ...r,
     }));
   }
+  // En reportes.service.ts
+  async generarPdfCalificacionesCurso(
+    datos: CalificacionReporte[],
+  ): Promise<Buffer> {
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([600, 800]);
+    const { height } = page.getSize();
 
+    const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+    // Título
+    page.drawText('Reporte de Calificaciones por Curso', {
+      x: 50,
+      y: height - 50,
+      size: 18,
+      font,
+      color: rgb(0, 0, 0),
+    });
+
+    // Contenido
+    let y = height - 80;
+    datos.forEach((d, i) => {
+      page.drawText(
+        `${i + 1}. ${d.estudiante} - ${d.materia} - ${d.calificacion}`,
+        {
+          x: 50,
+          y,
+          size: 12,
+        },
+      );
+      y -= 20;
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    return Buffer.from(pdfBytes);
+  }
   async buscarCalificacionesPorEstudiante(idEstudiante: number) {
     const query = this.calificacionesEstudianteRepo
       .createQueryBuilder('v')

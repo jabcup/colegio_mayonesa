@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { Calificaciones } from './calificaciones.entity';
 import { CreateCalificacionDto } from './dto/create-calificacion.dto';
 // import { AsignacionClase } from '../asignacion-clases/asignacionCursos.entity';
 import { Materias } from 'src/materias/materias.entity';
 import { Estudiante } from 'src/estudiante/estudiante.entity';
+import { UpdateCalificacionDto } from './dto/update-calificacion.dto';
 
 @Injectable()
 export class CalificacionesService {
@@ -56,6 +57,7 @@ export class CalificacionesService {
       .leftJoin('asignacion.curso', 'curso')
       .where('materia.id = :idMateria', { idMateria })
       .andWhere('curso.id = :idCurso', { idCurso })
+      .andWhere('calificacion.estado = "activo"')
       .select([
         'calificacion.id',
         'calificacion.calificacion',
@@ -78,6 +80,22 @@ export class CalificacionesService {
         estudiante: { id: idEstudiante },
       },
       relations: ['materia', 'estudiante'], // asignacionClase
+    });
+  }
+  async getCalificacionesPorEstudianteGestionActual(
+    idEstudiante: number,
+  ): Promise<Calificaciones[]> {
+    const gestionActual = new Date().getFullYear();
+
+    return this.calificacionesRepository.find({
+      where: {
+        estudiante: { id: idEstudiante },
+        fecha_creacion: Between(
+          new Date(gestionActual, 0, 1), // 1 enero del año actual
+          new Date(gestionActual, 11, 31, 23, 59, 59, 999), // 31 diciembre 23:59:59
+        ),
+      },
+      relations: ['materia', 'estudiante'],
     });
   }
 
@@ -122,7 +140,7 @@ export class CalificacionesService {
     return this.calificacionesRepository.save(calificacion);
   }
 
-  async updateCalificacion(id: number, dto: CreateCalificacionDto) {
+  async updateCalificacion(id: number, dto: UpdateCalificacionDto) {
     const calificacion = await this.calificacionesRepository.findOne({
       where: { id },
     });

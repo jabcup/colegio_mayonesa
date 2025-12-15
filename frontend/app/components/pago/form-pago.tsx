@@ -71,6 +71,7 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
       } else {
         await api.post("/pagos", payload)
       }
+
       onCreate()
       onClose()
     } catch (error) {

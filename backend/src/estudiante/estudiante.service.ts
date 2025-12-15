@@ -164,6 +164,10 @@ export class EstudianteService {
     return this.estudianteRepository.find();
   }
 
+  async mostrarEstudiante(id: number): Promise<Estudiante> {
+    return this.estudianteRepository.findOne({ where: { id } });
+  }
+
   async login(correo_institucional: string, rude: string) {
     const estudiante = await this.estudianteRepository.findOne({
       where: { correo_institucional },

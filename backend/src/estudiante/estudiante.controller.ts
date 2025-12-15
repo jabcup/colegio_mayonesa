@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateEstudianteFullDto } from './dto/create-estudiante-full.dto';
 import { EstudianteService } from './estudiante.service';
@@ -22,6 +22,11 @@ export class EstudianteController {
     return this.estudianteService.mostrarEstudiantes();
   }
 
+  @Get('MostrarEstudiante/:idEstudiante')
+  @ApiOperation({ summary: 'Mostrar Estudiante' })
+  async mostrarEstudiante(@Param('idEstudiante') id: number) {
+    return this.estudianteService.mostrarEstudiante(id);
+  }
   @Post('login')
   async login(@Body() loginDto: LoginEstudianteDto) {
     return this.estudianteService.login(

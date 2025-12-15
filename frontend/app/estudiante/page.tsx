@@ -63,7 +63,6 @@ export default function EstudiantesPage() {
     const filteredList = estudiantes.filter((e) => {
       const fullName =
         `${e.estudiante.nombres} ${e.estudiante.apellidoPat} ${e.estudiante.apellidoMat}`.toLowerCase();
-
       return (
         fullName.includes(s) ||
         e.estudiante.identificacion.toLowerCase().includes(s) ||
