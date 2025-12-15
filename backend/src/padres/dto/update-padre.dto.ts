@@ -1,5 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString, IsOptional} from "class-validator";
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
 export class UpdatePadreDto {
   @ApiProperty({
@@ -18,7 +18,6 @@ export class UpdatePadreDto {
   @IsString()
   apellidoPat: string;
 
-
   @ApiProperty({
     example: 'Diaz',
     description: 'Segundo apellido del padre de familia',
@@ -26,7 +25,7 @@ export class UpdatePadreDto {
   @IsOptional()
   @IsString()
   apellidoMat: string;
-  
+
   @ApiProperty({
     example: '12345678',
     description: 'Numero de telefono de contacto del padre de familia',

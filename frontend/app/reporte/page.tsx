@@ -9,6 +9,7 @@ import { useState } from "react";
 import FormFiltrosReporte from "../components/reporte/form-filtros-reporte";
 
 import { getAuthData } from "../lib/auth";
+import { Boton } from "../components/botones/botonNav";
 
 type TipoReporte =
   | "calificacionesCurso"
@@ -39,91 +40,90 @@ export default function ReportePage() {
       </Typography>
 
       {rol !== "Cajero" && (
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => handleOpenFiltro("calificacionesCurso")}
-        sx={{ mb: 2 }}
-      >
-        Descargar Reporte Calificaciones por Curso
-      </Button>
+        <Boton
+          label="Descargar Reporte Calificaciones por Curso"
+          // variant="contained"
+          color="success"
+          onClick={() => handleOpenFiltro("calificacionesCurso")}
+          className="m-2"
+          size="small"
+        />
+      )}
+      <br />
+      {rol !== "Cajero" && (
+        <Boton
+          label="Descargar Reporte Calificaciones por Estudiante"
+          color="success"
+          onClick={() => handleOpenFiltro("calificacionesEstudiante")}
+          className="ml-2"
+          size="small"
+        />
+      )}
+      <br />
+      {rol !== "Cajero" && (
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleOpenFiltro("asistenciasCurso")}
+          sx={{ mb: 2 }}
+        >
+          Descargar Reporte Asistencias por Curso
+        </Button>
       )}
 
       {rol !== "Cajero" && (
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => handleOpenFiltro("calificacionesEstudiante")}
-        sx={{ mb: 2 }}
-      >
-        Descargar Reporte Calificaciones por Estudiante
-      </Button>
-      )}
-
-      {rol !== "Cajero" && (
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => handleOpenFiltro("asistenciasCurso")}
-        sx={{ mb: 2 }}
-      >
-        Descargar Reporte Asistencias por Curso
-      </Button>
-      )}
-
-      {rol !== "Cajero" && (
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => handleOpenFiltro("asistenciasEstudiante")}
-        sx={{ mb: 2 }}
-      >
-        Descargar Reporte Asistencias por Estudiante
-      </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleOpenFiltro("asistenciasEstudiante")}
+          sx={{ mb: 2 }}
+        >
+          Descargar Reporte Asistencias por Estudiante
+        </Button>
       )}
 
       {rol !== "Docente" && (
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => handleOpenFiltro("pagosCurso")}
-        sx={{ mb: 2 }}
-      >
-        Descargar Reporte Pagos por Curso
-      </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleOpenFiltro("pagosCurso")}
+          sx={{ mb: 2 }}
+        >
+          Descargar Reporte Pagos por Curso
+        </Button>
       )}
 
       {rol !== "Docente" && (
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => handleOpenFiltro("pagosEstudiante")}
-        sx={{ mb: 2 }}
-      >
-        Descargar Reporte Pagos por Estudiante
-      </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleOpenFiltro("pagosEstudiante")}
+          sx={{ mb: 2 }}
+        >
+          Descargar Reporte Pagos por Estudiante
+        </Button>
       )}
 
       {rol !== "Cajero" && (
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => handleOpenFiltro("listadoEstudiantes")}
-        sx={{ mb: 2 }}
-      >
-        Descargar Reporte Listado de Estudiantes de un Curso
-      </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleOpenFiltro("listadoEstudiantes")}
+          sx={{ mb: 2 }}
+        >
+          Descargar Reporte Listado de Estudiantes de un Curso
+        </Button>
       )}
 
       {rol !== "Cajero" && rol !== "Docente" && (
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => handleOpenFiltro("tutoresCurso")}
-        sx={{ mb: 2 }}
-      >
-        Descargar Reporte Tutores por Curso
-      </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleOpenFiltro("tutoresCurso")}
+          sx={{ mb: 2 }}
+        >
+          Descargar Reporte Tutores por Curso
+        </Button>
       )}
 
       {tipoReporte && (

@@ -7,9 +7,9 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import FormEstudiante from "../components/estudiante/form";
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
+import FormEstudiante from "../components/estudiante/form";
 import TableEstudiante from "../components/estudiante/table";
 import { getAuthData } from "../lib/auth";
 
@@ -40,16 +40,14 @@ interface EstudianteFull {
     apellidoPat: string;
     apellidoMat: string;
     telefono: string;
-    fecha_creacion?: string;
-    estado?: string;
+    estado: string;
   };
   relacion: string;
-  fecha_creacion?: string;
-  estado?: string;
+  fecha_creacion: string;
+  estado: string;
 }
 
 export default function EstudiantesPage() {
-
   const [estudiantes, setEstudiantes] = useState<EstudianteFull[]>([]);
   const [filtered, setFiltered] = useState<EstudianteFull[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,18 +62,16 @@ export default function EstudiantesPage() {
 
   useEffect(() => {
     const s = search.toLowerCase();
-
-    const filteredList = estudiantes.filter((e) => {
-      const fullName =
-        `${e.estudiante.nombres} ${e.estudiante.apellidoPat} ${e.estudiante.apellidoMat}`.toLowerCase();
-      return (
-        fullName.includes(s) ||
-        e.estudiante.identificacion.toLowerCase().includes(s) ||
-        e.estudiante.correo.toLowerCase().includes(s)
-      );
-    });
-
-    setFiltered(filteredList);
+    setFiltered(
+      estudiantes.filter((e) => {
+        const fullName = `${e.estudiante.nombres} ${e.estudiante.apellidoPat} ${e.estudiante.apellidoMat}`.toLowerCase();
+        return (
+          fullName.includes(s) ||
+          e.estudiante.identificacion.includes(s) ||
+          e.estudiante.correo.toLowerCase().includes(s)
+        );
+      })
+    );
   }, [search, estudiantes]);
 
   const cargarEstudiantes = async () => {
@@ -83,22 +79,21 @@ export default function EstudiantesPage() {
     try {
       const res = await api.get("/padre-estudiante/todos");
       setEstudiantes(Array.isArray(res.data) ? res.data : []);
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert("Error al cargar estudiantes");
     } finally {
       setLoading(false);
     }
   };
 
-  const crearEstudiante = async (data: unknown) => {
+  const crearEstudiante = async (data: any) => {
     try {
       await api.post("/estudiante/CrearEstudianteCompleto", data);
       alert("Estudiante creado exitosamente");
+      setShowForm(false);
       cargarEstudiantes();
-    } catch (err) {
-      console.error(err);
-      alert("Error al crear el estudiante");
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Error al crear estudiante");
     }
   };
 
@@ -106,24 +101,20 @@ export default function EstudiantesPage() {
     <>
       <Navbar />
 
-      <Typography variant="h3" sx={{ mb: 2 }}>
+      <Typography variant="h4" sx={{ mb: 2 }}>
         Estudiantes
       </Typography>
 
       <TextField
-        label="Buscar estudiante (nombre, CI o correo)"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        label="Buscar por nombre, CI o correo"
         fullWidth
         sx={{ mb: 2 }}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
       />
 
-      <Button
-        variant="contained"
-        onClick={() => setShowForm(true)}
-        sx={{ mb: 2 }}
-      >
-        Crear Nuevo Estudiante
+      <Button variant="contained" sx={{ mb: 2 }} onClick={() => setShowForm(true)}>
+        Registrar Estudiante
       </Button>
 
       <FormEstudiante
@@ -134,10 +125,10 @@ export default function EstudiantesPage() {
 
       {loading ? (
         <CircularProgress />
-      ) : filtered.length > 0 ? (
+      ) : filtered.length ? (
         <TableEstudiante estudiantes={filtered} />
       ) : (
-        <Typography>No hay estudiantes para mostrar</Typography>
+        <Typography>No hay estudiantes registrados</Typography>
       )}
     </>
   );

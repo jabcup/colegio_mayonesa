@@ -174,7 +174,7 @@ export default function AsignacionPage() {
       >
         {cursos.map((c) => (
           <MenuItem key={c.id} value={c.id}>
-            {c.nombre}
+            {c.nombre} - {c.paralelo}
           </MenuItem>
         ))}
       </TextField>

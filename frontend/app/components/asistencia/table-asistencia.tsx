@@ -16,6 +16,7 @@ import {
 
 import { useState, useEffect } from "react";
 import { api } from "@/app/lib/api";
+import Cookies from "js-cookie"
 
 interface AsistenciaFiltrada {
   id: number;
@@ -115,7 +116,7 @@ export default function TableAsistencia({ asistencias }: Props) {
   const cargarDatos = async () => {
     setLoading(true);
     try {
-      const idDocente = 4;
+      const idDocente = Number(Cookies.get('personal_id') ?? 0);
       const cursosRes = await api.get(
         `/asignacion-clases/por-docente/${idDocente}`,
       );
@@ -145,7 +146,7 @@ export default function TableAsistencia({ asistencias }: Props) {
     setEstudiantesCurso([]);
     setBatchAsistencias([]);
 
-    const idDocente = 4;
+    const idDocente = Number(Cookies.get('personal_id') ?? 0);;
 
     setLoading(true);
     try {
