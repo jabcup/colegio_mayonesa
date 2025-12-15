@@ -8,6 +8,8 @@ import { useState } from "react";
 
 import FormFiltrosReporte from "../components/reporte/form-filtros-reporte";
 
+import { getAuthData } from "../lib/auth";
+
 type TipoReporte =
   | "calificacionesCurso"
   | "calificacionesEstudiante"
@@ -22,6 +24,8 @@ export default function ReportePage() {
   const [showForm, setShowForm] = useState(false);
   const [tipoReporte, setTipoReporte] = useState<TipoReporte | null>(null);
 
+  const { rol } = getAuthData();
+
   const handleOpenFiltro = (reporte: TipoReporte) => {
     setTipoReporte(reporte);
     setShowForm(true);
@@ -34,7 +38,7 @@ export default function ReportePage() {
         Página de Reportes
       </Typography>
 
-      {/* Solo recibe filtro de idCuro */}
+      {rol !== "Cajero" && (
       <Button
         variant="contained"
         color="primary"
@@ -43,8 +47,9 @@ export default function ReportePage() {
       >
         Descargar Reporte Calificaciones por Curso
       </Button>
+      )}
 
-      {/* Solo recibe filtro de idEstudiante */}
+      {rol !== "Cajero" && (
       <Button
         variant="contained"
         color="primary"
@@ -53,8 +58,9 @@ export default function ReportePage() {
       >
         Descargar Reporte Calificaciones por Estudiante
       </Button>
+      )}
 
-      {/* Solo recibe filtro de idCuro y mes como 12 */}
+      {rol !== "Cajero" && (
       <Button
         variant="contained"
         color="primary"
@@ -63,8 +69,9 @@ export default function ReportePage() {
       >
         Descargar Reporte Asistencias por Curso
       </Button>
+      )}
 
-      {/* Solo recibe filtro de idEstudiante */}
+      {rol !== "Cajero" && (
       <Button
         variant="contained"
         color="primary"
@@ -73,8 +80,9 @@ export default function ReportePage() {
       >
         Descargar Reporte Asistencias por Estudiante
       </Button>
+      )}
 
-      {/* Solo recibe filtro de idCuro, estado como 'pendiente', mes como 12 y año como 2025 */}
+      {rol !== "Docente" && (
       <Button
         variant="contained"
         color="primary"
@@ -83,8 +91,9 @@ export default function ReportePage() {
       >
         Descargar Reporte Pagos por Curso
       </Button>
+      )}
 
-      {/* Solo recibe filtro de idEstudiante */}
+      {rol !== "Docente" && (
       <Button
         variant="contained"
         color="primary"
@@ -93,8 +102,9 @@ export default function ReportePage() {
       >
         Descargar Reporte Pagos por Estudiante
       </Button>
+      )}
 
-      {/* Solo recibe filtro de idCuro */}
+      {rol !== "Cajero" && (
       <Button
         variant="contained"
         color="primary"
@@ -103,8 +113,9 @@ export default function ReportePage() {
       >
         Descargar Reporte Listado de Estudiantes de un Curso
       </Button>
+      )}
 
-      {/* Este reporte es el unico que no recibe filtros */}
+      {rol !== "Cajero" && rol !== "Docente" && (
       <Button
         variant="contained"
         color="primary"
@@ -113,6 +124,7 @@ export default function ReportePage() {
       >
         Descargar Reporte Tutores por Curso
       </Button>
+      )}
 
       {tipoReporte && (
         <FormFiltrosReporte

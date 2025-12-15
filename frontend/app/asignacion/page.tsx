@@ -161,6 +161,8 @@ export default function AsignacionPage() {
 
       <FormAsignacion
         open={showForm}
+        dia={contextoAsignacion?.dia || ""}
+        idHorario={contextoAsignacion?.idHorario || 0}
         onClose={() => {
           setShowForm(false);
           setContextoAsignacion(null);

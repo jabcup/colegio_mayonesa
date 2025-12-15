@@ -105,8 +105,6 @@ export class EstudianteCursoService {
     idCurso: number,
     idMateria: number,
   ): Promise<EstudianteNoCalificadoDto[]> {
-    console.log('obtenerEstudiantesNoCalificados', { idCurso, idMateria });
-
     if (isNaN(idCurso) || isNaN(idMateria)) {
       throw new BadRequestException('idCurso o idMateria inválidos');
     }
@@ -123,7 +121,7 @@ export class EstudianteCursoService {
     AND ec.estado = 'activo'
     AND e.estado = 'activo'
     AND NOT EXISTS (
-      SELECT 1
+      SELECT 3
       FROM calificaciones c
       WHERE c.idEstudiante = e.id
         AND c.idMateria = ?

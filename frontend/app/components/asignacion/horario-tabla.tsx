@@ -7,6 +7,8 @@ import {
   Button,
 } from "@mui/material";
 
+import { getAuthData } from "@/app/lib/auth";
+
 interface Asignacion {
   idAsignacion: number;
   dia: string;
@@ -31,6 +33,8 @@ export default function HorarioTabla ({ asignaciones, onAsignar }: HorarioTableP
     "10:20 - 11:20",
     "11:20 - 12:20",
   ];
+
+  const { rol } = getAuthData();
 
   return (
     <Table>
@@ -57,7 +61,7 @@ export default function HorarioTabla ({ asignaciones, onAsignar }: HorarioTableP
                       <div>{asignacion.docente}</div>
                       <div>{asignacion.materia}</div>
                     </>
-                  ) : (
+                  ) : rol !== "Docente" ? (
                     <Button
                       variant="contained"
                       color="primary"
@@ -65,6 +69,8 @@ export default function HorarioTabla ({ asignaciones, onAsignar }: HorarioTableP
                     >
                       Asignar
                     </Button>
+                  ) : (
+                    <span style={{ color: "red" }}>Aún no definido</span>
                   )}
                 </TableCell>
               );

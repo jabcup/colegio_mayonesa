@@ -12,6 +12,7 @@ import {
   Button,
 } from "@mui/material";
 import { useEffect, useState } from "react";
+import { getAuthData } from "@/app/lib/auth";
 
 export interface UpdateCalificacionDto {
   calificacion: number;
@@ -96,6 +97,8 @@ export default function FormCalificacion({
   const [materiasCurso, setMateriasCurso] = useState<MateriaDocente[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const { rol, idPersonal } = getAuthData();
+
   const [form, setForm] = useState({
     idCurso: "", // Nuevo: curso seleccionado
     idMateria: "", // Si quieres guardar la clase específica (materia + horario)
@@ -130,7 +133,7 @@ export default function FormCalificacion({
   const cargarDatos = async () => {
     setLoading(true);
     try {
-      const idDocente = 4;
+      const idDocente = idPersonal;
       const cursosRes = await api.get(
         `/asignacion-clases/por-docente/${idDocente}`
       );
@@ -157,7 +160,7 @@ export default function FormCalificacion({
     const idCurso = e.target.value;
     setForm({ ...form, idCurso, idMateria: "", idEstudiante: "" });
 
-    const idDocente = 4;
+    const idDocente = idPersonal;
 
     setLoading(true);
     try {

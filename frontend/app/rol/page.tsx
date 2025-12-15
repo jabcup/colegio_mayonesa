@@ -12,6 +12,7 @@ import {
 
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
+import { getAuthData } from "../lib/auth";
 
 import FormRol from "../components/rol/form-rol";
 import TablaRol from "../components/rol/tabla-rol";
@@ -34,6 +35,8 @@ export default function Rol() {
     const [loading, setLoading] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [roles, setRoles] = useState<Rol[]>([]);
+
+    const { rol } = getAuthData();
 
     const cargarRoles = async () => {
         setLoading(true);
@@ -112,7 +115,7 @@ export default function Rol() {
             <Typography variant="h4" align="center" gutterBottom>
                 Pagina de Roles
             </Typography>
-            
+            {rol !== "Secretaria-o" && (
             <Button
                 variant="contained"
                 onClick={() => setShowForm(true)}
@@ -120,6 +123,7 @@ export default function Rol() {
             >
                 Crear Rol
             </Button>
+            )}
             <FormRol 
                 open={showForm}
                 onClose={() => setShowForm(false)}

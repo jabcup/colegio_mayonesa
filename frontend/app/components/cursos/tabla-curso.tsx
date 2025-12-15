@@ -9,21 +9,27 @@ import {
     TableContainer,
     Paper,
     Button,
+    Tab,
 } from "@mui/material";
 import { getAuthData } from "@/app/lib/auth";
 
-interface Rol {
-    id: number;
-    nombre: string;
+interface Curso {
+  id: number;
+  nombre: string;
+  paralelo: string;
+  gestion: number;
+  capacidad: number;
+  fechaCreacion: string;
+  estado: string;
 }
 
 interface Props {
-    roles: Rol[]
-    onEdit: (rol: Rol) => void
+    cursos: Curso[]
+    onEdit: (curso: Curso) => void
     onDelete: (id: number) => void
 }
 
-export default function TablaRol({ roles, onEdit, onDelete }: Props) {
+export default function TablaCurso({ cursos, onEdit, onDelete }: Props) {
 
     const { rol } = getAuthData();
 
@@ -33,32 +39,34 @@ export default function TablaRol({ roles, onEdit, onDelete }: Props) {
                 <TableHead>
                     <TableRow>
                         <TableCell>Nombre</TableCell>
-                        {rol !== "Secretaria-o" && (
+                        <TableCell>Paralelo</TableCell>
+                        <TableCell>Gestion</TableCell>
+                        <TableCell>Capacidad</TableCell>
                         <TableCell>Acciones</TableCell>
-                        )}
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {roles.map((r) => (
-                        <TableRow key={r.id}>
-                            <TableCell>{r.nombre}</TableCell>
-                            {rol !== "Secretaria-o" && (
+                    {cursos.map((c) => (
+                        <TableRow key={c.id}>
+                            <TableCell>{c.nombre}</TableCell>
+                            <TableCell>{c.paralelo}</TableCell>
+                            <TableCell>{c.gestion}</TableCell>
+                            <TableCell>{c.capacidad}</TableCell>
                             <TableCell>
                                 <Button 
                                   variant="outlined"
-                                  onClick={() => onEdit(r)}
+                                  onClick={() => onEdit(c)}
                                 >
                                     Editar
                                 </Button>
                                 <Button 
                                   variant="outlined"
                                   color="error"
-                                  onClick={() => onDelete(r.id)}
+                                  onClick={() => onDelete(c.id)}
                                 >
                                     Eliminar
                                 </Button>
                             </TableCell>
-                            )}
                         </TableRow>
                     ))}
                 </TableBody>

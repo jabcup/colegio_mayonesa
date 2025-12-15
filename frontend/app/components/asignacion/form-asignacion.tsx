@@ -30,9 +30,11 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onGuardar: (data: { idDocente: number; idMateria: number }) => void;
+  dia: string;
+  idHorario: number;
 }
 
-export default function FormAsignacion({ open, onClose, onGuardar }: Props) {
+export default function FormAsignacion({ open, onClose, onGuardar, dia, idHorario }: Props) {
   const [loading, setLoading] = useState(false);
   const [materias, setMaterias] = useState<Materias[]>([]);
   const [idMateria, setIdMateria] = useState<number>(0);
@@ -41,8 +43,8 @@ export default function FormAsignacion({ open, onClose, onGuardar }: Props) {
 
   useEffect(() => {
     if (open) cargarMaterias();
-    if (open) cargarDocentes();
-  }, [open]);
+    if (open) cargarDocentesDisponibles();
+  }, [open, dia, idHorario]);
 
   const cargarMaterias = async () => {
     setLoading(true);
@@ -63,10 +65,15 @@ export default function FormAsignacion({ open, onClose, onGuardar }: Props) {
     }
   };
 
-  const cargarDocentes = async () => {
+  const cargarDocentesDisponibles = async () => {
     setLoading(true);
     try {
-      const docentesRes = await api.get("/personal/Docentes");
+      const docentesRes = await api.get('/personal/DocentesDisponibles', {
+        params: {
+          dia,
+          idHorario,
+        },
+      });
       const docentesMap = (docentesRes.data as Docentes[]).map((a) => ({
         id: a.id,
         nombre: a.nombre,
@@ -75,7 +82,7 @@ export default function FormAsignacion({ open, onClose, onGuardar }: Props) {
       setDocentes(docentesMap);
     } catch (err) {
       console.error(err);
-      alert("Error al cargar los datos");
+      alert('Error al cargar los datos');
     } finally {
       setLoading(false);
     }
@@ -126,7 +133,7 @@ export default function FormAsignacion({ open, onClose, onGuardar }: Props) {
           <Button onClick={onClose}>Cancelar</Button>
           <Button
             variant="contained"
-            disabled={!idMateria}
+            disabled={!idMateria || !idDocente}
             onClick={() => onGuardar({ idMateria, idDocente })}
           >
             Guardar

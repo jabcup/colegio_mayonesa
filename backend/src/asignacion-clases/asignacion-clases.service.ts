@@ -30,6 +30,16 @@ export class AsignacionClasesService {
   async createAsignacionFull(
     dtoAsignacion: CreateAsignacionFulDto,
   ): Promise<AsignacionClase> {
+    const conflicto = await this.existeConflictoDocente(
+      dtoAsignacion.idPersonal,
+      dtoAsignacion.dia,
+      dtoAsignacion.idHorario,
+    );
+
+    if (conflicto) {
+      throw new Error('El docente ya tiene una clase en ese horario');
+    }
+
     return this.asignacionRepository.save(
       this.asignacionRepository.create({
         dia: dtoAsignacion.dia,
@@ -125,45 +135,6 @@ export class AsignacionClasesService {
     });
   }
 
-  //     if (!docente) {
-  //       throw new Error('Docente no encontrado');
-  //     }
-
-  //     const curso = await manager.findOne(Curso, {
-  //       where: { id: dto.idCurso },
-  //     });
-
-  //     if (!curso) {
-  //       throw new Error('Curso no encontrado');
-  //     }
-
-  //     const materia = await manager.findOne(Materias, {
-  //       where: { id: dto.idMateria },
-  //     });
-
-  //     if (!materia) {
-  //       throw new Error('Materia no encontrado');
-  //     }
-
-  //     const horario = await manager.findOne(Horarios, {
-  //       where: { id: dto.idHorario },
-  //     });
-
-  //     if (!horario) {
-  //       throw new Error('Horario no encontrado');
-  //     }
-
-  //     return {
-  //       message: 'Asignacion de curso creado exitosamente',
-  //       asignacion: nuevaAsignacion,
-  //       docente: docente,
-  //       curso: curso,
-  //       materia: materia,
-  //       horario: horario,
-  //     };
-  //   });
-  // }
-
   async getHorarioDocente(idPersonal: number): Promise<AsignacionClase[]> {
     return this.asignacionRepository.find({
       where: { personal: { id: idPersonal } },
@@ -208,5 +179,19 @@ export class AsignacionClasesService {
       .orderBy('horario.id', 'ASC')
       .addOrderBy('asignacion.dia', 'ASC')
       .getRawMany();
+  }
+
+  async existeConflictoDocente(
+    idDocente: number,
+    dia: string,
+    idHorario: number,
+  ) {
+    return this.asignacionRepository
+      .createQueryBuilder('asignacion')
+      .where('asignacion.idPersonal = :idDocente', { idDocente })
+      .andWhere('asignacion.dia = :dia', { dia })
+      .andWhere('asignacion.idHorario = :idHorario', { idHorario })
+      .andWhere('asignacion.estado = :estado', { estado: 'activo' })
+      .getCount();
   }
 }

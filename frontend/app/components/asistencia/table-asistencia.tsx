@@ -149,7 +149,7 @@ export default function TableAsistencia({ asistencias }: Props) {
 
     setLoading(true);
     try {
-      const estudiantesRes = await api.get(`/estudiante-curso/${idCurso}`);
+      const estudiantesRes = await api.get(`/estudiante-curso/estudiantes-por-curso/${idCurso}`);
       const estudiantesMap = (estudiantesRes.data as BackEstudianteCurso[]).map(
         (ec) => ({
           id: ec.estudiante.id,

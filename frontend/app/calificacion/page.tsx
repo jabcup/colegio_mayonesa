@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
+import { getAuthData } from "../lib/auth";
 
 import FormCalificacion from "../components/calificacion/form-calificacion";
 import TableCalificacion from "../components/calificacion/table-calificacion";
@@ -78,6 +79,8 @@ export default function CalificacionPage() {
     []
   );
 
+  const { rol, idPersonal } = getAuthData();
+
   const [filtro, setFiltro] = useState({
     idCurso: "",
     idMateria: "",
@@ -86,7 +89,7 @@ export default function CalificacionPage() {
   const cargarCursos = async () => {
     setLoading(true);
     try {
-      const idDocente = 4;
+      const idDocente = idPersonal;
       const cursosRes = await api.get(
         `/asignacion-clases/por-docente/${idDocente}`
       );
@@ -154,7 +157,7 @@ export default function CalificacionPage() {
     const idCurso = e.target.value;
     setFiltro({ ...filtro, idCurso, idMateria: "" });
 
-    const idDocente = 4;
+    const idDocente = idPersonal;
 
     setLoading(true);
     try {

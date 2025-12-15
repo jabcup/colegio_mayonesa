@@ -19,12 +19,8 @@ export class EstudianteCursoController {
   ) {}
 
   @Get('/estudiantes-por-curso/:idCurso')
-  async estudiantesPorCurso(@Query('idCurso') idCurso: string) {
-    const curso = Number(idCurso);
-    if (isNaN(curso)) {
-      throw new BadRequestException('idCurso inválido');
-    }
-    return this.estudianteCursoService.getEstudiantesPorCurso(curso);
+  async estudiantesPorCurso(@Param('idCurso') idCurso: string) {
+    return this.estudianteCursoService.getEstudiantesPorCurso(Number(idCurso));
   }
 
   @Put('ActualizarEstudianteCurso/:id')
