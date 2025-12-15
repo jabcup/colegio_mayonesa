@@ -78,7 +78,7 @@ export default function FormAsistencia({ open, onClose, onCreate }: Props) {
   const cargarDatos = async () => {
     setLoading(true);
     try {
-      const idDocente = 1;
+      const idDocente = 4;
       const cursosRes = await api.get(
         `/asignacion-clases/por-docente/${idDocente}`
       );
@@ -105,7 +105,7 @@ export default function FormAsistencia({ open, onClose, onCreate }: Props) {
     const idCurso = e.target.value;
     setForm({ ...form, idCurso, idAsignacion: "", idEstudiante: "" });
 
-    const idDocente = 1;
+    const idDocente = 4;
 
     setLoading(true);
     try {

@@ -65,8 +65,8 @@ interface BackMateriaDocente {
   nombre: string;
 }
 
-export interface UpdateCalificacionDto{
-  calificacion: number
+export interface UpdateCalificacionDto {
+  calificacion: number;
 }
 
 export default function CalificacionPage() {
@@ -211,7 +211,7 @@ export default function CalificacionPage() {
 
   // Funcion para editar una calificacion
   const [selectedCalificacion, setSelectedCalificacion] =
-  useState<CalificacionFiltrada | null>(null);
+    useState<CalificacionFiltrada | null>(null);
 
   const editarCalificacion = (calificacion: CalificacionFiltrada) => {
     setSelectedCalificacion(calificacion);
@@ -222,7 +222,10 @@ export default function CalificacionPage() {
     if (!selectedCalificacion) return;
 
     try {
-      await api.put(`/calificaciones/EditarCalificacion/${selectedCalificacion.id}`, data);
+      await api.put(
+        `/calificaciones/EditarCalificacion/${selectedCalificacion.id}`,
+        data
+      );
       alert("Calificación actualizada");
 
       setShowForm(false);
@@ -233,7 +236,6 @@ export default function CalificacionPage() {
       alert("Error al actualizar");
     }
   };
-
 
   return (
     <>
@@ -283,7 +285,11 @@ export default function CalificacionPage() {
       {loading ? (
         <CircularProgress />
       ) : (
-        <TableCalificacion calificaciones={calificaciones} onEdit={editarCalificacion} onDelete={eliminarCalificacion} />
+        <TableCalificacion
+          calificaciones={calificaciones}
+          onEdit={editarCalificacion}
+          onDelete={eliminarCalificacion}
+        />
       )}
 
       <FormCalificacion

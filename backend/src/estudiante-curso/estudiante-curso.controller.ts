@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Delete, Put, Param } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Delete,
+  Put,
+  Param,
+  Query,
+  BadRequestException,
+} from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { UpdateEstudianteFullDto } from './dto/update-estudiante-full.dto';
 import { EstudianteCursoService } from './estudiante-curso.service';
@@ -9,9 +18,13 @@ export class EstudianteCursoController {
     private readonly estudianteCursoService: EstudianteCursoService,
   ) {}
 
-  @Get(':idCurso')
-  async getEstudiantesPorCurso(@Param('idCurso') idCurso: number) {
-    return this.estudianteCursoService.getEstudiantesPorCurso(Number(idCurso));
+  @Get('/estudiantes-por-curso/:idCurso')
+  async estudiantesPorCurso(@Query('idCurso') idCurso: string) {
+    const curso = Number(idCurso);
+    if (isNaN(curso)) {
+      throw new BadRequestException('idCurso inválido');
+    }
+    return this.estudianteCursoService.getEstudiantesPorCurso(curso);
   }
 
   @Put('ActualizarEstudianteCurso/:id')
@@ -38,5 +51,23 @@ export class EstudianteCursoController {
     return {
       message: 'Estudiante eliminado del curso exitosamente',
     };
+  }
+
+  @Get('no-calificados')
+  async getEstudiantesNoCalificados(
+    @Query('idCurso') idCurso: string,
+    @Query('idMateria') idMateria: string,
+  ) {
+    const curso = Number(idCurso);
+    const materia = Number(idMateria);
+
+    if (isNaN(curso) || isNaN(materia)) {
+      throw new BadRequestException('idCurso o idMateria inválidos');
+    }
+
+    return await this.estudianteCursoService.obtenerEstudiantesNoCalificados(
+      curso,
+      materia,
+    );
   }
 }
