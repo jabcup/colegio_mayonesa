@@ -14,6 +14,7 @@ import { api } from "@/app/lib/api"
 import TablePersonalActivo from "@/app/components/personal/table-personal"
 import PersonalForm from "@/app/components/personal/form-personal"
 import DetallePersonal from "../components/personal/detalle-personal"
+import Navbar from "../components/Navbar/navbar"
 
 interface Personal {
   id: number
@@ -83,7 +84,8 @@ export default function PersonalPage() {
   if (loading)
     return <CircularProgress sx={{ display: "block", mx: "auto", mt: 4 }} />
 
-  return (
+  return (<>
+    <Navbar/>
     <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h4">Personal Activo</Typography>
@@ -118,5 +120,6 @@ export default function PersonalPage() {
         personal={verPersonal}
       />
     </Container>
+    </>
   )
 }

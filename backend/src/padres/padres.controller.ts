@@ -31,14 +31,14 @@ export class PadresController {
     return this.padresService.todos();
   }
 
-  @Put('editar:id')
+  @Put('editar/:id')
   @ApiOperation({ summary: 'Actualizar padre' })
   updatePadre(@Param('id') id: string, @Body() dto: UpdatePadreDto) {
     return this.padresService.actualizar(+id, dto);
   }
 
-  @Delete(':id')
-  @ApiOperation({ summary: 'Eliminar padre' })
+  @Delete('eliminar/:id')
+  @ApiOperation({ summary: 'Eliminar padre (lógico)' })
   eliminarPadre(@Param('id') id: string) {
     return this.padresService.eliminar(+id);
   }

@@ -14,9 +14,14 @@ import {
   Typography,
   Button,
 } from "@mui/material";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import {
+  KeyboardArrowDown,
+  KeyboardArrowUp,
+} from "@mui/icons-material";
 import { useState } from "react";
+import { api } from "@/app/lib/api";
+import EditPadreDialog from "../padre/EditPadreDialog";
+import EditEstudianteDialog from "./EditEstudianteDialog";
 
 interface EstudianteFull {
   id: number;
@@ -43,6 +48,7 @@ interface EstudianteFull {
     apellidoPat: string;
     apellidoMat: string;
     telefono: string;
+    correo?: string;
     estado: string;
   };
   relacion: string;
@@ -56,20 +62,49 @@ interface Props {
 
 export default function TableEstudiante({ estudiantes }: Props) {
   const [openRow, setOpenRow] = useState<number | null>(null);
+  const [openEditPadre, setOpenEditPadre] = useState(false);
+  const [selectedPadre, setSelectedPadre] = useState<any>(null);
+
+  const [openEditEstudiante, setOpenEditEstudiante] = useState(false);
+  const [selectedEstudiante, setSelectedEstudiante] = useState<any>(null);
+
+  const handleEliminarPadre = async (id: number) => {
+    if (!confirm("¿Seguro que deseas eliminar este tutor?")) return;
+
+    try {
+      await api.delete(`/padres/eliminar/${id}`);
+      alert("Tutor eliminado correctamente");
+      window.location.reload();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Error al eliminar tutor");
+    }
+  };
+
+  const handleEliminarEstudiante = async (id: number) => {
+    if (!confirm("¿Seguro que deseas eliminar este estudiante?")) return;
+
+    try {
+      await api.delete(`/estudiante/eliminar/${id}`);
+      alert("Estudiante eliminado correctamente");
+      window.location.reload();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Error al eliminar estudiante");
+    }
+  };
 
   return (
     <TableContainer component={Paper} sx={{ mt: 2 }}>
       <Table>
         <TableHead>
           <TableRow>
+            <TableCell />
             <TableCell><strong>ID</strong></TableCell>
             <TableCell><strong>Nombre Completo</strong></TableCell>
             <TableCell><strong>CI</strong></TableCell>
             <TableCell><strong>Correo</strong></TableCell>
             <TableCell><strong>Tutor</strong></TableCell>
-            <TableCell><strong>Estado Estudiante</strong></TableCell>
+            <TableCell><strong>Estado</strong></TableCell>
             <TableCell><strong>Acciones</strong></TableCell>
-            <TableCell><strong>Ver Más</strong></TableCell>
           </TableRow>
         </TableHead>
 
@@ -80,43 +115,135 @@ export default function TableEstudiante({ estudiantes }: Props) {
 
             return (
               <>
+                {/* FILA PRINCIPAL */}
                 <TableRow key={e.id}>
                   <TableCell>
-                    {e.id}
+                    <IconButton
+                      size="small"
+                      onClick={() =>
+                        setOpenRow(openRow === e.id ? null : e.id)
+                      }
+                    >
+                      {openRow === e.id ? (
+                        <KeyboardArrowUp />
+                      ) : (
+                        <KeyboardArrowDown />
+                      )}
+                    </IconButton>
                   </TableCell>
+
+                  <TableCell>{e.id}</TableCell>
                   <TableCell>{fullName}</TableCell>
                   <TableCell>{e.estudiante.identificacion}</TableCell>
                   <TableCell>{e.estudiante.correo}</TableCell>
                   <TableCell>{tutorName}</TableCell>
                   <TableCell>{e.estudiante.estado}</TableCell>
-                  <TableCell><Button>Editar</Button><Button color="error">Eliminar</Button></TableCell>
-                  <IconButton
+
+                  <TableCell>
+                    <Button
                       size="small"
-                      onClick={() => setOpenRow(openRow === e.id ? null : e.id)}
+                      variant="outlined"
+                      onClick={() => {
+                        setSelectedEstudiante(e);
+                        setOpenEditEstudiante(true);
+                      }}
                     >
-                      {openRow === e.id ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                    </IconButton> 
+                      Editar Estudiante
+                    </Button>
+
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="error"
+                      onClick={() =>
+                        handleEliminarEstudiante(e.estudiante.id)
+                      }
+                    >
+                      Eliminar Estudiante
+                    </Button>
+                  </TableCell>
                 </TableRow>
 
-                {/* Fila expandible */}
+                {/* FILA EXPANDIBLE */}
                 <TableRow>
-                  <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-                    <Collapse in={openRow === e.id} timeout="auto" unmountOnExit>
+                  <TableCell colSpan={8} sx={{ p: 0 }}>
+                    <Collapse
+                      in={openRow === e.id}
+                      timeout="auto"
+                      unmountOnExit
+                    >
                       <Box margin={2}>
-                        <Typography variant="subtitle2">Información completa:</Typography>
-                        <Typography><b>Correo Institucional:</b> {e.estudiante.correo_institucional}</Typography>
-                        <Typography><b>RUDE:</b> {e.estudiante.rude}</Typography>
-                        <Typography><b>Dirección:</b> {e.estudiante.direccion}</Typography>
-                        <Typography><b>Teléfono de Referencia:</b> {e.estudiante.telefono_referencia}</Typography>
-                        <Typography><b>Fecha de Nacimiento:</b> {e.estudiante.fecha_nacimiento}</Typography>
-                        <Typography><b>Sexo:</b> {e.estudiante.sexo}</Typography>
-                        <Typography><b>Nacionalidad:</b> {e.estudiante.nacionalidad}</Typography>
-                        <Typography><b>Relación con Tutor:</b> {e.relacion}</Typography>
-                        <Typography><b>Fecha de Creación:</b> {e.fecha_creacion}</Typography>
-                        <Typography><b>Nombre del Tutor:</b> {tutorName} <Button>Editar</Button> <Button color="error">Eliminar</Button> </Typography>
+                        <Typography variant="subtitle2">
+                          Información del Estudiante
+                        </Typography>
 
-                        <Typography><b>Telefono del Tutor:</b> {e.tutor.telefono}</Typography>
-                        <Typography><b>Estado del Tutor:</b> {e.tutor.estado}</Typography>
+                        <Typography>
+                          <b>Correo Institucional:</b>{" "}
+                          {e.estudiante.correo_institucional}
+                        </Typography>
+                        <Typography>
+                          <b>RUDE:</b> {e.estudiante.rude}
+                        </Typography>
+                        <Typography>
+                          <b>Dirección:</b> {e.estudiante.direccion}
+                        </Typography>
+                        <Typography>
+                          <b>Teléfono:</b>{" "}
+                          {e.estudiante.telefono_referencia}
+                        </Typography>
+                        <Typography>
+                          <b>Fecha de Nacimiento:</b>{" "}
+                          {e.estudiante.fecha_nacimiento}
+                        </Typography>
+                        <Typography>
+                          <b>Sexo:</b> {e.estudiante.sexo}
+                        </Typography>
+                        <Typography>
+                          <b>Nacionalidad:</b> {e.estudiante.nacionalidad}
+                        </Typography>
+
+                        <Box mt={2}>
+                          <Typography variant="subtitle2">
+                            Tutor
+                          </Typography>
+
+                          <Typography>
+                            <b>Nombre:</b> {tutorName}
+                          </Typography>
+                          <Typography>
+                            <b>Teléfono:</b> {e.tutor.telefono}
+                          </Typography>
+                          <Typography>
+                            <b>Relación:</b> {e.relacion}
+                          </Typography>
+                          <Typography>
+                            <b>Estado Tutor:</b> {e.tutor.estado}
+                          </Typography>
+
+                          <Box mt={1} display="flex" gap={1}>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => {
+                                setSelectedPadre(e.tutor);
+                                setOpenEditPadre(true);
+                              }}
+                            >
+                              Editar Tutor
+                            </Button>
+
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="error"
+                              onClick={() =>
+                                handleEliminarPadre(e.tutor.id)
+                              }
+                            >
+                              Eliminar Tutor
+                            </Button>
+                          </Box>
+                        </Box>
                       </Box>
                     </Collapse>
                   </TableCell>
@@ -126,6 +253,26 @@ export default function TableEstudiante({ estudiantes }: Props) {
           })}
         </TableBody>
       </Table>
+
+      {/* MODAL EDITAR PADRE */}
+      {selectedPadre && (
+        <EditPadreDialog
+          open={openEditPadre}
+          padre={selectedPadre}
+          onClose={() => setOpenEditPadre(false)}
+          onUpdated={() => window.location.reload()}
+        />
+      )}
+
+      {/* MODAL EDITAR ESTUDIANTE */}
+      {selectedEstudiante && (
+        <EditEstudianteDialog
+          open={openEditEstudiante}
+          estudiante={selectedEstudiante}
+          onClose={() => setOpenEditEstudiante(false)}
+          onUpdated={() => window.location.reload()}
+        />
+      )}
     </TableContainer>
   );
 }
