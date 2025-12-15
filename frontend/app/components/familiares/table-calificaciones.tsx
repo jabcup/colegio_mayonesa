@@ -30,10 +30,8 @@ interface Calificacion {
 
 interface FilaMateria {
   materia: string;
-  t1: number;
-  t2: number;
-  t3: number;
-  promedio: number;
+  nota: number;
+  aprobado: boolean;
 }
 
 interface Props {
@@ -77,18 +75,14 @@ export default function TableCalificaciones({ idEstudiante }: Props) {
                 new Date(b.fecha_creacion).getTime()
             );
 
-            const t1 = Number(ordenadas[0]?.calificacion ?? 0);
-            const t2 = Number(ordenadas[1]?.calificacion ?? 0);
-            const t3 = Number(ordenadas[2]?.calificacion ?? 0);
+            const nota = Number(ordenadas[0]?.calificacion ?? 0);
 
-            const promedio = Number(((t1 + t2 + t3) / 3).toFixed(2));
+            const aprobado = nota >= 51;
 
             return {
               materia: listaMateria[0].materia.nombre,
-              t1,
-              t2,
-              t3,
-              promedio,
+              nota,
+              aprobado,
             };
           }
         );
@@ -100,10 +94,12 @@ export default function TableCalificaciones({ idEstudiante }: Props) {
     };
 
     fetchCalificaciones();
-  }, [idEstudiante]); // 👈 importante
+  }, [idEstudiante]);
+  useEffect(() => {console.log(rows);
+  }, [rows]);
 
   return (
-    <TableContainer component={Paper} sx={{ mt: 3 }}>
+    <TableContainer component={Paper} sx={{ mt: 3, width: "95%", mx: "auto" }}>
       <Typography variant="h6" sx={{ p: 2 }}>
         Calificaciones
       </Typography>
@@ -111,11 +107,15 @@ export default function TableCalificaciones({ idEstudiante }: Props) {
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell><strong>Materia</strong></TableCell>
-            <TableCell align="center"><strong>1er Trimestre</strong></TableCell>
-            <TableCell align="center"><strong>2do Trimestre</strong></TableCell>
-            <TableCell align="center"><strong>3er Trimestre</strong></TableCell>
-            <TableCell align="center"><strong>Promedio Anual</strong></TableCell>
+            <TableCell>
+              <strong>Materia</strong>
+            </TableCell>
+            <TableCell align="center">
+              <strong>Nota</strong>
+            </TableCell>
+            <TableCell align="center">
+              <strong>Estado</strong>
+            </TableCell>
           </TableRow>
         </TableHead>
 
@@ -123,11 +123,9 @@ export default function TableCalificaciones({ idEstudiante }: Props) {
           {rows.map((row, index) => (
             <TableRow key={index}>
               <TableCell>{row.materia}</TableCell>
-              <TableCell align="center">{row.t1}</TableCell>
-              <TableCell align="center">{row.t2}</TableCell>
-              <TableCell align="center">{row.t3}</TableCell>
-              <TableCell align="center">
-                <strong>{row.promedio}</strong>
+              <TableCell align="center">{row.nota}</TableCell>
+              <TableCell align="center" sx={{ backgroundColor: row.aprobado ? "#C8E6C9" : "#FFCDD2"}}>
+                <strong>{row.aprobado && "Aprobado" || "Reprobado"}</strong>
               </TableCell>
             </TableRow>
           ))}

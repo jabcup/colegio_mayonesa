@@ -87,7 +87,7 @@ export default function TableHorario({ idEstudiante }: Props) {
   }, [idEstudiante]);
 
   return (
-    <TableContainer component={Paper} sx={{ mt: 4 }}>
+    <TableContainer component={Paper} sx={{ mt: 4, width: "95%", mx: "auto"}}>
       <Typography variant="h6" sx={{ p: 2 }}>
         Horario Académico
       </Typography>

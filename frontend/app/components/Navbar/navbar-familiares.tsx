@@ -6,14 +6,19 @@ import LogoutButton from "../botones/logout";
 
 interface Props {
   onChangeVista: (vista: "calificaciones" | "asistencias" | "horarios") => void;
+  nombreEstudiante?: string;
 }
 
-export default function NavbarFamiliares({ onChangeVista }: Props) {
+export default function NavbarFamiliares({
+  onChangeVista,
+  nombreEstudiante,
+}: Props) {
   return (
-    <AppBar position="static">
+    <AppBar position="static" sx={{ marginBottom: 5}}>
       <Toolbar>
-        <Typography variant="h6" sx={{ flexGrow: 1 }}>
+        <Typography variant="h6" sx={{ flexGrow: 1, paddingLeft: 2 }}>
           Mayonesa
+          {nombreEstudiante && ` | ${nombreEstudiante}`}
         </Typography>
 
         <Boton

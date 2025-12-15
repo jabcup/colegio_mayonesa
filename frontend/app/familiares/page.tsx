@@ -6,6 +6,7 @@ import TableHorario from "../components/familiares/table-horario";
 import { api } from "../lib/api";
 import TableAsistencia from "../components/familiares/table-asistencias";
 import Cookies from "js-cookie";
+import { Typography } from "@mui/material";
 
 export interface Estudiante {
   id: number;
@@ -23,7 +24,7 @@ export default function FamiliaresPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const id = Cookies.get("estudiante_id");; // luego cambiar por el de local storage
+        const id = Cookies.get("estudiante_id");
         const res = await api.get(`/estudiante/MostrarEstudiante/${id}`);
         setEstudiante(res.data);
       } catch (err) {
@@ -36,7 +37,14 @@ export default function FamiliaresPage() {
 
   return (
     <>
-      <NavbarFamiliares onChangeVista={setVista} />
+      <NavbarFamiliares
+        onChangeVista={setVista}
+        nombreEstudiante={
+          estudiante
+            ? `Est. ${estudiante.nombres} ${estudiante.apellidoPat} ${estudiante.apellidoMat}`
+            : undefined
+        }
+      />
 
       {vista === "calificaciones" && estudiante && (
         <TableCalificaciones idEstudiante={estudiante.id} />
