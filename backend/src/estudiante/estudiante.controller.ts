@@ -1,8 +1,17 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateEstudianteFullDto } from './dto/create-estudiante-full.dto';
 import { EstudianteService } from './estudiante.service';
 import { LoginEstudianteDto } from './dto/login-estudiante.dto';
+import { UpdateEstudianteDto } from './dto/update-estudiante.dto';
 
 @Controller('estudiante')
 export class EstudianteController {
@@ -33,5 +42,17 @@ export class EstudianteController {
       loginDto.correo_institucional,
       loginDto.rude,
     );
+  }
+
+  @Put('editar/:id')
+  @ApiOperation({ summary: 'Editar estudiante' })
+  update(@Param('id') id: string, @Body() dto: UpdateEstudianteDto) {
+    return this.estudianteService.actualizar(+id, dto);
+  }
+
+  @Delete('eliminar/:id')
+  @ApiOperation({ summary: 'Eliminar estudiante (lógico)' })
+  remove(@Param('id') id: string) {
+    return this.estudianteService.eliminar(+id);
   }
 }

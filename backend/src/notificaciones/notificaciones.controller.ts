@@ -15,35 +15,43 @@ import { Estudiante } from '../estudiante/estudiante.entity';
 
 @Controller('notificaciones')
 export class NotificacionesController {
-    constructor(private readonly notificacionesService: NotificacionesService) { }
+  constructor(private readonly notificacionesService: NotificacionesService) {}
 
-    @Post('CrearNotificacion')
-    @ApiOperation({ summary: 'Crea una nueva notificacion' })
-    async createNotificacion(@Body() createNotificacionesDto: CreateNotificacionesDto) {
-        const notificacion = await this.notificacionesService.crearNotificacion(createNotificacionesDto);
-        return {
-            message: 'Notificacion enviada correctamente',
-            notificacion,
-        }
-    }
+  @Post('CrearNotificacion')
+  @ApiOperation({ summary: 'Crea una nueva notificacion' })
+  async createNotificacion(
+    @Body() createNotificacionesDto: CreateNotificacionesDto,
+  ) {
+    const notificacion = await this.notificacionesService.crearNotificacion(
+      createNotificacionesDto,
+    );
+    return {
+      message: 'Notificacion enviada correctamente',
+      notificacion,
+    };
+  }
 
-    @Get('Estudiante/:estudianteId')
-    @ApiOperation({ summary: 'Obtener Notificaciones por Estudiante' })
-    async obtenerNotificacionesPorEstudiante(@Param('estudianteId') estudianteId: number) {
-        const estudiante = new Estudiante();
-        estudiante.id = estudianteId;
-        return this.notificacionesService.obtenerNotificacionesPorEstudiante(estudiante);
-    }
+  @Get('Estudiante/:estudianteId')
+  @ApiOperation({ summary: 'Obtener Notificaciones por Estudiante' })
+  async obtenerNotificacionesPorEstudiante(
+    @Param('estudianteId') estudianteId: number,
+  ) {
+    const estudiante = new Estudiante();
+    estudiante.id = estudianteId;
+    return this.notificacionesService.obtenerNotificacionesPorEstudiante(
+      estudiante,
+    );
+  }
 
-    @Put (':id')
-    @ApiOperation({ summary: 'Actualizar Notificacion' })
-    update(@Param('id') id: string, @Body() dto: UpdateNotificacionesDto) {
-        return this.notificacionesService.actualizarNotificacion(+id, dto);
-    }
-    
-    @Delete(':id')
-    @ApiOperation({ summary: 'Eliminar Notificacion' })
-    eliminarNotificacion(@Param('id') id: string) {
-        return this.notificacionesService.eliminarNotificacion(+id);
-    }
+  @Put(':id')
+  @ApiOperation({ summary: 'Actualizar Notificacion' })
+  update(@Param('id') id: string, @Body() dto: UpdateNotificacionesDto) {
+    return this.notificacionesService.actualizarNotificacion(+id, dto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Eliminar Notificacion' })
+  eliminarNotificacion(@Param('id') id: string) {
+    return this.notificacionesService.eliminarNotificacion(+id);
+  }
 }

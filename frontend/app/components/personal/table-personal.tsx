@@ -30,13 +30,10 @@ interface Personal {
 interface Props {
   personal: Personal[]
   onEdit: (p: Personal) => void
+  onView: (p: Personal) => void 
 }
 
-export default function TablePersonalActivo({ personal, onEdit }: Props) {
-  const handleEditar = (p: Personal) => {
-    onEdit(p) 
-  }
-
+export default function TablePersonalActivo({ personal, onEdit, onView }: Props) {
   const handleEliminar = async (id: number) => {
     if (!confirm("¿Eliminar a este individuo?")) return
     try {
@@ -71,9 +68,8 @@ export default function TablePersonalActivo({ personal, onEdit }: Props) {
               <TableCell>{p.identificacion}</TableCell>
               <TableCell>{p.correo}</TableCell>
               <TableCell>
-                <Button size="small" onClick={() => handleEditar(p)}>
-                  Editar
-                </Button>
+                <Button size="small" onClick={() => onView(p)}>Ver</Button>
+                <Button size="small" onClick={() => onEdit(p)} sx={{ ml: 1 }}>Editar</Button>
                 <Button
                   size="small"
                   color="error"

@@ -12,6 +12,7 @@ import {
   Button,
 } from "@mui/material";
 import { useEffect, useState } from "react";
+import { getAuthData } from "@/app/lib/auth";
 
 export interface UpdateCalificacionDto {
   calificacion: number;
@@ -65,12 +66,9 @@ interface BackMateriaDocente {
 
 interface BackEstudianteCurso {
   id: number;
-  estudiante: {
-    id: number;
-    nombres: string;
-    apellidoPat: string;
-    apellidoMat: string;
-  };
+  nombres: string;
+  apellidoPat: string;
+  apellidoMat: string;
 }
 
 interface Props {
@@ -78,6 +76,7 @@ interface Props {
   onClose: () => void;
   //Edit
   selectedCalificacion: CalificacionFiltrada | null;
+
   onCreate: (data: {
     idMateria: number;
     idEstudiante: number;
@@ -97,6 +96,8 @@ export default function FormCalificacion({
   const [estudiantesCurso, setEstudiantesCurso] = useState<Estudiante[]>([]);
   const [materiasCurso, setMateriasCurso] = useState<MateriaDocente[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const { rol, idPersonal } = getAuthData();
 
   const [form, setForm] = useState({
     idCurso: "", // Nuevo: curso seleccionado
@@ -132,7 +133,7 @@ export default function FormCalificacion({
   const cargarDatos = async () => {
     setLoading(true);
     try {
-      const idDocente = 1;
+      const idDocente = idPersonal;
       const cursosRes = await api.get(
         `/asignacion-clases/por-docente/${idDocente}`
       );
@@ -159,21 +160,21 @@ export default function FormCalificacion({
     const idCurso = e.target.value;
     setForm({ ...form, idCurso, idMateria: "", idEstudiante: "" });
 
-    const idDocente = 4;
+    const idDocente = idPersonal;
 
     setLoading(true);
     try {
-      const estudiantesRes = await api.get(`/estudiante-curso/${idCurso}`);
-      const estudiantesMap = (estudiantesRes.data as BackEstudianteCurso[]).map(
-        (ec) => ({
-          id: ec.estudiante.id,
-          nombres: ec.estudiante.nombres,
-          apellidoPat: ec.estudiante.apellidoPat,
-          apellidoMat: ec.estudiante.apellidoMat,
-        })
-      );
+      // const estudiantesRes = await api.get(`/estudiante-curso/${idCurso}`);
+      // const estudiantesMap = (estudiantesRes.data as BackEstudianteCurso[]).map(
+      //   (ec) => ({
+      //     id: ec.estudiante.id,
+      //     nombres: ec.estudiante.nombres,
+      //     apellidoPat: ec.estudiante.apellidoPat,
+      //     apellidoMat: ec.estudiante.apellidoMat,
+      //   })
+      // );
 
-      setEstudiantesCurso(estudiantesMap);
+      // setEstudiantesCurso(estudiantesMap);
 
       const materiaRes = await api.get(
         `/asignacion-clases/materias-por-docente-curso/${idDocente}/${Number(
@@ -187,6 +188,8 @@ export default function FormCalificacion({
         })
       );
       setMateriasCurso(materiasMap);
+
+      setEstudiantesCurso([]);
     } catch (err) {
       console.error(err);
       alert("Error al cargar los estudiantes");
@@ -195,9 +198,37 @@ export default function FormCalificacion({
     }
   };
 
-  const handleMateriaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMateriaChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const idMateria = e.target.value;
     setForm({ ...form, idMateria, idEstudiante: "" });
+
+    const idCurso = form.idCurso;
+    if (!idCurso) return; // No hay curso seleccionado
+
+    setLoading(true);
+
+    try {
+      // Llamamos al endpoint de NO CALIFICADOS según curso y materia
+      const estudiantesRes = await api.get(
+        `/estudiante-curso/no-calificados?idCurso=${idCurso}&idMateria=${idMateria}`
+      );
+
+      const estudiantesMap = (estudiantesRes.data as BackEstudianteCurso[]).map(
+        (ec) => ({
+          id: ec.id,
+          nombres: ec.nombres,
+          apellidoPat: ec.apellidoPat,
+          apellidoMat: ec.apellidoMat,
+        })
+      );
+
+      setEstudiantesCurso(estudiantesMap);
+    } catch (err) {
+      console.error(err);
+      alert("Error al cargar los estudiantes no calificados");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = () => {
@@ -297,6 +328,22 @@ export default function FormCalificacion({
               type="number"
               value={form.calificacion}
               onChange={handleChange}
+              inputProps={{
+                min: 0,
+                max: 100,
+              }}
+              error={
+                form.calificacion !== "" &&
+                (Number(form.calificacion) < 0 ||
+                  Number(form.calificacion) > 100)
+              }
+              helperText={
+                form.calificacion !== "" &&
+                (Number(form.calificacion) < 0 ||
+                  Number(form.calificacion) > 100)
+                  ? "La calificación debe estar entre 0 y 100"
+                  : ""
+              }
             />
           </>
         )}

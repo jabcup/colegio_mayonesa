@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { api } from "@/app/lib/api";
+import Cookies from "js-cookie"
 
 interface Estudiante {
   id: number;
@@ -36,7 +37,7 @@ export default function FormNotificacion({ open, onClose, onSuccess }: Props) {
   const [asunto, setAsunto] = useState("");
   const [mensaje, setMensaje] = useState("");
 
-  const idPersonal = 1; // Para pruebas, sin login aún
+  const idPersonal = Number(Cookies.get('personal_id') ?? 0);
 
   useEffect(() => {
     if (open) {

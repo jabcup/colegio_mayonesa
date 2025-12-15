@@ -1,0 +1,165 @@
+"use client";
+
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  TextField,
+  DialogActions,
+  Button,
+} from "@mui/material";
+import { useEffect, useState } from "react";
+
+interface Curso {
+  id: number;
+  nombre: string;
+  paralelo: string;
+  gestion: number;
+  capacidad: number;
+  fechaCreacion: string;
+  estado: string;
+}
+
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  //Edit
+  selectedCurso: Curso | null;
+
+  onCreate: (data: { nombre: string, paralelo: string, gestion: number, capacidad: number }) => void;
+  onUpdate?: (data: { nombre: string, paralelo: string, gestion: number, capacidad: number }) => void;
+}
+
+export interface UpdateCursoDto {
+  nombre: string;
+  paralelo: string;
+  gestion: number;
+  capacidad: number;
+}
+
+export default function FormCurso({
+  open,
+  onClose,
+  onCreate,
+  onUpdate,
+  selectedCurso,
+}: Props) {
+
+  const [form, setForm] = useState({
+    nombre: "",
+    paralelo: "",
+    gestion: 0,
+    capacidad: 0
+  });
+
+  useEffect(() => {
+    if (selectedCurso) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setForm({
+        nombre: selectedCurso.nombre,
+        paralelo: selectedCurso.paralelo,
+        gestion: selectedCurso.gestion,
+        capacidad: selectedCurso.capacidad
+      });
+    } else {
+      setForm({
+        nombre: "",
+        paralelo: "",
+        gestion: 0,
+        capacidad: 0
+      });
+    }
+  }, [selectedCurso]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = () => {
+    if (selectedCurso && onUpdate) {
+      // Modo EDITAR
+      onUpdate({
+        nombre: form.nombre,
+        paralelo: form.paralelo,
+        gestion: form.gestion,
+        capacidad: form.capacidad
+      });
+      return;
+    }
+
+    const payload = {
+      ...form,
+    };
+
+    console.log("Payload enviado:", payload);
+
+    onCreate(payload);
+
+    setForm({
+      nombre: "",
+      paralelo: "",
+      gestion: 0,
+      capacidad: 0
+    });
+
+    onClose();
+  };
+
+  const isUpdate = Boolean(selectedCurso);
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+      <DialogTitle>{isUpdate ? "Editar Curso" : "Crear Curso"}</DialogTitle>
+      <DialogContent>
+        <TextField
+          autoFocus
+          margin="dense"
+          name="nombre"
+          label="Nombre"
+          type="text"
+          fullWidth
+          value={form.nombre}
+          onChange={handleChange}
+        />
+        <TextField
+          margin="dense"
+          name="paralelo"
+          label="Paralelo"
+          type="text"
+          fullWidth
+          value={form.paralelo}
+          onChange={handleChange}
+        />
+        <TextField
+          margin="dense"
+          name="gestion"
+          label="Gestion"
+          type="number"
+          fullWidth
+          value={form.gestion}
+          onChange={handleChange}
+        />
+        <TextField
+          margin="dense"
+          name="capacidad"
+          label="Capacidad"
+          type="number"
+          fullWidth
+          value={form.capacidad}
+          onChange={handleChange}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancelar</Button>
+        <Button
+          onClick={() => {
+            handleSubmit();
+            onClose();
+          }}
+          variant="contained"
+        >
+          {isUpdate ? "Actualizar" : "Crear"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}

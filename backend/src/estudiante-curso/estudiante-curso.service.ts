@@ -1,9 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Estudiante } from 'src/estudiante/estudiante.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Curso } from '../cursos/cursos.entity';
 import { EstudianteCurso } from 'src/estudiante-curso/estudiante_curso.entity';
+import { InjectDataSource } from '@nestjs/typeorm';
+
+export interface EstudianteNoCalificadoDto {
+  id: number;
+  nombres: string;
+  apellidoPat: string;
+  apellidoMat: string;
+}
 
 @Injectable()
 export class EstudianteCursoService {
@@ -14,13 +26,14 @@ export class EstudianteCursoService {
     private readonly estudianteRepository: Repository<Estudiante>,
     @InjectRepository(Curso)
     private readonly cursoRepository: Repository<Curso>,
-    private dataSource: DataSource,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
   async getEstudiantesPorCurso(idCurso: number) {
     return this.estudianteCursoRepository.find({
       where: { curso: { id: idCurso }, estado: 'activo' },
-      relations: ['estudiante'], // Para traer datos del estudiante
+      relations: ['estudiante'],
     });
   }
 
@@ -86,5 +99,38 @@ export class EstudianteCursoService {
     }
     estudianteCurso.estado = 'inactivo';
     return await this.estudianteCursoRepository.save(estudianteCurso);
+  }
+
+  async obtenerEstudiantesNoCalificados(
+    idCurso: number,
+    idMateria: number,
+  ): Promise<EstudianteNoCalificadoDto[]> {
+    if (isNaN(idCurso) || isNaN(idMateria)) {
+      throw new BadRequestException('idCurso o idMateria inválidos');
+    }
+    const result: EstudianteNoCalificadoDto[] = await this.dataSource.query(
+      `
+  SELECT 
+    e.id,
+    e.nombres,
+    e.apellidoPat,
+    e.apellidoMat
+  FROM estudiante e
+  INNER JOIN estudiante_curso ec ON ec.idEstudiante = e.id
+  WHERE ec.idCurso = ?
+    AND ec.estado = 'activo'
+    AND e.estado = 'activo'
+    AND NOT EXISTS (
+      SELECT 3
+      FROM calificaciones c
+      WHERE c.idEstudiante = e.id
+        AND c.idMateria = ?
+        AND c.estado = 'activo'
+    )
+  `,
+      [idCurso, idMateria],
+    );
+
+    return result;
   }
 }

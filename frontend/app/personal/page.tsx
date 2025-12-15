@@ -1,17 +1,20 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import {
   CircularProgress,
   Container,
   Typography,
   Button,
   Box,
-  Collapse
+  Collapse,
+  TextField
 } from "@mui/material"
 import { api } from "@/app/lib/api"
 import TablePersonalActivo from "@/app/components/personal/table-personal"
-import FormPersonal from "@/app/components/personal/form-personal"
+import PersonalForm from "@/app/components/personal/form-personal"
+import DetallePersonal from "../components/personal/detalle-personal"
+import Navbar from "../components/Navbar/navbar"
 
 interface Personal {
   id: number
@@ -33,6 +36,8 @@ export default function PersonalPage() {
   const [loading, setLoading] = useState(true)
   const [mostrarForm, setMostrarForm] = useState(false)
   const [editando, setEditando] = useState<Personal | undefined>()
+  const [textoBusqueda, setTextoBusqueda] = useState("")
+  const [verPersonal, setVerPersonal] = useState<Personal | null>(null)
 
   const fetchPersonal = () =>
     api
@@ -44,6 +49,18 @@ export default function PersonalPage() {
   useEffect(() => {
     fetchPersonal()
   }, [])
+
+  const personalFiltrado = useMemo(() => {
+    if (!textoBusqueda) return personal
+    const low = textoBusqueda.toLowerCase()
+    return personal.filter(
+      (p) =>
+        p.nombres.toLowerCase().includes(low) ||
+        p.apellidoPat.toLowerCase().includes(low) ||
+        p.apellidoMat.toLowerCase().includes(low) ||
+        p.identificacion.toLowerCase().includes(low)
+    )
+  }, [personal, textoBusqueda])
 
   const despuesDeGuardar = () => {
     setMostrarForm(false)
@@ -61,33 +78,48 @@ export default function PersonalPage() {
     setMostrarForm(true)
   }
 
+  const handleVer = (p: Personal) => setVerPersonal(p)
+  const cerrarVer = () => setVerPersonal(null)
+
   if (loading)
     return <CircularProgress sx={{ display: "block", mx: "auto", mt: 4 }} />
 
-  return (
+  return (<>
+    <Navbar/>
     <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={2}
-      >
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h4">Personal Activo</Typography>
         <Button variant="contained" onClick={handleNuevo}>
           Nuevo
         </Button>
       </Box>
 
+      <TextField
+        fullWidth
+        label="Buscar por nombre, apellido o CI"
+        value={textoBusqueda}
+        onChange={(e) => setTextoBusqueda(e.target.value)}
+        sx={{ mb: 3 }}
+      />
+
       <Collapse in={mostrarForm} unmountOnExit>
         <Box mb={3}>
-          <FormPersonal
-            personalToEdit={editando}
-            onGuardado={despuesDeGuardar}
-          />
+          <PersonalForm personalToEdit={editando} onClose={despuesDeGuardar} />
         </Box>
       </Collapse>
 
-      <TablePersonalActivo personal={personal} onEdit={handleEditar} />
+      <TablePersonalActivo
+        personal={personalFiltrado}
+        onEdit={handleEditar}
+        onView={handleVer}
+      />
+
+      <DetallePersonal
+        open={!!verPersonal}
+        onClose={cerrarVer}
+        personal={verPersonal}
+      />
     </Container>
+    </>
   )
 }

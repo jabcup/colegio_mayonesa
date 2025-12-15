@@ -6,6 +6,7 @@ import {
   Put,
   Delete,
   Param,
+  Query,
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreatePersonalDto } from './dto/create-personal.dto';
@@ -43,6 +44,21 @@ export class PersonalController {
   @ApiOperation({ summary: 'Mostrar Personal Activo' })
   listarPersonalActivo() {
     return this.personalService.getPersonalActivo();
+  }
+
+  @Get('Docentes')
+  @ApiOperation({ summary: 'Obtener lista de docentes activos' })
+  getDocentes() {
+    return this.personalService.getDocentes();
+  }
+
+  @Get('DocentesDisponibles')
+  @ApiOperation({ summary: 'Docentes disponibles por día y horario' })
+  getDocentesDisponibles(
+    @Query('dia') dia: string,
+    @Query('idHorario') idHorario: number,
+  ) {
+    return this.personalService.getDocentesDisponibles(dia, Number(idHorario));
   }
 
   @Put('EditarPersonal/:id')

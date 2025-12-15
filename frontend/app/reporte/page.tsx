@@ -2,24 +2,36 @@
 
 import Navbar from "@/app/components/Navbar/navbar";
 
-import {
-  Button,
-  CircularProgress,
-  MenuItem,
-  TextField,
-  Typography,
-} from "@mui/material";
-import { useEffect, useState } from "react";
-import { api } from "../lib/api";
+import { Button, Typography } from "@mui/material";
+
+import { useState } from "react";
 
 import FormFiltrosReporte from "../components/reporte/form-filtros-reporte";
 
-export default function ReportePage() {
-  const [loading, setLoading] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+import { getAuthData } from "../lib/auth";
+import { Boton } from "../components/botones/botonNav";
 
-  useEffect(() => {}, []);
-  
+type TipoReporte =
+  | "calificacionesCurso"
+  | "calificacionesEstudiante"
+  | "asistenciasCurso"
+  | "asistenciasEstudiante"
+  | "pagosCurso"
+  | "pagosEstudiante"
+  | "listadoEstudiantes"
+  | "tutoresCurso";
+
+export default function ReportePage() {
+  const [showForm, setShowForm] = useState(false);
+  const [tipoReporte, setTipoReporte] = useState<TipoReporte | null>(null);
+
+  const { rol } = getAuthData();
+
+  const handleOpenFiltro = (reporte: TipoReporte) => {
+    setTipoReporte(reporte);
+    setShowForm(true);
+  };
+
   return (
     <>
       <Navbar />
@@ -27,47 +39,98 @@ export default function ReportePage() {
         Página de Reportes
       </Typography>
 
-      <Button 
-        variant="contained"
-        color="primary"
-        onClick={() => setShowForm(true)}
-        sx={ { mb: 2} }
-      >
-        Descargar Reporte Calificaciones por Curso
-      </Button>
+      {rol !== "Cajero" && (
+        <Boton
+          label="Descargar Reporte Calificaciones por Curso"
+          // variant="contained"
+          color="success"
+          onClick={() => handleOpenFiltro("calificacionesCurso")}
+          className="m-2"
+          size="small"
+        />
+      )}
+      <br />
+      {rol !== "Cajero" && (
+        <Boton
+          label="Descargar Reporte Calificaciones por Estudiante"
+          color="success"
+          onClick={() => handleOpenFiltro("calificacionesEstudiante")}
+          className="ml-2"
+          size="small"
+        />
+      )}
+      <br />
+      {rol !== "Cajero" && (
+        <Boton
+        label=" Descargar Reporte Asistencias por Curso"
+          color="success"
+          onClick={() => handleOpenFiltro("asistenciasCurso")}
+          className="ml-2"
+        />
+      )}
+<br />
+      {rol !== "Cajero" && (
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleOpenFiltro("asistenciasEstudiante")}
+          sx={{ mb: 2 }}
+        >
+          Descargar Reporte Asistencias por Estudiante
+        </Button>
+      )}
 
-      <Button variant="contained" color="primary">
-        Descargar Reporte Calificaciones por Estudiante
-      </Button>
+      {rol !== "Docente" && (
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleOpenFiltro("pagosCurso")}
+          sx={{ mb: 2 }}
+        >
+          Descargar Reporte Pagos por Curso
+        </Button>
+      )}
 
-      <Button variant="contained" color="primary">
-        Descargar Reporte Asistencias por Curso
-      </Button>
+      {rol !== "Docente" && (
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleOpenFiltro("pagosEstudiante")}
+          sx={{ mb: 2 }}
+        >
+          Descargar Reporte Pagos por Estudiante
+        </Button>
+      )}
 
-      <Button variant="contained" color="primary">
-        Descargar Reporte Asistencias por Estudiante
-      </Button>
+      {rol !== "Cajero" && (
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleOpenFiltro("listadoEstudiantes")}
+          sx={{ mb: 2 }}
+        >
+          Descargar Reporte Listado de Estudiantes de un Curso
+        </Button>
+      )}
 
-      <Button variant="contained" color="primary">
-        Descargar Reporte Pagos por Curso
-      </Button>
+      {rol !== "Cajero" && rol !== "Docente" && (
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleOpenFiltro("tutoresCurso")}
+          sx={{ mb: 2 }}
+        >
+          Descargar Reporte Tutores por Curso
+        </Button>
+      )}
 
-      <Button variant="contained" color="primary">
-        Descargar Reporte Pagos por Estudiante
-      </Button>
-
-      <Button variant="contained" color="primary">
-        Descargar Reporte Listado de Estudiantes de un Curso
-      </Button>
-
-      <Button variant="contained" color="primary">
-        Descargar Reporte Tutores por Curso
-      </Button>
-
-      <FormFiltrosReporte
-        open={showForm}
-        onClose={() => setShowForm(false)}
-      />
+      {tipoReporte && (
+        <FormFiltrosReporte
+          open={showForm}
+          onClose={() => setShowForm(false)}
+          tipoReporte={tipoReporte}
+        />
+      )}
     </>
   );
 }
