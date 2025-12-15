@@ -61,16 +61,14 @@ export default function ReportePage() {
       )}
       <br />
       {rol !== "Cajero" && (
-        <Button
-          variant="contained"
-          color="primary"
+        <Boton
+        label=" Descargar Reporte Asistencias por Curso"
+          color="success"
           onClick={() => handleOpenFiltro("asistenciasCurso")}
-          sx={{ mb: 2 }}
-        >
-          Descargar Reporte Asistencias por Curso
-        </Button>
+          className="ml-2"
+        />
       )}
-
+<br />
       {rol !== "Cajero" && (
         <Button
           variant="contained"
