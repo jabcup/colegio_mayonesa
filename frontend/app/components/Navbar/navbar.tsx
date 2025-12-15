@@ -113,6 +113,7 @@ export default function Navbar() {
             onClick={() => router.push("/asignacion")}
           />
           )}
+          {rol !== "Cajero" && rol!== "Docente" &&  (
           <Boton
             label="Cursos"
             color="success"
@@ -120,6 +121,7 @@ export default function Navbar() {
             className="ml-2"
             onClick={() => router.push("/cursos")}
           />
+          )}
           <LogoutButton />
         </Toolbar>
       </AppBar>

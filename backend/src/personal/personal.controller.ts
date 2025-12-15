@@ -57,8 +57,13 @@ export class PersonalController {
   getDocentesDisponibles(
     @Query('dia') dia: string,
     @Query('idHorario') idHorario: number,
+    @Query('idAsignacionActual') idAsignacionActual?: number,
   ) {
-    return this.personalService.getDocentesDisponibles(dia, Number(idHorario));
+    return this.personalService.getDocentesDisponibles(
+      dia,
+      Number(idHorario),
+      idAsignacionActual ? Number(idAsignacionActual) : undefined,
+    );
   }
 
   @Put('EditarPersonal/:id')

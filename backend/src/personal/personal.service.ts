@@ -51,24 +51,33 @@ export class PersonalService {
       .getRawMany();
   }
 
-  async getDocentesDisponibles(dia: string, idHorario: number) {
-    return this.personalRepository
+  async getDocentesDisponibles(
+    dia: string,
+    idHorario: number,
+    idAsignacionActual?: number,
+  ) {
+    const qb = this.personalRepository
       .createQueryBuilder('personal')
       .innerJoin('usuarios', 'usuario', 'usuario.idPersonal = personal.id')
       .innerJoin('roles', 'rol', 'rol.id = usuario.idRol')
       .where('rol.nombre = :rol', { rol: 'Docente' })
       .andWhere('personal.estado = :estado', { estado: 'activo' })
-      .andWhere('usuario.estado = :estadoUsuario', { estadoUsuario: 'activo' })
-      .andWhere(
-        `personal.id NOT IN (
+      .andWhere('usuario.estado = :estadoUsuario', { estadoUsuario: 'activo' });
+
+    qb.andWhere(`
+        personal.id NOT IN (
         SELECT a.idPersonal
         FROM asignacion_clases a
         WHERE a.dia = :dia
         AND a.idHorario = :idHorario
         AND a.estado = 'activo'
-      )`,
-        { dia, idHorario },
+        ${idAsignacionActual ? 'AND a.id != :idAsignacionActual' : ''}
       )
+      `);
+
+    qb.setParameters({ dia, idHorario, idAsignacionActual });
+    return qb
+
       .select([
         'personal.id AS id',
         "CONCAT(personal.nombres,' ',personal.apellidoPat,' ',IFNULL(personal.apellidoMat,'')) AS nombre",

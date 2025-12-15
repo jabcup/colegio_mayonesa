@@ -45,9 +45,14 @@ export default function AsignacionPage() {
 
   const [cursos, setCursos] = useState<Curso[]>([]);
 
+  const [modoEdicion, setModoEdicion] = useState(false);
+
   const [contextoAsignacion, setContextoAsignacion] = useState<{
+    idAsignacion?: number;
     dia: string;
     idHorario: number;
+    idDocente?: number;
+    idMateria?: number;
   } | null>(null);
 
   const cargarCursos = async () => {
@@ -77,7 +82,7 @@ export default function AsignacionPage() {
     cargarCursos();
   }, []);
 
-  const [selectedCurso, setSelectedCurso] = useState<number | ''>('');
+  const [selectedCurso, setSelectedCurso] = useState<number | "">("");
 
   const cargarAsignaciones = async (cursoId: string) => {
     const cursoIdInt = parseInt(cursoId);
@@ -97,6 +102,7 @@ export default function AsignacionPage() {
 
   const handleAbrirAsignacion = (dia: string, idHorario: number) => {
     setContextoAsignacion({ dia, idHorario });
+    setModoEdicion(false);
     setShowForm(true);
   };
 
@@ -109,20 +115,43 @@ export default function AsignacionPage() {
   }) => {
     if (!contextoAsignacion || !selectedCurso) return;
 
-    const payload = {
-      idCurso: selectedCurso,
-      dia: contextoAsignacion.dia,
-      idHorario: contextoAsignacion.idHorario,
-      idMateria,
-      idPersonal: idDocente,
-    };
+    if (modoEdicion && contextoAsignacion.idAsignacion) {
+      await api.put(
+        `/asignacion-clases/ActualizarAsignacion/${contextoAsignacion.idAsignacion}`,
+        {
+          idMateria,
+          idPersonal: idDocente,
+        }
+      );
+    } else {
+      const payload = {
+        idCurso: selectedCurso,
+        dia: contextoAsignacion.dia,
+        idHorario: contextoAsignacion.idHorario,
+        idMateria,
+        idPersonal: idDocente,
+      };
 
-    await api.post("/asignacion-clases/CrearAsignacion", payload);
+      await api.post("/asignacion-clases/CrearAsignacion", payload);
+    }
 
     setShowForm(false);
     setContextoAsignacion(null);
+    setModoEdicion(false);
 
     cargarAsignaciones(String(selectedCurso));
+  };
+
+  const handleEditarAsignacion = (data: {
+    idAsignacion: number;
+    dia: string;
+    idHorario: number;
+    idDocente: number;
+    idMateria: number;
+  }) => {
+    setContextoAsignacion(data);
+    setModoEdicion(true);
+    setShowForm(true);
   };
 
   return (
@@ -156,6 +185,7 @@ export default function AsignacionPage() {
         <HorarioTabla
           asignaciones={asignaciones}
           onAsignar={handleAbrirAsignacion}
+          onEditar={handleEditarAsignacion}
         />
       )}
 
@@ -163,9 +193,20 @@ export default function AsignacionPage() {
         open={showForm}
         dia={contextoAsignacion?.dia || ""}
         idHorario={contextoAsignacion?.idHorario || 0}
+        idAsignacionActual={contextoAsignacion?.idAsignacion}
+        modoEdicion={modoEdicion}
+        valoresIniciales={
+          modoEdicion
+            ? {
+                idDocente: contextoAsignacion?.idDocente,
+                idMateria: contextoAsignacion?.idMateria,
+              }
+            : undefined
+        }
         onClose={() => {
           setShowForm(false);
           setContextoAsignacion(null);
+          setModoEdicion(false);
         }}
         onGuardar={handleGuardarAsignacion}
       />

@@ -5,6 +5,7 @@ import {
   TableCell,
   TableBody,
   Button,
+  Typography,
 } from "@mui/material";
 
 import { getAuthData } from "@/app/lib/auth";
@@ -20,12 +21,25 @@ interface Asignacion {
   materia: string;
 }
 
-interface HorarioTableProps {
-  asignaciones: Asignacion[];
-  onAsignar: (dia: string, idHorario: number) => void; // Llamar al formulario de asignación
+interface EditContext {
+  idAsignacion: number;
+  dia: string;
+  idHorario: number;
+  idDocente: number;
+  idMateria: number;
 }
 
-export default function HorarioTabla ({ asignaciones, onAsignar }: HorarioTableProps) {
+interface HorarioTableProps {
+  asignaciones: Asignacion[];
+  onAsignar: (dia: string, idHorario: number) => void;
+  onEditar: (data: EditContext) => void;
+}
+
+export default function HorarioTabla({
+  asignaciones,
+  onAsignar,
+  onEditar,
+}: HorarioTableProps) {
   const dias = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes"];
   const horarios = [
     "08:00 - 09:00",
@@ -58,8 +72,26 @@ export default function HorarioTabla ({ asignaciones, onAsignar }: HorarioTableP
                 <TableCell key={dia}>
                   {asignacion ? (
                     <>
-                      <div>{asignacion.docente}</div>
-                      <div>{asignacion.materia}</div>
+                      <Typography fontWeight="bold">
+                        {asignacion.materia}
+                      </Typography>
+                      <Typography variant="body2">
+                        {asignacion.docente}
+                      </Typography>
+                      <Button
+                        color="warning"
+                        onClick={() =>
+                          onEditar({
+                            idAsignacion: asignacion.idAsignacion,
+                            dia: asignacion.dia,
+                            idHorario: asignacion.idHorario,
+                            idDocente: asignacion.idDocente,
+                            idMateria: asignacion.idMateria,
+                          })
+                        }
+                      >
+                        Editar
+                      </Button>
                     </>
                   ) : rol !== "Docente" ? (
                     <Button
@@ -80,4 +112,4 @@ export default function HorarioTabla ({ asignaciones, onAsignar }: HorarioTableP
       </TableBody>
     </Table>
   );
-};
+}
