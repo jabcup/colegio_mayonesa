@@ -18,23 +18,30 @@ export default function Navbar() {
           <Boton
             label="Estudiantes"
             color="success"
-            size="medium"
+            size="small"
             className="ml-2"
             onClick={() => router.push("/estudiante")}
           />
           <Boton
             label="Materias"
             color="success"
-            size="medium"
+            size="small"
             className="ml-2"
             onClick={() => router.push("/materias")}
           />
           <Boton
             label="Horarios"
             color="success"
-            size="medium"
+            size="small"
             className="ml-2"
             onClick={() => router.push("/horarios")}
+          />
+          <Boton
+            label="Pagos"
+            color="success"
+            size="small"
+            className="ml-2"
+            onClick={() => router.push("/pago")}
           />
           <LogoutButton />
         </Toolbar>

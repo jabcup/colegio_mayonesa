@@ -6,6 +6,7 @@ import TablePagos from "@/app/components/pago/table-pago"
 import FormPago from "@/app/components/pago/form-pago"
 import { api } from "@/app/lib/api"
 import Cookies from "js-cookie"
+import Navbar from "../components/Navbar/navbar"
 
 export default function PagosPage() {
   const [showForm, setShowForm] = useState(false)
@@ -60,7 +61,8 @@ export default function PagosPage() {
     setShowForm(false)
   }
 
-  return (
+  return (<>
+  <Navbar/>
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Pagos</h1>
@@ -84,5 +86,6 @@ export default function PagosPage() {
       {showForm && <FormPago estudiantes={data.estudiantes} onClose={() => setShowForm(false)} onCreate={handleCreate} />}
       <TablePagos pagos={pagosFiltrados} estudiantes={data.estudiantes} />
     </div>
+    </>
   )
 }
