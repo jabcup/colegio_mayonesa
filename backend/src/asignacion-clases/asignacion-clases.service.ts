@@ -164,16 +164,14 @@ export class AsignacionClasesService {
   //   });
   // }
 
-
-
   async getHorarioDocente(idPersonal: number): Promise<AsignacionClase[]> {
     return this.asignacionRepository.find({
       where: { personal: { id: idPersonal } },
       relations: ['personal', 'curso', 'materia', 'horario'],
-      order: { dia: 'ASC', horario: { horario: 'ASC' } },    
+      order: { dia: 'ASC', horario: { horario: 'ASC' } },
     });
   }
-  
+
   async deleteAsignacion(id: number) {
     const asignacion = await this.asignacionRepository.findOne({
       where: { id },
@@ -183,5 +181,32 @@ export class AsignacionClasesService {
     }
     asignacion.estado = 'inactivo';
     return await this.asignacionRepository.save(asignacion);
+  }
+
+  async getAsignacionesPorCurso(idCurso: number) {
+    return this.asignacionRepository
+      .createQueryBuilder('asignacion')
+      .leftJoin('asignacion.curso', 'curso')
+      .leftJoin('asignacion.personal', 'personal')
+      .leftJoin('asignacion.materia', 'materia')
+      .leftJoin('asignacion.horario', 'horario')
+      .where('curso.id = :idCurso', { idCurso })
+      .andWhere('asignacion.estado = :estado', { estado: 'activo' })
+      .select([
+        'asignacion.id AS idAsignacion',
+        'asignacion.dia AS dia',
+
+        'horario.id AS idHorario',
+        'horario.horario AS horario',
+
+        'personal.id AS idDocente',
+        "CONCAT(personal.nombres, ' ', personal.apellidoPat) AS docente",
+
+        'materia.id AS idMateria',
+        'materia.nombre AS materia',
+      ])
+      .orderBy('horario.id', 'ASC')
+      .addOrderBy('asignacion.dia', 'ASC')
+      .getRawMany();
   }
 }

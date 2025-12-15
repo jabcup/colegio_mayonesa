@@ -45,6 +45,12 @@ export class PersonalController {
     return this.personalService.getPersonalActivo();
   }
 
+  @Get('Docentes')
+  @ApiOperation({ summary: 'Obtener lista de docentes activos' })
+  getDocentes() {
+    return this.personalService.getDocentes();
+  }
+
   @Put('EditarPersonal/:id')
   @ApiOperation({ summary: 'Editar Personal' })
   updatePersonal(@Param('id') id: number, @Body() dto: CreatePersonalDto) {

@@ -78,6 +78,7 @@ interface Props {
   onClose: () => void;
   //Edit
   selectedCalificacion: CalificacionFiltrada | null;
+  
   onCreate: (data: {
     idMateria: number;
     idEstudiante: number;

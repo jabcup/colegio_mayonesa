@@ -56,16 +56,17 @@ export class AsignacionClasesController {
   }
 
   @Get('horario/:idPersonal')
-  async getHorarioDocente(@Param('idPersonal', ParseIntPipe) idPersonal: number) {
+  async getHorarioDocente(
+    @Param('idPersonal', ParseIntPipe) idPersonal: number,
+  ) {
     return this.asignacionService.getHorarioDocente(idPersonal);
   }
-  
-  // @Get('estudiante/:id')
-  // @ApiOperation({
-  //   summary: 'Obtener asignaciones de clase por ID de estudiante',
-  // })
-  // getPorEstudiante(@Param('id') id: number) {
-  //   return this.asignacionService.getAsignacionesPorEstudiante(id);}
+
+  @Get('curso/:idCurso')
+  @ApiOperation({ summary: 'Obtener horario de clases por curso' })
+  getAsignacionesPorCurso(@Param('idCurso') idCurso: number) {
+    return this.asignacionService.getAsignacionesPorCurso(Number(idCurso));
+  }
 
   @Put('ActualizarAsignacion/:id')
   @ApiOperation({ summary: 'Actualizar Asignacion' })

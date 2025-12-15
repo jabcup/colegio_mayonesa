@@ -20,6 +20,8 @@ export default function Navbar() {
                 <Boton label="Reportes" color="success" size="medium" className="ml-2" onClick={() => router.push("/reporte")} />
                 <Boton label="Asistencias" color="success" size="medium" className="ml-2" onClick={() => router.push("/asistencias")} />
                 <Button variant="outlined" color="inherit" onClick={() => router.push("/pago")}> Pagos </Button>
+                <Boton label="Roles" color="success" size="medium" className="ml-2" onClick={() => router.push("/rol")} />
+                <Boton label="Asignaciones" color="success" size="medium" className="ml-2" onClick={() => router.push("/asignacion")} />
             </Toolbar>
         </AppBar>
     );

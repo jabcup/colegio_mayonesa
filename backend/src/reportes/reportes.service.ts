@@ -18,6 +18,81 @@ export interface CalificacionReporte {
   calificacion: number; // calificación obtenida
 }
 
+export interface PagoCursoReporte {
+  numero: number;
+  estudiante: string;
+  curso: string;
+  paralelo: string;
+  mesPago: number;
+  anioPago: number;
+  total: number;
+  estadoPago: string;
+}
+
+export interface PagoPorEstudianteReporte {
+  numero: number;
+  estudiante: string;
+  curso: string;
+  paralelo: string;
+  gestion: string;
+  total: number;
+  estadoPago: string;
+  fecha_creacion: Date;
+}
+
+export interface CalificacionEstudianteReporte {
+  numero: number;
+  estudiante: string;
+  curso: string;
+  paralelo: string;
+  gestion: string;
+  materia: string;
+  calificacion: number;
+  estado: string;
+}
+
+export interface AsistenciaCursoReporte {
+  numero: number;
+  estudiante: string;
+  curso: string;
+  paralelo: string;
+  gestion: string;
+  fecha: Date;
+  estado_asistencia: string;
+}
+
+export interface AsistenciaEstudianteReporte {
+  numero: number;
+  estudiante: string;
+  curso: string;
+  paralelo: string;
+  gestion: string;
+  fecha: Date;
+  estado_asistencia: string;
+}
+
+export interface EstudianteCursoReporte {
+  numero: number;
+  estudiante: string;
+  identificacion: string;
+  rude: string;
+  correo_institucional: string;
+  telefono_referencia: string;
+  curso: string;
+  paralelo: string;
+  gestion: string;
+}
+
+export interface TutorCursoReporte {
+  numero: number;
+  curso: string;
+  paralelo: string;
+  gestion: string;
+  tutor_completo: string;
+  telefono: string;
+  correo: string;
+}
+
 @Injectable()
 export class ReportesService {
   constructor(
@@ -40,15 +115,15 @@ export class ReportesService {
   ) {}
 
   async buscarPagos(params: {
-    curso?: string;
+    idCurso?: number;
     estadoPago?: string;
     mesPago?: number;
     anioPago?: number;
   }) {
     const query = this.pagosViewRepo.createQueryBuilder('v');
 
-    if (params.curso) {
-      query.andWhere('v.curso LIKE :curso', { curso: `%${params.curso}%` });
+    if (params.idCurso) {
+      query.andWhere('v.idCurso = :idCurso', { idCurso: params.idCurso });
     }
 
     if (params.estadoPago) {
@@ -71,6 +146,121 @@ export class ReportesService {
     }));
   }
 
+  async generarPdfPagos(datos: PagoCursoReporte[]): Promise<Buffer> {
+    const pdfDoc = await PDFDocument.create();
+    let page = pdfDoc.addPage([612, 792]); // A4
+    const { width, height } = page.getSize();
+
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+    let y = height - 50;
+
+    // 🏫 Encabezado
+    page.drawText('UNIDAD EDUCATIVA XYZ', {
+      x: 50,
+      y,
+      size: 14,
+      font: fontBold,
+    });
+
+    y -= 20;
+
+    page.drawText('Reporte de Pagos por Curso', {
+      x: 50,
+      y,
+      size: 16,
+      font: fontBold,
+    });
+
+    y -= 15;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+
+    y -= 25;
+
+    // 🧾 Cabecera tabla
+    const col = {
+      nro: 50,
+      estudiante: 80,
+      curso: 230,
+      mes: 320,
+      anio: 360,
+      total: 410,
+      estado: 480,
+    };
+
+    page.drawText('N°', { x: col.nro, y, size: 10, font: fontBold });
+    page.drawText('Estudiante', {
+      x: col.estudiante,
+      y,
+      size: 10,
+      font: fontBold,
+    });
+    page.drawText('Curso', { x: col.curso, y, size: 10, font: fontBold });
+    page.drawText('Mes', { x: col.mes, y, size: 10, font: fontBold });
+    page.drawText('Año', { x: col.anio, y, size: 10, font: fontBold });
+    page.drawText('Total', { x: col.total, y, size: 10, font: fontBold });
+    page.drawText('Estado', { x: col.estado, y, size: 10, font: fontBold });
+
+    y -= 10;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 0.8,
+    });
+
+    y -= 15;
+
+    // 📄 Filas
+    for (const d of datos) {
+      if (y < 60) {
+        page = pdfDoc.addPage([612, 792]);
+        y = height - 50;
+      }
+
+      page.drawText(String(d.numero), { x: col.nro, y, size: 9, font });
+      page.drawText(d.estudiante, { x: col.estudiante, y, size: 9, font });
+      page.drawText(`${d.curso} ${d.paralelo}`, {
+        x: col.curso,
+        y,
+        size: 9,
+        font,
+      });
+      page.drawText(String(d.mesPago), { x: col.mes, y, size: 9, font });
+      page.drawText(String(d.anioPago), { x: col.anio, y, size: 9, font });
+      page.drawText(`${d.total} Bs`, { x: col.total, y, size: 9, font });
+      page.drawText(d.estadoPago, { x: col.estado, y, size: 9, font });
+
+      y -= 15;
+    }
+
+    // 📅 Footer
+    y -= 20;
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 0.5,
+    });
+
+    y -= 15;
+    page.drawText(`Fecha de emisión: ${new Date().toLocaleDateString()}`, {
+      x: 50,
+      y,
+      size: 9,
+      font,
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    return Buffer.from(pdfBytes);
+  }
+
   async buscarPagosPorEstudiante(idEstudiante: number) {
     const query = this.pagosPorEstudianteRepo
       .createQueryBuilder('v')
@@ -82,24 +272,114 @@ export class ReportesService {
       ...r,
     }));
   }
+  async generarPdfPagosPorEstudiante(
+    datos: PagoPorEstudianteReporte[],
+  ): Promise<Buffer> {
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([612, 792]); // A4
+    const { width, height } = page.getSize();
 
-  async buscarCalificacionesPorCurso(params: {
-    curso?: string;
-    paralelo?: string;
-    gestion?: number;
-  }) {
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+    let y = height - 50;
+
+    // 🏫 Encabezado
+    page.drawText('UNIDAD EDUCATIVA XYZ', {
+      x: 50,
+      y,
+      size: 14,
+      font: fontBold,
+    });
+
+    y -= 20;
+
+    page.drawText('Reporte de Pagos por Estudiante', {
+      x: 50,
+      y,
+      size: 16,
+      font: fontBold,
+    });
+
+    y -= 15;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+
+    y -= 25;
+
+    // 🧾 Cabecera tabla
+    const colX = {
+      nro: 50,
+      monto: 220,
+      estado: 300,
+      fecha: 400,
+    };
+
+    page.drawText('N°', { x: colX.nro, y, size: 10, font: fontBold });
+    page.drawText('Monto', { x: colX.monto, y, size: 10, font: fontBold });
+    page.drawText('Estado', { x: colX.estado, y, size: 10, font: fontBold });
+    page.drawText('Fecha', { x: colX.fecha, y, size: 10, font: fontBold });
+
+    y -= 10;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 0.8,
+    });
+
+    y -= 15;
+
+    // 📄 Filas
+    for (const d of datos) {
+      if (y < 60) {
+        y = height - 50;
+        pdfDoc.addPage();
+      }
+
+      page.drawText(String(d.numero), { x: colX.nro, y, size: 9, font });
+      page.drawText(`${d.total} Bs`, { x: colX.monto, y, size: 9, font });
+      page.drawText(d.estadoPago, { x: colX.estado, y, size: 9, font });
+      page.drawText(new Date(d.fecha_creacion).toLocaleDateString(), {
+        x: colX.fecha,
+        y,
+        size: 9,
+        font,
+      });
+
+      y -= 15;
+    }
+
+    // 📅 Footer
+    y -= 20;
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 0.5,
+    });
+
+    y -= 15;
+    page.drawText(`Fecha de emisión: ${new Date().toLocaleDateString()}`, {
+      x: 50,
+      y,
+      size: 9,
+      font,
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    return Buffer.from(pdfBytes);
+  }
+
+  async buscarCalificacionesPorCurso(params: { idCurso?: number }) {
     const query = this.calificacionesCursoRepo.createQueryBuilder('v');
 
-    if (params.curso) {
-      query.andWhere('v.curso LIKE :curso', { curso: `%${params.curso}%` });
-    }
-
-    if (params.paralelo) {
-      query.andWhere('v.paralelo = :paralelo', { paralelo: params.paralelo });
-    }
-
-    if (params.gestion) {
-      query.andWhere('v.gestion = :gestion', { gestion: params.gestion });
+    if (params.idCurso) {
+      query.andWhere('v.idCurso LIKE :idCurso', { idCurso: params.idCurso });
     }
 
     const resultados = await query.getMany();
@@ -114,37 +394,132 @@ export class ReportesService {
     datos: CalificacionReporte[],
   ): Promise<Buffer> {
     const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([600, 800]);
-    const { height } = page.getSize();
 
-    const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const page = pdfDoc.addPage([612, 792]); // tamaño A4
+    const { width, height } = page.getSize();
 
-    // Título
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+    let y = height - 50;
+
+    // 🏫 Encabezado institucional
+    page.drawText('UNIDAD EDUCATIVA XYZ', {
+      x: 50,
+      y,
+      size: 14,
+      font: fontBold,
+    });
+
+    y -= 20;
+
     page.drawText('Reporte de Calificaciones por Curso', {
       x: 50,
-      y: height - 50,
-      size: 18,
-      font,
+      y,
+      size: 16,
+      font: fontBold,
+    });
+
+    y -= 15;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 1,
       color: rgb(0, 0, 0),
     });
 
-    // Contenido
-    let y = height - 80;
-    datos.forEach((d, i) => {
-      page.drawText(
-        `${i + 1}. ${d.estudiante} - ${d.materia} - ${d.calificacion}`,
-        {
-          x: 50,
-          y,
-          size: 12,
-        },
-      );
-      y -= 20;
+    y -= 25;
+
+    // 🧾 Cabecera de tabla
+    const colX = {
+      nro: 50,
+      estudiante: 90,
+      materia: 300,
+      nota: 480,
+    };
+
+    page.drawText('N°', { x: colX.nro, y, size: 11, font: fontBold });
+    page.drawText('Estudiante', {
+      x: colX.estudiante,
+      y,
+      size: 11,
+      font: fontBold,
+    });
+    page.drawText('Materia', { x: colX.materia, y, size: 11, font: fontBold });
+    page.drawText('Nota', { x: colX.nota, y, size: 11, font: fontBold });
+
+    y -= 10;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 0.8,
+    });
+
+    y -= 15;
+
+    // 📄 Filas de la tabla
+    for (let i = 0; i < datos.length; i++) {
+      const d = datos[i];
+
+      // Salto de página automático
+      if (y < 50) {
+        y = height - 50;
+        pdfDoc.addPage();
+      }
+
+      page.drawText(String(i + 1), {
+        x: colX.nro,
+        y,
+        size: 10,
+        font,
+      });
+
+      page.drawText(d.estudiante, {
+        x: colX.estudiante,
+        y,
+        size: 10,
+        font,
+      });
+
+      page.drawText(d.materia, {
+        x: colX.materia,
+        y,
+        size: 10,
+        font,
+      });
+
+      page.drawText(String(d.calificacion), {
+        x: colX.nota,
+        y,
+        size: 10,
+        font,
+      });
+
+      y -= 15;
+    }
+
+    // 📅 Footer
+    y -= 20;
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 0.5,
+    });
+
+    y -= 15;
+    page.drawText(`Fecha de emisión: ${new Date().toLocaleDateString()}`, {
+      x: 50,
+      y,
+      size: 9,
+      font,
     });
 
     const pdfBytes = await pdfDoc.save();
     return Buffer.from(pdfBytes);
   }
+
   async buscarCalificacionesPorEstudiante(idEstudiante: number) {
     const query = this.calificacionesEstudianteRepo
       .createQueryBuilder('v')
@@ -158,28 +533,142 @@ export class ReportesService {
     }));
   }
 
-  async buscarAsistenciasPorCurso(params: {
-    curso?: string;
-    paralelo?: string;
-    gestion?: number;
-    mes?: number;
-  }) {
+  async generarPdfCalificacionesPorEstudiante(
+    datos: CalificacionEstudianteReporte[],
+  ): Promise<Buffer> {
+    const pdfDoc = await PDFDocument.create();
+    let page = pdfDoc.addPage([612, 792]); // A4
+    const { width, height } = page.getSize();
+
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+    let y = height - 50;
+
+    // 🏫 Encabezado
+    page.drawText('UNIDAD EDUCATIVA XYZ', {
+      x: 50,
+      y,
+      size: 14,
+      font: fontBold,
+    });
+
+    y -= 20;
+
+    page.drawText('Reporte de Calificaciones por Estudiante', {
+      x: 50,
+      y,
+      size: 16,
+      font: fontBold,
+    });
+
+    y -= 20;
+
+    // 👤 Datos del estudiante (tomamos del primer registro)
+    const estudiante = datos[0];
+
+    page.drawText(`Estudiante: ${estudiante.estudiante}`, {
+      x: 50,
+      y,
+      size: 11,
+      font,
+    });
+
+    y -= 15;
+
+    page.drawText(
+      `Curso: ${estudiante.curso} ${estudiante.paralelo} - Gestión ${estudiante.gestion}`,
+      {
+        x: 50,
+        y,
+        size: 11,
+        font,
+      },
+    );
+
+    y -= 15;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 1,
+    });
+
+    y -= 25;
+
+    // 📊 Cabecera tabla
+    const col = {
+      nro: 50,
+      materia: 90,
+      calificacion: 330,
+      estado: 420,
+    };
+
+    page.drawText('N°', { x: col.nro, y, size: 10, font: fontBold });
+    page.drawText('Materia', { x: col.materia, y, size: 10, font: fontBold });
+    page.drawText('Calificación', {
+      x: col.calificacion,
+      y,
+      size: 10,
+      font: fontBold,
+    });
+    page.drawText('Estado', { x: col.estado, y, size: 10, font: fontBold });
+
+    y -= 10;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 0.8,
+    });
+
+    y -= 15;
+
+    // 📄 Filas
+    for (const d of datos) {
+      if (y < 60) {
+        page = pdfDoc.addPage([612, 792]);
+        y = height - 50;
+      }
+
+      page.drawText(String(d.numero), { x: col.nro, y, size: 9, font });
+      page.drawText(d.materia, { x: col.materia, y, size: 9, font });
+      page.drawText(String(d.calificacion), {
+        x: col.calificacion,
+        y,
+        size: 9,
+        font,
+      });
+      page.drawText(d.estado, { x: col.estado, y, size: 9, font });
+
+      y -= 15;
+    }
+
+    // 📅 Footer
+    y -= 20;
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 0.5,
+    });
+
+    y -= 15;
+    page.drawText(`Fecha de emisión: ${new Date().toLocaleDateString()}`, {
+      x: 50,
+      y,
+      size: 9,
+      font,
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    return Buffer.from(pdfBytes);
+  }
+
+  async buscarAsistenciasPorCurso(params: { idCurso?: number; mes?: number }) {
     const query = this.asistenciasCursoRepo.createQueryBuilder('v');
 
-    if (params.curso) {
-      query.andWhere('v.curso LIKE :curso', { curso: `%${params.curso}%` });
-    }
-
-    if (params.paralelo) {
-      query.andWhere('v.paralelo = :paralelo', { paralelo: params.paralelo });
-    }
-
-    if (params.gestion) {
-      query.andWhere('v.gestion = :gestion', { gestion: params.gestion });
-    }
-
-    if (params.mes) {
-      query.andWhere('MONTH(v.fecha) = :mes', { mes: params.mes });
+    if (params.idCurso) {
+      query.andWhere('v.idCurso = :idCurso', { idCurso: params.idCurso });
     }
 
     const resultados = await query.getMany();
@@ -188,6 +677,151 @@ export class ReportesService {
       numero: index + 1,
       ...r,
     }));
+  }
+
+  async generarPdfAsistenciasPorCurso(
+    datos: AsistenciaCursoReporte[],
+  ): Promise<Buffer> {
+    const pdfDoc = await PDFDocument.create();
+    let page = pdfDoc.addPage([612, 792]); // A4
+    const { width, height } = page.getSize();
+
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+    let y = height - 50;
+
+    // 🏫 Encabezado
+    page.drawText('UNIDAD EDUCATIVA XYZ', {
+      x: 50,
+      y,
+      size: 14,
+      font: fontBold,
+    });
+
+    y -= 20;
+
+    page.drawText('Reporte de Asistencias por Curso', {
+      x: 50,
+      y,
+      size: 16,
+      font: fontBold,
+    });
+
+    y -= 20;
+
+    // 📚 Datos del curso (del primer registro)
+    const info = datos[0];
+
+    page.drawText(
+      `Curso: ${info.curso} ${info.paralelo} - Gestión ${info.gestion}`,
+      {
+        x: 50,
+        y,
+        size: 11,
+        font,
+      },
+    );
+
+    y -= 15;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 1,
+    });
+
+    y -= 25;
+
+    // 📊 Cabecera tabla
+    const col = {
+      nro: 50,
+      estudiante: 80,
+      fecha: 300,
+      estado: 400,
+    };
+
+    page.drawText('N°', { x: col.nro, y, size: 10, font: fontBold });
+    page.drawText('Estudiante', {
+      x: col.estudiante,
+      y,
+      size: 10,
+      font: fontBold,
+    });
+    page.drawText('Fecha', { x: col.fecha, y, size: 10, font: fontBold });
+    page.drawText('Asistencia', {
+      x: col.estado,
+      y,
+      size: 10,
+      font: fontBold,
+    });
+
+    y -= 10;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 0.8,
+    });
+
+    y -= 15;
+
+    // 📄 Filas
+    for (const d of datos) {
+      if (y < 60) {
+        page = pdfDoc.addPage([612, 792]);
+        y = height - 50;
+      }
+
+      page.drawText(String(d.numero), {
+        x: col.nro,
+        y,
+        size: 9,
+        font,
+      });
+
+      page.drawText(d.estudiante, {
+        x: col.estudiante,
+        y,
+        size: 9,
+        font,
+      });
+
+      page.drawText(new Date(d.fecha).toLocaleDateString(), {
+        x: col.fecha,
+        y,
+        size: 9,
+        font,
+      });
+
+      page.drawText(d.estado_asistencia, {
+        x: col.estado,
+        y,
+        size: 9,
+        font,
+      });
+
+      y -= 15;
+    }
+
+    // 📅 Footer
+    y -= 20;
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 0.5,
+    });
+
+    y -= 15;
+    page.drawText(`Fecha de emisión: ${new Date().toLocaleDateString()}`, {
+      x: 50,
+      y,
+      size: 9,
+      font,
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    return Buffer.from(pdfBytes);
   }
 
   async buscarAsistenciaPorEstudiante(idEstudiante: number) {
@@ -203,6 +837,152 @@ export class ReportesService {
     }));
   }
 
+  async generarPdfAsistenciasPorEstudiante(
+    datos: AsistenciaEstudianteReporte[],
+  ): Promise<Buffer> {
+    if (!datos || datos.length === 0) {
+      throw new Error('No existen asistencias para el estudiante');
+    }
+
+    const pdfDoc = await PDFDocument.create();
+    let page = pdfDoc.addPage([612, 792]); // A4
+    const { width, height } = page.getSize();
+
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+    let y = height - 50;
+
+    // 🏫 Encabezado institucional
+    page.drawText('UNIDAD EDUCATIVA XYZ', {
+      x: 50,
+      y,
+      size: 14,
+      font: fontBold,
+    });
+
+    y -= 20;
+
+    page.drawText('Reporte de Asistencias por Estudiante', {
+      x: 50,
+      y,
+      size: 16,
+      font: fontBold,
+    });
+
+    y -= 20;
+
+    // 📌 Datos del estudiante
+    const info = datos[0];
+
+    page.drawText(`Estudiante: ${info.estudiante}`, {
+      x: 50,
+      y,
+      size: 11,
+      font,
+    });
+
+    y -= 15;
+
+    page.drawText(
+      `Curso: ${info.curso} ${info.paralelo} - Gestión ${info.gestion}`,
+      {
+        x: 50,
+        y,
+        size: 11,
+        font,
+      },
+    );
+
+    y -= 15;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 1,
+    });
+
+    y -= 25;
+
+    // 📊 Cabecera de tabla
+    const col = {
+      nro: 50,
+      fecha: 100,
+      estado: 250,
+    };
+
+    page.drawText('N°', { x: col.nro, y, size: 10, font: fontBold });
+    page.drawText('Fecha', { x: col.fecha, y, size: 10, font: fontBold });
+    page.drawText('Asistencia', {
+      x: col.estado,
+      y,
+      size: 10,
+      font: fontBold,
+    });
+
+    y -= 10;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 0.8,
+    });
+
+    y -= 15;
+
+    // 📄 Filas
+    for (const d of datos) {
+      if (y < 60) {
+        page = pdfDoc.addPage([612, 792]);
+        y = height - 50;
+      }
+
+      page.drawText(String(d.numero), {
+        x: col.nro,
+        y,
+        size: 9,
+        font,
+      });
+
+      page.drawText(new Date(d.fecha).toLocaleDateString(), {
+        x: col.fecha,
+        y,
+        size: 9,
+        font,
+      });
+
+      page.drawText(d.estado_asistencia, {
+        x: col.estado,
+        y,
+        size: 9,
+        font,
+      });
+
+      y -= 15;
+    }
+
+    // 📅 Footer
+    y -= 20;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 0.5,
+    });
+
+    y -= 15;
+
+    page.drawText(`Fecha de emisión: ${new Date().toLocaleDateString()}`, {
+      x: 50,
+      y,
+      size: 9,
+      font,
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    return Buffer.from(pdfBytes);
+  }
+
   async listarTutores() {
     const resultados = await this.tutoresCursoRepo
       .createQueryBuilder('v')
@@ -214,23 +994,150 @@ export class ReportesService {
     }));
   }
 
-  async buscarEstudiantesPorCurso(params: {
-    curso?: string;
-    paralelo?: string;
-    gestion?: number;
-  }) {
+  async generarPdfTutoresPorCurso(datos: TutorCursoReporte[]): Promise<Buffer> {
+    if (!datos || datos.length === 0) {
+      throw new Error('No existen tutores registrados');
+    }
+
+    const pdfDoc = await PDFDocument.create();
+    let page = pdfDoc.addPage([612, 792]); // A4
+    const { width, height } = page.getSize();
+
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+    let y = height - 50;
+
+    // 🏫 Encabezado institucional
+    page.drawText('UNIDAD EDUCATIVA XYZ', {
+      x: 50,
+      y,
+      size: 14,
+      font: fontBold,
+    });
+
+    y -= 20;
+
+    page.drawText('Listado de Tutores por Curso', {
+      x: 50,
+      y,
+      size: 16,
+      font: fontBold,
+    });
+
+    y -= 20;
+
+    // 📚 Datos del primer registro (curso)
+    const info = datos[0];
+
+    page.drawText(
+      `Curso: ${info.curso} ${info.paralelo} - Gestión ${info.gestion}`,
+      {
+        x: 50,
+        y,
+        size: 11,
+        font,
+      },
+    );
+
+    y -= 15;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 1,
+    });
+
+    y -= 25;
+
+    // 📊 Cabecera tabla
+    const col = {
+      nro: 50,
+      tutor: 80,
+      telefono: 300,
+      correo: 400,
+    };
+
+    page.drawText('N°', { x: col.nro, y, size: 10, font: fontBold });
+    page.drawText('Tutor', { x: col.tutor, y, size: 10, font: fontBold });
+    page.drawText('Teléfono', { x: col.telefono, y, size: 10, font: fontBold });
+    page.drawText('Correo', { x: col.correo, y, size: 10, font: fontBold });
+
+    y -= 10;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 0.8,
+    });
+
+    y -= 15;
+
+    // 📄 Filas
+    for (const d of datos) {
+      if (y < 60) {
+        page = pdfDoc.addPage([612, 792]);
+        y = height - 50;
+      }
+
+      page.drawText(String(d.numero), {
+        x: col.nro,
+        y,
+        size: 9,
+        font,
+      });
+
+      page.drawText(d.tutor_completo, {
+        x: col.tutor,
+        y,
+        size: 9,
+        font,
+      });
+
+      page.drawText(d.telefono, {
+        x: col.telefono,
+        y,
+        size: 9,
+        font,
+      });
+
+      page.drawText(d.correo, {
+        x: col.correo,
+        y,
+        size: 9,
+        font,
+      });
+
+      y -= 15;
+    }
+
+    // 📅 Footer
+    y -= 20;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 0.5,
+    });
+
+    y -= 15;
+
+    page.drawText(`Fecha de emisión: ${new Date().toLocaleDateString()}`, {
+      x: 50,
+      y,
+      size: 9,
+      font,
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    return Buffer.from(pdfBytes);
+  }
+
+  async buscarEstudiantesPorCurso(params: { idCurso?: number }) {
     const query = this.estudiantesCursoRepo.createQueryBuilder('v');
 
-    if (params.curso) {
-      query.andWhere('v.curso LIKE :curso', { curso: `%${params.curso}%` });
-    }
-
-    if (params.paralelo) {
-      query.andWhere('v.paralelo = :paralelo', { paralelo: params.paralelo });
-    }
-
-    if (params.gestion) {
-      query.andWhere('v.gestion = :gestion', { gestion: params.gestion });
+    if (params.idCurso) {
+      query.andWhere('v.idCurso = :idCurso', { idCurso: params.idCurso });
     }
 
     const resultados = await query.getMany();
@@ -239,5 +1146,160 @@ export class ReportesService {
       numero: index + 1,
       ...r,
     }));
+  }
+
+  async generarPdfEstudiantesPorCurso(
+    datos: EstudianteCursoReporte[],
+  ): Promise<Buffer> {
+    if (!datos || datos.length === 0) {
+      throw new Error('No existen estudiantes para el curso seleccionado');
+    }
+
+    const pdfDoc = await PDFDocument.create();
+    let page = pdfDoc.addPage([612, 792]); // A4
+    const { width, height } = page.getSize();
+
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+    let y = height - 50;
+
+    // 🏫 Encabezado institucional
+    page.drawText('UNIDAD EDUCATIVA XYZ', {
+      x: 50,
+      y,
+      size: 14,
+      font: fontBold,
+    });
+
+    y -= 20;
+
+    page.drawText('Listado de Estudiantes por Curso', {
+      x: 50,
+      y,
+      size: 16,
+      font: fontBold,
+    });
+
+    y -= 20;
+
+    // 📚 Datos del curso
+    const info = datos[0];
+
+    page.drawText(
+      `Curso: ${info.curso} ${info.paralelo} - Gestión ${info.gestion}`,
+      {
+        x: 50,
+        y,
+        size: 11,
+        font,
+      },
+    );
+
+    y -= 15;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 1,
+    });
+
+    y -= 25;
+
+    // 📊 Cabecera tabla
+    const col = {
+      nro: 50,
+      estudiante: 80,
+      identificacion: 250,
+      rude: 330,
+      telefono: 420,
+    };
+
+    page.drawText('N°', { x: col.nro, y, size: 10, font: fontBold });
+    page.drawText('Estudiante', {
+      x: col.estudiante,
+      y,
+      size: 10,
+      font: fontBold,
+    });
+    page.drawText('CI', { x: col.identificacion, y, size: 10, font: fontBold });
+    page.drawText('RUDE', { x: col.rude, y, size: 10, font: fontBold });
+    page.drawText('Teléfono', { x: col.telefono, y, size: 10, font: fontBold });
+
+    y -= 10;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 0.8,
+    });
+
+    y -= 15;
+
+    // 📄 Filas
+    for (const d of datos) {
+      if (y < 60) {
+        page = pdfDoc.addPage([612, 792]);
+        y = height - 50;
+      }
+
+      page.drawText(String(d.numero), {
+        x: col.nro,
+        y,
+        size: 9,
+        font,
+      });
+
+      page.drawText(d.estudiante, {
+        x: col.estudiante,
+        y,
+        size: 9,
+        font,
+      });
+
+      page.drawText(d.identificacion, {
+        x: col.identificacion,
+        y,
+        size: 9,
+        font,
+      });
+
+      page.drawText(d.rude, {
+        x: col.rude,
+        y,
+        size: 9,
+        font,
+      });
+
+      page.drawText(d.telefono_referencia, {
+        x: col.telefono,
+        y,
+        size: 9,
+        font,
+      });
+
+      y -= 15;
+    }
+
+    // 📅 Footer
+    y -= 20;
+
+    page.drawLine({
+      start: { x: 50, y },
+      end: { x: width - 50, y },
+      thickness: 0.5,
+    });
+
+    y -= 15;
+
+    page.drawText(`Fecha de emisión: ${new Date().toLocaleDateString()}`, {
+      x: 50,
+      y,
+      size: 9,
+      font,
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    return Buffer.from(pdfBytes);
   }
 }

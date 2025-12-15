@@ -44,7 +44,7 @@ export default function TableAsistencias({ asistencias }: Props) {
     useEffect(() => {
         const fetchAsistencias = async () => {
             try {
-                const response = await api.get<asistenciaBackend[]>("/asistencias");
+                const response = await api.get<asistenciaBackend[]>("/asistencias/VerAsistencias");
                 const mappedAsistencias = response.data.map((asistencia) => ({
                     id: asistencia.asistencia_id,
                     fecha: asistencia.asistencia_fecha,

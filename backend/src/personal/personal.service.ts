@@ -34,6 +34,23 @@ export class PersonalService {
     return this.personalRepository.find({ where: { estado: 'activo' } });
   }
 
+  async getDocentes() {
+    return this.personalRepository
+      .createQueryBuilder('personal')
+      .innerJoin('usuarios', 'usuario', 'usuario.idPersonal = personal.id')
+      .innerJoin('roles', 'rol', 'rol.id = usuario.idRol')
+      .where('rol.nombre = :rol', { rol: 'Docente' })
+      .andWhere('personal.estado = :estado', { estado: 'activo' })
+      .andWhere('usuario.estado = :estadoUsuario', { estadoUsuario: 'activo' })
+      .select([
+        'personal.id AS id',
+        "CONCAT(personal.nombres, ' ', personal.apellidoPat) AS nombre",
+        'personal.correo AS correo',
+      ])
+      .orderBy('personal.apellidoPat', 'ASC')
+      .getRawMany();
+  }
+
   async updatePersonal(
     id: number,
     dtoPersonal: CreatePersonalDto,
