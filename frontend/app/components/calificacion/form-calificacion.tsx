@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { api } from "@/app/lib/api";
 import {
@@ -87,7 +87,13 @@ interface Props {
   onUpdate?: (data: { calificacion: number }) => void;
 }
 
-export default function FormCalificacion({ open, onClose, onCreate, onUpdate, selectedCalificacion }: Props) {
+export default function FormCalificacion({
+  open,
+  onClose,
+  onCreate,
+  onUpdate,
+  selectedCalificacion,
+}: Props) {
   const [cursosDocente, setCursosDocente] = useState<AsignacionClase[]>([]);
   const [estudiantesCurso, setEstudiantesCurso] = useState<Estudiante[]>([]);
   const [materiasCurso, setMateriasCurso] = useState<MateriaDocente[]>([]);
@@ -127,7 +133,7 @@ export default function FormCalificacion({ open, onClose, onCreate, onUpdate, se
   const cargarDatos = async () => {
     setLoading(true);
     try {
-      const idDocente = 4;
+      const idDocente = 1;
       const cursosRes = await api.get(
         `/asignacion-clases/por-docente/${idDocente}`
       );

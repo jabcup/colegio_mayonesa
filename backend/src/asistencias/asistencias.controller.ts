@@ -1,57 +1,68 @@
 import {
-  Body,
   Controller,
   Get,
-  Delete,
   Post,
-  Put,
+  Body,
   Param,
+  Put,
+  Delete,
+  Query,
 } from '@nestjs/common';
 import { AsistenciasService } from './asistencias.service';
 import { CreateAsistenciaDto } from './dto/create-asistencia.dto';
 import { UpdateAsistenciaDto } from './dto/update-asistencia.dto';
-import { ApiOperation } from '@nestjs/swagger';
 
 @Controller('asistencias')
 export class AsistenciasController {
-  constructor(private readonly asistenciaService: AsistenciasService) {}
+  constructor(private readonly asistenciasService: AsistenciasService) {}
 
-  @Get('VerAsistencias')
-  @ApiOperation({ summary: 'Ver Asistencias' })
-  async getAsistencias() {
-    return this.asistenciaService.getAsistencias();
+  @Get()
+  findAll() {
+    return this.asistenciasService.findAll();
   }
 
-  @Post('CrearAsistencia')
-  @ApiOperation({ summary: 'Crear Asistencia' })
-  async createAsistencia(@Body() CreateAsistenciaDto: CreateAsistenciaDto) {
-    const asistencia =
-      await this.asistenciaService.createAsistencia(CreateAsistenciaDto);
-    return {
-      message: 'Asistencia creada exitosamente',
-      asistencia,
-    };
+  @Post()
+  create(@Body() createAsistenciaDto: CreateAsistenciaDto) {
+    return this.asistenciasService.createAsistencia(createAsistenciaDto);
   }
 
-  @Put('ActualizarAsistencia/:id')
-  @ApiOperation({ summary: 'Actualizar Asistencia' })
-  async updateAsistencia(
-    @Param('id') id: number,
+  @Post('batch')
+  createBatch(@Body() dtos: CreateAsistenciaDto[]) {
+    return this.asistenciasService.createBatchAsistencias(dtos);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.asistenciasService.findOne(+id);
+  }
+
+  @Put(':id')
+  update(
+    @Param('id') id: string,
     @Body() updateAsistenciaDto: UpdateAsistenciaDto,
   ) {
-    const asistencia = await this.asistenciaService.updateAsistencia(
-      id,
-      updateAsistenciaDto,
-    );
-    return {
-      message: 'Asistencia actualizada exitosamente',
-      asistencia,
-    };
+    return this.asistenciasService.updateAsistencia(+id, updateAsistenciaDto);
   }
 
-  @Delete('EliminarAsistencia/:id')
-  @ApiOperation({ summary: 'Eliminar Asistencia' })
-  removeAsistencia(@Param('id') id: number) {
-    return this.asistenciaService.remove(id);
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.asistenciasService.remove(+id);
+  }
+
+  @Get('BuscarAsistenciasPorCursoYMateria/:idCurso/:idMateria')
+  buscarAsistenciasPorCursoYMateria(
+    @Param('idCurso') idCurso: string,
+    @Param('idMateria') idMateria: string,
+    @Query('estudianteId') estudianteId: string,
+    @Query('fromDate') fromDate: string,
+    @Query('toDate') toDate: string,
+  ) {
+    return this.asistenciasService.buscarAsistenciasPorCursoYMateria(
+      +idCurso,
+      +idMateria,
+      estudianteId ? +estudianteId : undefined,
+      fromDate,
+      toDate,
+    );
   }
 }

@@ -31,10 +31,22 @@ export class MateriasController {
     return this.materiaService.listarMaterias();
   }
 
+  @Get('mostrarMateriasInactivas')
+  @ApiOperation({ summary: 'Lista de materias inactivas' })
+  listarMateriasInactivas() {
+    return this.materiaService.listarMateriasInactivas();
+  }
+
   @Put('EditarMateria/:id')
   @ApiOperation({ summary: 'Editar Materia' })
   updateMateria(@Param('id') id: number, @Body() dto: CreateMateriaDto) {
     return this.materiaService.updateMateria(id, dto);
+  }
+
+  @Put('reactivarMateria/:id')
+  @ApiOperation({ summary: 'Reactivar materia inactiva' })
+  reactivarMateria(@Param('id') id: number) {
+    return this.materiaService.reactivarMateria(id);
   }
 
   @Delete('EliminarMateria/:id')

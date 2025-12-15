@@ -69,7 +69,6 @@ export class AsignacionClasesService {
   }
 
   async getAsignacionesPorEstudiante(idEstudiante: number) {
-    // 1. Obtener curso activo del estudiante usando QueryBuilder
     const cursoActual: EstudianteCurso =
       await this.estudianteCursoRepository.findOne({
         where: {
@@ -90,10 +89,11 @@ export class AsignacionClasesService {
         dia: true,
         curso: { nombre: true, paralelo: true },
         materia: { nombre: true },
+        personal: { nombres: true, apellidoPat: true, apellidoMat: true },
         horario: { horario: true },
       },
       where: { curso: { id: idCurso } },
-      relations: ['materia', 'horario'], //Si se desea tener datos del docente se debe agregar personal al relation
+      relations: ['materia', 'horario', 'personal'], //Si se desea tener datos del docente se debe agregar personal al relation
     });
   }
 

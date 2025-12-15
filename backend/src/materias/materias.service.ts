@@ -13,7 +13,15 @@ export class MateriasService {
   }
 
   async listarMaterias(): Promise<Materias[]> {
-    return this.repo.find();
+    return this.repo.find({
+      where: { estado: 'activo' },
+    });
+  }
+
+  async listarMateriasInactivas(): Promise<Materias[]> {
+    return this.repo.find({
+      where: { estado: 'inactivo' },
+    });
   }
 
   async updateMateria(
@@ -29,6 +37,16 @@ export class MateriasService {
     // Mezcla los datos nuevos con los actuales
     Object.assign(materia, dtoMateria);
 
+    return this.repo.save(materia);
+  }
+
+  async reactivarMateria(id: number): Promise<Materias> {
+    const materia = await this.repo.findOne({ where: { id } });
+    if (!materia) {
+      throw new Error('Materia no encontrada');
+    }
+
+    materia.estado = 'activo';
     return this.repo.save(materia);
   }
 

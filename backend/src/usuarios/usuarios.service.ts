@@ -95,6 +95,7 @@ export class UsuariosService {
   async login(correo_institucional: string, contrasena: string) {
     const usuario = await this.usuariosRepository.findOne({
       where: { correo_institucional },
+      relations: ['personal', 'rol'],
     });
     if (!usuario) {
       throw new UnauthorizedException('Credenciales incorrectas');
@@ -108,7 +109,12 @@ export class UsuariosService {
     }
     return {
       message: 'Inicio de sesión exitoso',
-      usuario: { id: usuario.id, correo: usuario.correo_institucional },
+      usuario: {
+        id: usuario.id,
+        correo: usuario.correo_institucional,
+        idPersonal: usuario.personal.id,
+        rol: usuario.rol.nombre,
+      },
     };
   }
 }
