@@ -71,6 +71,13 @@ export default function Navbar() {
             className="ml-2"
             onClick={() => router.push("/notificaciones")}
           />
+          <Boton
+            label="Reportes"
+            color="success"
+            size="small"
+            className="ml-2"
+            onClick={() => router.push("/reporte")}
+          />
           <LogoutButton />
         </Toolbar>
       </AppBar>
