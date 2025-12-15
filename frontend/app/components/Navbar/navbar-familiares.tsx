@@ -26,12 +26,14 @@ export default function NavbarFamiliares({ onChangeVista }: Props) {
           label="Asistencias"
           color="success"
           onClick={() => onChangeVista("asistencias")}
+          className="ml-2"
         />
 
         <Boton
           label="Horarios"
           color="success"
           onClick={() => onChangeVista("horarios")}
+          className="ml-2"
         />
 
         <LogoutButton />
