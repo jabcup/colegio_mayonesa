@@ -64,6 +64,13 @@ export default function Navbar() {
             className="ml-2"
             onClick={() => router.push("/pago")}
           />
+          <Boton
+            label="Notificaciones"
+            color="success"
+            size="small"
+            className="ml-2"
+            onClick={() => router.push("/notificaciones")}
+          />
           <LogoutButton />
         </Toolbar>
       </AppBar>
