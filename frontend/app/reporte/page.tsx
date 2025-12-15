@@ -2,24 +2,35 @@
 
 import Navbar from "@/app/components/Navbar/navbar";
 
-import {
-  Button,
-  CircularProgress,
-  MenuItem,
-  TextField,
-  Typography,
-} from "@mui/material";
-import { useEffect, useState } from "react";
-import { api } from "../lib/api";
+import { Button, Typography } from "@mui/material";
+
+import { useState } from "react";
 
 import FormFiltrosReporte from "../components/reporte/form-filtros-reporte";
 
-export default function ReportePage() {
-  const [loading, setLoading] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+import { getAuthData } from "../lib/auth";
 
-  useEffect(() => {}, []);
-  
+type TipoReporte =
+  | "calificacionesCurso"
+  | "calificacionesEstudiante"
+  | "asistenciasCurso"
+  | "asistenciasEstudiante"
+  | "pagosCurso"
+  | "pagosEstudiante"
+  | "listadoEstudiantes"
+  | "tutoresCurso";
+
+export default function ReportePage() {
+  const [showForm, setShowForm] = useState(false);
+  const [tipoReporte, setTipoReporte] = useState<TipoReporte | null>(null);
+
+  const { rol } = getAuthData();
+
+  const handleOpenFiltro = (reporte: TipoReporte) => {
+    setTipoReporte(reporte);
+    setShowForm(true);
+  };
+
   return (
     <>
       <Navbar />
@@ -27,47 +38,101 @@ export default function ReportePage() {
         Página de Reportes
       </Typography>
 
-      <Button 
+      {rol !== "Cajero" && (
+      <Button
         variant="contained"
         color="primary"
-        onClick={() => setShowForm(true)}
-        sx={ { mb: 2} }
+        onClick={() => handleOpenFiltro("calificacionesCurso")}
+        sx={{ mb: 2 }}
       >
         Descargar Reporte Calificaciones por Curso
       </Button>
+      )}
 
-      <Button variant="contained" color="primary">
+      {rol !== "Cajero" && (
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => handleOpenFiltro("calificacionesEstudiante")}
+        sx={{ mb: 2 }}
+      >
         Descargar Reporte Calificaciones por Estudiante
       </Button>
+      )}
 
-      <Button variant="contained" color="primary">
+      {rol !== "Cajero" && (
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => handleOpenFiltro("asistenciasCurso")}
+        sx={{ mb: 2 }}
+      >
         Descargar Reporte Asistencias por Curso
       </Button>
+      )}
 
-      <Button variant="contained" color="primary">
+      {rol !== "Cajero" && (
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => handleOpenFiltro("asistenciasEstudiante")}
+        sx={{ mb: 2 }}
+      >
         Descargar Reporte Asistencias por Estudiante
       </Button>
+      )}
 
-      <Button variant="contained" color="primary">
+      {rol !== "Docente" && (
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => handleOpenFiltro("pagosCurso")}
+        sx={{ mb: 2 }}
+      >
         Descargar Reporte Pagos por Curso
       </Button>
+      )}
 
-      <Button variant="contained" color="primary">
+      {rol !== "Docente" && (
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => handleOpenFiltro("pagosEstudiante")}
+        sx={{ mb: 2 }}
+      >
         Descargar Reporte Pagos por Estudiante
       </Button>
+      )}
 
-      <Button variant="contained" color="primary">
+      {rol !== "Cajero" && (
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => handleOpenFiltro("listadoEstudiantes")}
+        sx={{ mb: 2 }}
+      >
         Descargar Reporte Listado de Estudiantes de un Curso
       </Button>
+      )}
 
-      <Button variant="contained" color="primary">
+      {rol !== "Cajero" && rol !== "Docente" && (
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => handleOpenFiltro("tutoresCurso")}
+        sx={{ mb: 2 }}
+      >
         Descargar Reporte Tutores por Curso
       </Button>
+      )}
 
-      <FormFiltrosReporte
-        open={showForm}
-        onClose={() => setShowForm(false)}
-      />
+      {tipoReporte && (
+        <FormFiltrosReporte
+          open={showForm}
+          onClose={() => setShowForm(false)}
+          tipoReporte={tipoReporte}
+        />
+      )}
     </>
   );
 }

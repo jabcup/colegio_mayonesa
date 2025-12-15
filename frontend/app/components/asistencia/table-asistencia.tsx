@@ -115,7 +115,7 @@ export default function TableAsistencia({ asistencias }: Props) {
   const cargarDatos = async () => {
     setLoading(true);
     try {
-      const idDocente = 1;
+      const idDocente = 4;
       const cursosRes = await api.get(
         `/asignacion-clases/por-docente/${idDocente}`,
       );
@@ -145,11 +145,11 @@ export default function TableAsistencia({ asistencias }: Props) {
     setEstudiantesCurso([]);
     setBatchAsistencias([]);
 
-    const idDocente = 1;
+    const idDocente = 4;
 
     setLoading(true);
     try {
-      const estudiantesRes = await api.get(`/estudiante-curso/${idCurso}`);
+      const estudiantesRes = await api.get(`/estudiante-curso/estudiantes-por-curso/${idCurso}`);
       const estudiantesMap = (estudiantesRes.data as BackEstudianteCurso[]).map(
         (ec) => ({
           id: ec.estudiante.id,

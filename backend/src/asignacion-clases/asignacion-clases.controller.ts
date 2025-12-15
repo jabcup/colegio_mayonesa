@@ -62,6 +62,12 @@ export class AsignacionClasesController {
     return this.asignacionService.getHorarioDocente(idPersonal);
   }
 
+  @Get('curso/:idCurso')
+  @ApiOperation({ summary: 'Obtener horario de clases por curso' })
+  getAsignacionesPorCurso(@Param('idCurso') idCurso: number) {
+    return this.asignacionService.getAsignacionesPorCurso(Number(idCurso));
+  }
+
   @Put('ActualizarAsignacion/:id')
   @ApiOperation({ summary: 'Actualizar Asignacion' })
   async updateAsignacion(

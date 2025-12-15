@@ -11,6 +11,9 @@ import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import FormEstudiante from "../components/estudiante/form";
 import TableEstudiante from "../components/estudiante/table";
+import { getAuthData } from "../lib/auth";
+
+
 
 interface EstudianteFull {
   id: number;
@@ -50,6 +53,8 @@ export default function EstudiantesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
+
+  const { rol, idPersonal} = getAuthData();
 
   useEffect(() => {
     cargarEstudiantes();

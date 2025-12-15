@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
+import { getAuthData } from "../lib/auth";
 
 import FormCalificacion from "../components/calificacion/form-calificacion";
 import TableCalificacion from "../components/calificacion/table-calificacion";
@@ -65,8 +66,8 @@ interface BackMateriaDocente {
   nombre: string;
 }
 
-export interface UpdateCalificacionDto{
-  calificacion: number
+export interface UpdateCalificacionDto {
+  calificacion: number;
 }
 
 export default function CalificacionPage() {
@@ -78,6 +79,8 @@ export default function CalificacionPage() {
     []
   );
 
+  const { rol, idPersonal } = getAuthData();
+
   const [filtro, setFiltro] = useState({
     idCurso: "",
     idMateria: "",
@@ -86,7 +89,7 @@ export default function CalificacionPage() {
   const cargarCursos = async () => {
     setLoading(true);
     try {
-      const idDocente = 4;
+      const idDocente = idPersonal;
       const cursosRes = await api.get(
         `/asignacion-clases/por-docente/${idDocente}`
       );
@@ -154,7 +157,7 @@ export default function CalificacionPage() {
     const idCurso = e.target.value;
     setFiltro({ ...filtro, idCurso, idMateria: "" });
 
-    const idDocente = 4;
+    const idDocente = idPersonal;
 
     setLoading(true);
     try {
@@ -211,7 +214,7 @@ export default function CalificacionPage() {
 
   // Funcion para editar una calificacion
   const [selectedCalificacion, setSelectedCalificacion] =
-  useState<CalificacionFiltrada | null>(null);
+    useState<CalificacionFiltrada | null>(null);
 
   const editarCalificacion = (calificacion: CalificacionFiltrada) => {
     setSelectedCalificacion(calificacion);
@@ -222,7 +225,10 @@ export default function CalificacionPage() {
     if (!selectedCalificacion) return;
 
     try {
-      await api.put(`/calificaciones/EditarCalificacion/${selectedCalificacion.id}`, data);
+      await api.put(
+        `/calificaciones/EditarCalificacion/${selectedCalificacion.id}`,
+        data
+      );
       alert("Calificación actualizada");
 
       setShowForm(false);
@@ -233,7 +239,6 @@ export default function CalificacionPage() {
       alert("Error al actualizar");
     }
   };
-
 
   return (
     <>
@@ -283,7 +288,11 @@ export default function CalificacionPage() {
       {loading ? (
         <CircularProgress />
       ) : (
-        <TableCalificacion calificaciones={calificaciones} onEdit={editarCalificacion} onDelete={eliminarCalificacion} />
+        <TableCalificacion
+          calificaciones={calificaciones}
+          onEdit={editarCalificacion}
+          onDelete={eliminarCalificacion}
+        />
       )}
 
       <FormCalificacion
