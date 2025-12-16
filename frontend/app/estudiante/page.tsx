@@ -12,6 +12,7 @@ import { api } from "../lib/api";
 import FormEstudiante from "../components/estudiante/form";
 import TableEstudiante from "../components/estudiante/table";
 import { getAuthData } from "../lib/auth";
+import { Boton } from "../components/botones/botonNav";
 
 
 
@@ -113,9 +114,8 @@ export default function EstudiantesPage() {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      <Button variant="contained" sx={{ mb: 2 }} onClick={() => setShowForm(true)}>
-        Registrar Estudiante
-      </Button>
+      <Boton label="Registrar Estudiante" className="m-2" color="success" onClick={() => setShowForm(true)}/>
+        
 
       <FormEstudiante
         open={showForm}

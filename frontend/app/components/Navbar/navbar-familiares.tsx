@@ -13,7 +13,7 @@ export default function NavbarFamiliares({ onChangeVista }: Props) {
     <AppBar position="static">
       <Toolbar>
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
-          Mayonesa
+          Colegio Mayo - Sección Familiar
         </Typography>
 
         <Boton
