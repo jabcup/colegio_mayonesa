@@ -31,6 +31,7 @@ interface EditContext {
 
 interface HorarioTableProps {
   asignaciones: Asignacion[];
+  horarios: { id: number; horario: string }[];
   onAsignar: (dia: string, idHorario: number) => void;
   onEditar: (data: EditContext) => void;
 }
@@ -39,14 +40,9 @@ export default function HorarioTabla({
   asignaciones,
   onAsignar,
   onEditar,
+  horarios,
 }: HorarioTableProps) {
   const dias = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes"];
-  const horarios = [
-    "08:00 - 09:00",
-    "09:00 - 10:00",
-    "10:20 - 11:20",
-    "11:20 - 12:20",
-  ];
 
   const { rol } = getAuthData();
 
@@ -61,12 +57,12 @@ export default function HorarioTabla({
         </TableRow>
       </TableHead>
       <TableBody>
-        {horarios.map((horario, index) => (
+        {horarios.map((h, index) => (
           <TableRow key={index}>
-            <TableCell>{horario}</TableCell>
+            <TableCell>{h.horario}</TableCell>
             {dias.map((dia) => {
               const asignacion = asignaciones.find(
-                (a) => a.dia === dia && a.horario === horario
+                (a) => a.dia === dia && a.idHorario === h.id
               );
               return (
                 <TableCell key={dia}>

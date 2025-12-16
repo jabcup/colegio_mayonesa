@@ -36,6 +36,12 @@ interface Asignacion {
   materia: string;
 }
 
+interface Horario {
+  id: number;
+  horario: string;
+  estado: string;
+}
+
 export default function AsignacionPage() {
   const [loadingCursos, setLoadingCursos] = useState(true);
   const [loadingAsignaciones, setLoadingAsignaciones] = useState(false);
@@ -44,6 +50,8 @@ export default function AsignacionPage() {
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
 
   const [cursos, setCursos] = useState<Curso[]>([]);
+
+  const [horarios, setHorarios] = useState<Horario[]>([]);
 
   const [modoEdicion, setModoEdicion] = useState(false);
 
@@ -78,8 +86,19 @@ export default function AsignacionPage() {
     }
   };
 
+  const cargarHorarios = async () => {
+    try {
+      const horariosRes = await api.get(`/horarios/mostrarHorarios`);
+      setHorarios(horariosRes.data.filter((h: Horario) => h.estado === "activo"));
+    } catch (err) {
+      console.error(err);
+      alert("Error al cargar los horarios");
+    }
+  }
+
   useEffect(() => {
     cargarCursos();
+    cargarHorarios();
   }, []);
 
   const [selectedCurso, setSelectedCurso] = useState<number | "">("");
@@ -183,6 +202,7 @@ export default function AsignacionPage() {
         <CircularProgress />
       ) : (
         <HorarioTabla
+          horarios={horarios}
           asignaciones={asignaciones}
           onAsignar={handleAbrirAsignacion}
           onEditar={handleEditarAsignacion}
