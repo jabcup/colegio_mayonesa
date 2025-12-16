@@ -13,12 +13,19 @@ export default function LogoutButton() {
     Cookies.remove("usuario_correo", { path: "/" });
     Cookies.remove("usuario_rol", { path: "/" });
     Cookies.remove("personal_id", { path: "/" });
-
+    Cookies.remove("estudiante_id", { path: "/" });
+    Cookies.remove("estudiante_correo", { path: "/" });
     // Redirige al login
     router.replace("/");
   };
 
   return (
-    <Boton label="Cerrar Sesión" color="error" size= "small" className="ml-2" onClick={handleLogout} />
+    <Boton
+      label="Cerrar Sesión"
+      color="error"
+      size="small"
+      className="ml-2"
+      onClick={handleLogout}
+    />
   );
 }

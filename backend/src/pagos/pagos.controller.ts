@@ -27,14 +27,18 @@ class SoloIdPersonal implements PipeTransform {
   transform(value: any) {
     const keys = Object.keys(value);
     if (keys.length !== 1 || keys[0] !== 'idpersonal')
-      throw new BadRequestException('El body debe contener únicamente "idpersonal"');
+      throw new BadRequestException(
+        'El body debe contener únicamente "idpersonal"',
+      );
     if (typeof value.idpersonal !== 'number')
       throw new BadRequestException('"idpersonal" debe ser un número');
     return { idpersonal: value.idpersonal };
   }
 }
 
-interface SoloIdPersonalBody { idpersonal: number; }
+interface SoloIdPersonalBody {
+  idpersonal: number;
+}
 
 async function esCajero(
   usuarioRepository: Repository<Usuarios>,
@@ -70,6 +74,11 @@ export class PagosController {
     return this.service.findAll();
   }
 
+  @Get(':idEstudiante')
+  @ApiOperation({ summary: 'Obtener la lista de pagos por estudiante' })
+  async obtenerPagosPorEstudiante(@Param('idEstudiante') idEstudiante: number) {
+    return this.service.obtenerPagosPorEstudiante(idEstudiante);
+  }
   @Get(':id')
   @ApiOperation({ summary: 'Obtener un pago en específico' })
   findOne(@Param('id', ParseIntPipe) id: number): Promise<PagoResponseDto> {
@@ -107,7 +116,8 @@ export class PagosController {
     description: 'Cantidad de pagos actualizados',
     schema: {
       example: {
-        message: 'Se marcaron como cancelados 3 pagos pendientes del último año.',
+        message:
+          'Se marcaron como cancelados 3 pagos pendientes del último año.',
         updatedCount: 3,
       },
     },

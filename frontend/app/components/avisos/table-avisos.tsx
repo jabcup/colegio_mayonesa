@@ -1,3 +1,4 @@
+// app/avisos/components/TableAvisos.tsx
 "use client";
 
 import {
@@ -14,7 +15,11 @@ import {
   Typography,
   Box,
   Button,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { useState, useEffect } from "react";
 import { api } from "@/app/lib/api";
 
@@ -34,7 +39,8 @@ interface Aviso {
   Curso: Curso;
 }
 
-export default function TableAvisos() {
+export default function TableAvisos({ onEdit }: { onEdit?: (aviso: Aviso) => void }) {
+  // onEdit se lo pasamos desde la página principal para abrir el modal en modo edición
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [selectedCurso, setSelectedCurso] = useState<Curso | null>(null);
   const [avisos, setAvisos] = useState<Aviso[]>([]);
@@ -66,7 +72,6 @@ export default function TableAvisos() {
       const res = await api.get(`/avisos/Curso/${selectedCurso.id}`);
       let data = res.data as Aviso[];
 
-      // Ordenar por fecha (más reciente primero)
       data = data.sort((a, b) =>
         sortDesc
           ? new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime()
@@ -100,6 +105,20 @@ export default function TableAvisos() {
           : new Date(a.fecha_creacion).getTime() - new Date(b.fecha_creacion).getTime()
       )
     );
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("¿Estás seguro de eliminar este aviso? (Se marcará como inactivo)")) {
+      return;
+    }
+
+    try {
+      await api.delete(`/avisos/${id}`);
+      alert("Aviso eliminado correctamente");
+      cargarAvisos(); // Recargar la lista
+    } catch (err) {
+      alert("Error al eliminar el aviso");
+    }
   };
 
   const formatoFecha = (fecha: string) => {
@@ -139,12 +158,12 @@ export default function TableAvisos() {
 
       {selectedCurso && (
         <>
-          <Box sx={{ mt: 3, mb: 2 }}>
+          <Box sx={{ mt: 3, mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Typography variant="h6">
               Avisos del curso: <strong>{getNombreCurso(selectedCurso)}</strong>
             </Typography>
-            <Button variant="outlined" onClick={toggleSort} sx={{ mt: 1 }}>
-              Ordenar por fecha: {sortDesc ? "Más reciente primero" : "Más antiguo primero"}
+            <Button variant="outlined" onClick={toggleSort}>
+              Ordenar: {sortDesc ? "Más reciente" : "Más antiguo"}
             </Button>
           </Box>
 
@@ -156,18 +175,19 @@ export default function TableAvisos() {
                   <TableCell><strong>Asunto</strong></TableCell>
                   <TableCell><strong>Mensaje</strong></TableCell>
                   <TableCell><strong>Fecha Envío</strong></TableCell>
+                  <TableCell align="center"><strong>Acciones</strong></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {loadingAvisos ? (
                   <TableRow>
-                    <TableCell colSpan={4} align="center">
+                    <TableCell colSpan={5} align="center">
                       <CircularProgress />
                     </TableCell>
                   </TableRow>
                 ) : avisos.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} align="center">
+                    <TableCell colSpan={5} align="center">
                       <Typography>No hay avisos para este curso.</Typography>
                     </TableCell>
                   </TableRow>
@@ -178,6 +198,24 @@ export default function TableAvisos() {
                       <TableCell>{aviso.asunto}</TableCell>
                       <TableCell>{aviso.mensaje}</TableCell>
                       <TableCell>{formatoFecha(aviso.fecha_creacion)}</TableCell>
+                      <TableCell align="center">
+                        <Tooltip title="Editar">
+                          <IconButton
+                            color="primary"
+                            onClick={() => onEdit?.(aviso)}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Eliminar">
+                          <IconButton
+                            color="error"
+                            onClick={() => handleDelete(aviso.id)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}

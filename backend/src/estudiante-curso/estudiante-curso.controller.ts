@@ -23,6 +23,10 @@ export class EstudianteCursoController {
     return this.estudianteCursoService.getEstudiantesPorCurso(Number(idCurso));
   }
 
+  @Get('/cursoEstudiante/:idEstudiante')
+  async cursoEstudiante(@Param('idEstudiante') idEstudiante: number) {
+    return this.estudianteCursoService.getCursoEstudiante(idEstudiante);
+  }
   @Put('ActualizarEstudianteCurso/:id')
   @ApiOperation({ summary: 'Actualizar Estudiante Curso' })
   async updateEstudianteCurso(

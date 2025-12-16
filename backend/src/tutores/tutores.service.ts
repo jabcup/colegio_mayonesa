@@ -41,6 +41,9 @@ export class TutoresService {
       relations: ['rol'],
     });
 
+    if (!usuario.rol) {
+      throw new Error('Este personal no tiene asignado un rol');
+    }
     if (usuario.rol.nombre.toLowerCase() !== 'docente') {
       throw new Error('Este personal no tiene el rol docente');
     }

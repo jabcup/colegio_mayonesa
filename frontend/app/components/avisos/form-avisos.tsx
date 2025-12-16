@@ -1,3 +1,4 @@
+// app/avisos/components/FormAviso.tsx
 "use client";
 
 import {
@@ -21,36 +22,52 @@ interface Curso {
   paralelo?: string;
 }
 
+interface AvisoExisting {
+  id: number;
+  asunto: string;
+  mensaje: string;
+  Curso: Curso;
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  avisoToEdit?: AvisoExisting | null; // Si es null → modo crear, si tiene datos → modo editar
 }
 
-export default function FormAviso({ open, onClose, onSuccess }: Props) {
+export default function FormAviso({ open, onClose, onSuccess, avisoToEdit }: Props) {
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCurso, setSelectedCurso] = useState<Curso | null>(null);
   const [asunto, setAsunto] = useState("");
   const [mensaje, setMensaje] = useState("");
 
-  const idPersonal = 1; // Para pruebas, luego vendrá del login
+  const idPersonal = 1; // Cambiar cuando tengas autenticación
+
+  const isEditMode = !!avisoToEdit;
 
   useEffect(() => {
     if (open) {
       cargarCursos();
-      // Resetear formulario
-      setSelectedCurso(null);
-      setAsunto("");
-      setMensaje("");
+
+      if (isEditMode && avisoToEdit) {
+        setSelectedCurso(avisoToEdit.Curso);
+        setAsunto(avisoToEdit.asunto);
+        setMensaje(avisoToEdit.mensaje);
+      } else {
+        // Modo crear
+        setSelectedCurso(null);
+        setAsunto("");
+        setMensaje("");
+      }
     }
-  }, [open]);
+  }, [open, avisoToEdit]);
 
   const cargarCursos = async () => {
     setLoading(true);
     try {
-      // Ajusta la ruta según tu endpoint real para cursos
-      const res = await api.get("/cursos/MostrarCursos"); 
+      const res = await api.get("/cursos/MostrarCursos");
       setCursos(res.data);
     } catch (err) {
       console.error(err);
@@ -68,28 +85,33 @@ export default function FormAviso({ open, onClose, onSuccess }: Props) {
 
     const payload = {
       idCurso: selectedCurso.id,
-      idPersonal,
+      idPersonal, // Solo se necesita en creación, pero no molesta enviarlo en update
       asunto: asunto.trim(),
       mensaje: mensaje.trim(),
     };
 
     try {
-      await api.post("/avisos/CrearAviso", payload);
-      alert("Aviso enviado correctamente");
+      if (isEditMode) {
+        await api.put(`/avisos/${avisoToEdit!.id}`, payload);
+        alert("Aviso actualizado correctamente");
+      } else {
+        await api.post("/avisos/CrearAviso", payload);
+        alert("Aviso enviado correctamente");
+      }
       onSuccess();
       onClose();
     } catch (err) {
       console.error(err);
-      alert("Error al enviar el aviso");
+      alert(`Error al ${isEditMode ? "actualizar" : "enviar"} el aviso`);
     }
   };
 
   const getOptionLabel = (option: Curso) =>
-    `${option.nombre} ${option.nivel ? `- ${option.nivel}` : ""} ${option.paralelo ? `${option.paralelo}` : ""}`.trim();
+    `${option.nombre} ${option.nivel ? `- ${option.nivel}` : ""} ${option.paralelo ? option.paralelo : ""}`.trim();
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Enviar Nuevo Aviso al Curso</DialogTitle>
+      <DialogTitle>{isEditMode ? "Editar Aviso" : "Enviar Nuevo Aviso al Curso"}</DialogTitle>
       <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 2 }}>
         {loading ? (
           <Box display="flex" justifyContent="center">
@@ -111,6 +133,7 @@ export default function FormAviso({ open, onClose, onSuccess }: Props) {
                 />
               )}
               noOptionsText="No se encontraron cursos"
+              disabled={isEditMode} // En edición no permitimos cambiar el curso (opcional, puedes quitarlo si quieres permitirlo)
             />
 
             <TextField
@@ -137,7 +160,7 @@ export default function FormAviso({ open, onClose, onSuccess }: Props) {
       <DialogActions>
         <Button onClick={onClose}>Cancelar</Button>
         <Button onClick={handleSubmit} variant="contained" color="primary">
-          Enviar Aviso
+          {isEditMode ? "Guardar Cambios" : "Enviar Aviso"}
         </Button>
       </DialogActions>
     </Dialog>

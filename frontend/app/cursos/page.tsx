@@ -22,20 +22,20 @@ interface Curso {
 }
 
 interface BackCurso {
-  id: number
-  nombre: string
-  paralelo: string
-  gestion: number
-  capacidad: number
-  fechaCreacion: string
-  estado: string
+  id: number;
+  nombre: string;
+  paralelo: string;
+  gestion: number;
+  capacidad: number;
+  fechaCreacion: string;
+  estado: string;
 }
 
 export interface UpdateCursoDto {
-  nombre: string
-  paralelo: string
-  gestion: number
-  capacidad: number
+  nombre: string;
+  paralelo: string;
+  gestion: number;
+  capacidad: number;
 }
 
 export default function Rol() {
@@ -128,13 +128,13 @@ export default function Rol() {
       <Typography variant="h4" align="center" gutterBottom>
         Pagina de Cursos
       </Typography>
-        <Button
-          variant="contained"
-          onClick={() => setShowForm(true)}
-          sx={{ mb: 2 }}
-        >
-          Crear Curso
-        </Button>
+      <Button
+        variant="contained"
+        onClick={() => setShowForm(true)}
+        sx={{ mb: 2 }}
+      >
+        Crear Curso
+      </Button>
       <FormCurso
         open={showForm}
         onClose={() => setShowForm(false)}
@@ -142,7 +142,11 @@ export default function Rol() {
         onUpdate={actualizarCurso}
         selectedCurso={selectedCurso}
       />
-      <TablaCurso cursos={cursos} onEdit={editarCurso} onDelete={eliminarCurso} />
+      <TablaCurso
+        cursos={cursos}
+        onEdit={editarCurso}
+        onDelete={eliminarCurso}
+      />
     </>
   );
 }

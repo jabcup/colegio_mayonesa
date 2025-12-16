@@ -8,14 +8,10 @@ import { AsignacionClase } from 'src/asignacion-clases/asignacionCursos.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      Asistencias,
-      AsignacionClase,
-      Estudiante,
-    ]),
+    TypeOrmModule.forFeature([Asistencias, AsignacionClase, Estudiante]),
   ],
-    controllers: [AsistenciasController],
-    providers: [AsistenciasService],
-    exports: [AsistenciasService]
+  controllers: [AsistenciasController],
+  providers: [AsistenciasService],
+  exports: [AsistenciasService],
 })
-export class AsistenciasModule { }
+export class AsistenciasModule {}

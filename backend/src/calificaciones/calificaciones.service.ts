@@ -94,6 +94,7 @@ export class CalificacionesService {
           new Date(gestionActual, 0, 1), // 1 enero del año actual
           new Date(gestionActual, 11, 31, 23, 59, 59, 999), // 31 diciembre 23:59:59
         ),
+        estado: 'activo',
       },
       relations: ['materia', 'estudiante'],
     });

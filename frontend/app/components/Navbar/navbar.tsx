@@ -1,6 +1,6 @@
 "use client";
 
-import { AppBar, Box, Button, Toolbar, Typography } from "@mui/material";
+import { AppBar, Toolbar, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { Boton } from "../botones/botonNav";
 import LogoutButton from "../botones/logout";
@@ -11,6 +11,7 @@ export default function Navbar() {
   console.log(rol);
 
   const router = useRouter();
+
   return (
     <>
       <AppBar position="static">
@@ -132,14 +133,21 @@ export default function Navbar() {
             />
           )}
           {rol !== "Docente" && (
-          <Boton
-            label="Avisos"
-            color="success"
-            size="medium"
-            className="ml-2"
-            onClick={() => router.push("/avisos")}
-          />
+            <Boton
+              label="Avisos"
+              color="success"
+              size="medium"
+              className="ml-2"
+              onClick={() => router.push("/avisos")}
+            />
           )}
+          <Boton
+            label="Tutores"
+            color="success"
+            size="small"
+            className="ml-2"
+            onClick={() => router.push("/tutor")}
+          />
           <LogoutButton />
         </Toolbar>
       </AppBar>

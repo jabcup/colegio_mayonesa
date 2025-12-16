@@ -1,3 +1,4 @@
+// app/avisos/page.tsx
 "use client";
 
 import Navbar from "@/app/components/Navbar/navbar";
@@ -6,12 +7,31 @@ import TableAvisos from "../components/avisos/table-avisos";
 import FormAviso from "../components/avisos/form-avisos";
 import { useState } from "react";
 
+interface Aviso {
+  id: number;
+  asunto: string;
+  mensaje: string;
+  Curso: { id: number; nombre: string; nivel?: string; paralelo?: string };
+}
+
 export default function AvisosPage() {
   const [openForm, setOpenForm] = useState(false);
+  const [avisoToEdit, setAvisoToEdit] = useState<Aviso | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleSuccess = () => {
-    setRefreshKey((prev) => prev + 1); // Forzar recarga de la tabla
+    setRefreshKey((prev) => prev + 1);
+    setAvisoToEdit(null);
+  };
+
+  const handleEdit = (aviso: Aviso) => {
+    setAvisoToEdit(aviso);
+    setOpenForm(true);
+  };
+
+  const handleCloseForm = () => {
+    setOpenForm(false);
+    setAvisoToEdit(null);
   };
 
   return (
@@ -33,12 +53,13 @@ export default function AvisosPage() {
           </Button>
         </Box>
 
-        <TableAvisos key={refreshKey} />
+        <TableAvisos key={refreshKey} onEdit={handleEdit} />
 
         <FormAviso
           open={openForm}
-          onClose={() => setOpenForm(false)}
+          onClose={handleCloseForm}
           onSuccess={handleSuccess}
+          avisoToEdit={avisoToEdit}
         />
       </Box>
     </>

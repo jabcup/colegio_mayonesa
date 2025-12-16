@@ -30,14 +30,21 @@ export class PagosService {
     });
 
     if (pagosPendientes.length === 0) {
-      return { message: 'No hay pagos pendientes del último año.', updatedCount: 0 };
+      return {
+        message: 'No hay pagos pendientes del último año.',
+        updatedCount: 0,
+      };
     }
 
     for (const p of pagosPendientes) {
       const descActual = Number(p.descuento);
       const descuentoAdicional = Number((Number(p.cantidad) * 0.1).toFixed(2));
-      const nuevoDescuento = Number((descActual + descuentoAdicional).toFixed(2));
-      const nuevoTotal = Number((Number(p.cantidad) - nuevoDescuento).toFixed(2));
+      const nuevoDescuento = Number(
+        (descActual + descuentoAdicional).toFixed(2),
+      );
+      const nuevoTotal = Number(
+        (Number(p.cantidad) - nuevoDescuento).toFixed(2),
+      );
 
       await this.repo.update(p.id, {
         descuento: nuevoDescuento,
@@ -56,7 +63,7 @@ export class PagosService {
   async create(dto: CreatePagoDto): Promise<PagoResponseDto> {
     const partial: DeepPartial<Pagos> = {
       estudiante: { id: dto.idEstudiante },
-      personal: dto.idPersonal ? { id: dto.idPersonal } as any : null,
+      personal: dto.idPersonal ? ({ id: dto.idPersonal } as any) : null,
       cantidad: dto.cantidad,
       descuento: dto.descuento,
       total: dto.total,
@@ -69,8 +76,10 @@ export class PagosService {
   }
 
   async findAll(): Promise<PagoResponseDto[]> {
-    const pagos = await this.repo.find({ relations: ['estudiante', 'personal'] });
-    return pagos.map(p => this.toResponse(p));
+    const pagos = await this.repo.find({
+      relations: ['estudiante', 'personal'],
+    });
+    return pagos.map((p) => this.toResponse(p));
   }
 
   async findOne(id: number): Promise<PagoResponseDto> {
@@ -84,8 +93,11 @@ export class PagosService {
 
   async update(id: number, dto: UpdatePagoDto): Promise<PagoResponseDto> {
     await this.repo.update(id, {
-      estudiante: dto.idEstudiante ? ({ id: dto.idEstudiante } as any) : undefined,
-      personal: dto.idPersonal !== undefined ? ({ id: dto.idPersonal } as any) : null,
+      estudiante: dto.idEstudiante
+        ? ({ id: dto.idEstudiante } as any)
+        : undefined,
+      personal:
+        dto.idPersonal !== undefined ? ({ id: dto.idPersonal } as any) : null,
       cantidad: dto.cantidad,
       descuento: dto.descuento,
       total: dto.total,
@@ -121,5 +133,12 @@ export class PagosService {
       fecha_creacion: p.fecha_creacion,
       estado: p.estado,
     } as PagoResponseDto;
+  }
+
+  async obtenerPagosPorEstudiante(idEstudiante: number): Promise<Pagos[]> {
+    return this.repo.find({
+      where: { estudiante: { id: idEstudiante }, estado: 'activo' },
+      relations: ['estudiante', 'personal'],
+    });
   }
 }
