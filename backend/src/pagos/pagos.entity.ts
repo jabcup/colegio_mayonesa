@@ -41,10 +41,10 @@ export class Pagos {
   @Column({
     type: 'varchar',
     length: 150,
-    nullable: false
+    nullable: false,
   })
   concepto: string;
-  
+
   @CreateDateColumn({ type: 'timestamp' })
   fecha_creacion: Date;
 

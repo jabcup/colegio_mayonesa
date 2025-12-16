@@ -5,7 +5,14 @@ import { Boton } from "../botones/botonNav";
 import LogoutButton from "../botones/logout";
 
 interface Props {
-  onChangeVista: (vista: "calificaciones" | "asistencias" | "horarios") => void;
+  onChangeVista: (
+    vista:
+      | "calificaciones"
+      | "asistencias"
+      | "horarios"
+      | "pagos"
+      | "notificaciones"
+  ) => void;
   nombreEstudiante?: string;
 }
 
@@ -14,7 +21,7 @@ export default function NavbarFamiliares({
   nombreEstudiante,
 }: Props) {
   return (
-    <AppBar position="static" sx={{ marginBottom: 5}}>
+    <AppBar position="static" sx={{ marginBottom: 5 }}>
       <Toolbar>
         <Typography variant="h6" sx={{ flexGrow: 1, paddingLeft: 2 }}>
           Mayonesa
@@ -40,7 +47,18 @@ export default function NavbarFamiliares({
           onClick={() => onChangeVista("horarios")}
           className="ml-2"
         />
-
+        <Boton
+          label="Pagos"
+          color="success"
+          onClick={() => onChangeVista("pagos")}
+          className="ml-2"
+        />
+        <Boton
+          label="Notificaciones"
+          color="success"
+          onClick={() => onChangeVista("notificaciones")}
+          className="ml-2"
+        />
         <LogoutButton />
       </Toolbar>
     </AppBar>

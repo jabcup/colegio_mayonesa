@@ -95,8 +95,7 @@ export default function TableCalificaciones({ idEstudiante }: Props) {
 
     fetchCalificaciones();
   }, [idEstudiante]);
-  useEffect(() => {console.log(rows);
-  }, [rows]);
+
 
   return (
     <TableContainer component={Paper} sx={{ mt: 3, width: "95%", mx: "auto" }}>

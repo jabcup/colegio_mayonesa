@@ -7,6 +7,8 @@ import { api } from "../lib/api";
 import TableAsistencia from "../components/familiares/table-asistencias";
 import Cookies from "js-cookie";
 import { Typography } from "@mui/material";
+import TablePagosEstudiante from "../components/familiares/table-pagos";
+import TableNotificacionesEstudiante from "../components/familiares/table-notificaciones";
 
 export interface Estudiante {
   id: number;
@@ -45,7 +47,6 @@ export default function FamiliaresPage() {
             : undefined
         }
       />
-
       {vista === "calificaciones" && estudiante && (
         <TableCalificaciones idEstudiante={estudiante.id} />
       )}
@@ -54,6 +55,12 @@ export default function FamiliaresPage() {
       )}
       {vista === "asistencias" && estudiante && (
         <TableAsistencia idEstudiante={estudiante.id} />
+      )}
+      {vista === "pagos" && estudiante && (
+        <TablePagosEstudiante idEstudiante={estudiante.id} />
+      )}
+      {vista === "notificaciones" && estudiante && (
+        <TableNotificacionesEstudiante idEstudiante={estudiante.id} />
       )}
     </>
   );

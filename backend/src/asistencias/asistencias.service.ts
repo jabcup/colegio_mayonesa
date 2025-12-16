@@ -282,25 +282,59 @@ export class AsistenciasService {
     return { asistencias: asistenciasMap };
   }
 
+  // async obtenerAsistenciasSemanaLaboral(
+  //   idEstudiante: number,
+  //   fechaReferencia: Date,
+  // ) {
+  //   const fecha = new Date(fechaReferencia);
+
+  //   const diaSemana = fecha.getDay();
+  //   const diffLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+
+  //   const lunes = new Date(fecha);
+
+  //   lunes.setDate(fecha.getDate() + diffLunes);
+  //   lunes.setHours(0, 0, 0, 0);
+
+  //   const viernes = new Date(lunes);
+  //   viernes.setDate(lunes.getDate() + 5);
+  //   viernes.setHours(23, 59, 59, 999);
+  //   console.log('JODER');
+
+  //   return await this.asistenciaRepository.find({
+  //     where: {
+  //       estudiante: { id: idEstudiante },
+  //       fecha_creacion: Between(lunes, viernes),
+  //       estado: 'activo',
+  //     },
+  //     relations: ['asignacionClase'],
+  //     order: {
+  //       fecha_creacion: 'ASC',
+  //     },
+  //   });
+  // }
   async obtenerAsistenciasSemanaLaboral(
     idEstudiante: number,
     fechaReferencia: Date,
   ) {
     const fecha = new Date(fechaReferencia);
 
-    const diaSemana = fecha.getDay();
-    const diffLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+    // 🔑 CLAVE: normalizar hora para evitar cambio de día por timezone
+    fecha.setHours(12, 0, 0, 0);
+
+    const diaSemana = fecha.getDay(); // 6=domingo
+
+    const diffLunes = diaSemana === 6 ? -6 : 1 - diaSemana;
 
     const lunes = new Date(fecha);
-
     lunes.setDate(fecha.getDate() + diffLunes);
     lunes.setHours(0, 0, 0, 0);
 
     const viernes = new Date(lunes);
-    viernes.setDate(lunes.getDate() + 5);
+    viernes.setDate(lunes.getDate() + 4);
     viernes.setHours(23, 59, 59, 999);
 
-    return await this.asistenciaRepository.find({
+    return this.asistenciaRepository.find({
       where: {
         estudiante: { id: idEstudiante },
         fecha_creacion: Between(lunes, viernes),
