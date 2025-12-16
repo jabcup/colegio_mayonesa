@@ -16,7 +16,7 @@ export default function Navbar() {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Mayonesa
+            Colegio Mayo - Sección Administrativa
           </Typography>
           <Boton
             label="Estudiantes"
