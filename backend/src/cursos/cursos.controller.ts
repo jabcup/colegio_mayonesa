@@ -6,11 +6,14 @@ import {
   Put,
   Delete,
   Param,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateCursoDto } from './dto/create-curso.dto';
 import { CursosService } from './cursos.service';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('cursos')
 export class CursosController {
   constructor(private readonly cursosService: CursosService) {}

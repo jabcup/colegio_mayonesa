@@ -122,6 +122,13 @@ export default function Navbar() {
             onClick={() => router.push("/cursos")}
           />
           )}
+          <Boton
+            label="Auditoria"
+            color="success"
+            size="small"
+            className="ml-2"
+            onClick={() => router.push("/auditoria")}
+          />
           <LogoutButton />
         </Toolbar>
       </AppBar>

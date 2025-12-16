@@ -21,6 +21,15 @@ async function bootstrap() {
     .setTitle('Mis APIs')
     .setDescription('API desarrollada con NestJS y Swagger')
     .setVersion('1.0')
+    //Auditoria
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+      'access-token',
+    )
     // .addTag('api')
     .build();
 

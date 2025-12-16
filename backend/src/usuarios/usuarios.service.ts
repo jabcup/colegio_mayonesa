@@ -6,12 +6,16 @@ import { UpdateCorreoUsuarioDto } from './dto/update-correo-usuario.dto';
 import { UpdateContrasenaUsuarioDto } from './dto/update-contrasena-usuario.dto';
 import * as bcrypt from 'bcrypt';
 import { UpdateUsuarioCompletoDto } from './dto/update-usuario.dto';
+// Auditoria
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UsuariosService {
   constructor(
     @InjectRepository(Usuarios)
     private usuariosRepository: Repository<Usuarios>,
+    //Auditoria
+    private readonly jwtService: JwtService,
   ) {}
   async listarUsuarios(): Promise<Usuarios[]> {
     return this.usuariosRepository.find({
@@ -107,8 +111,18 @@ export class UsuariosService {
     if (!passValido) {
       throw new UnauthorizedException('Credenciales incorrectas');
     }
+
+    //Cambio JWT
+    const payload = {
+      sub: usuario.id,
+      rol: usuario.rol.nombre,
+    };
+
+    const token = this.jwtService.sign(payload);
+
     return {
       message: 'Inicio de sesión exitoso',
+      access_token: token,
       usuario: {
         id: usuario.id,
         correo: usuario.correo_institucional,
