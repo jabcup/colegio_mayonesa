@@ -26,13 +26,13 @@ export default function Navbar() {
             onClick={() => router.push("/estudiante")}
           />
           {rol !== "Secretaria-o" && rol !== "Cajero" && (
-          <Boton
-            label="Calificaciones"
-            color="success"
-            size="small"
-            className="ml-2"
-            onClick={() => router.push("/calificacion")}
-          />
+            <Boton
+              label="Calificaciones"
+              color="success"
+              size="small"
+              className="ml-2"
+              onClick={() => router.push("/calificacion")}
+            />
           )}
           <Boton
             label="Reportes"
@@ -42,85 +42,85 @@ export default function Navbar() {
             onClick={() => router.push("/reporte")}
           />
           {rol !== "Secretaria-o" && rol !== "Cajero" && (
-          <Boton
-            label="Asistencias"
-            color="success"
-            size="small"
-            className="ml-2"
-            onClick={() => router.push("/asistencias")}
-          />
+            <Boton
+              label="Asistencias"
+              color="success"
+              size="small"
+              className="ml-2"
+              onClick={() => router.push("/asistencias")}
+            />
           )}
-          {rol !== "Cajero" && rol!== "Docente" && (
-          <Boton
-            label="Personal"
-            color="success"
-            size="small"
-            className="ml-2"
-            onClick={() => router.push("/personal")}
-          />
+          {rol !== "Cajero" && rol !== "Docente" && (
+            <Boton
+              label="Personal"
+              color="success"
+              size="small"
+              className="ml-2"
+              onClick={() => router.push("/personal")}
+            />
           )}
-          {rol !== "Cajero" && rol!== "Docente" && (
-          <Boton
-            label="Materias"
-            color="success"
-            size="small"
-            className="ml-2"
-            onClick={() => router.push("/materias")}
-          />
+          {rol !== "Cajero" && rol !== "Docente" && (
+            <Boton
+              label="Materias"
+              color="success"
+              size="small"
+              className="ml-2"
+              onClick={() => router.push("/materias")}
+            />
           )}
-          {rol !== "Cajero" && rol!== "Docente" &&  (
-          <Boton
-            label="Horarios"
-            color="success"
-            size="small"
-            className="ml-2"
-            onClick={() => router.push("/horarios")}
-          />
+          {rol !== "Cajero" && rol !== "Docente" && (
+            <Boton
+              label="Horarios"
+              color="success"
+              size="small"
+              className="ml-2"
+              onClick={() => router.push("/horarios")}
+            />
           )}
-          {rol !== "Secretaria-o" && rol!== "Docente" &&  (
-          <Boton
-            label="Pagos"
-            color="success"
-            size="small"
-            className="ml-2"
-            onClick={() => router.push("/pago")}
-          />
+          {rol !== "Secretaria-o" && rol !== "Docente" && (
+            <Boton
+              label="Pagos"
+              color="success"
+              size="small"
+              className="ml-2"
+              onClick={() => router.push("/pago")}
+            />
           )}
           {rol !== "Docente" && (
-          <Boton
-            label="Notificaciones"
-            color="success"
-            size="small"
-            className="ml-2"
-            onClick={() => router.push("/notificaciones")}
-          />
+            <Boton
+              label="Notificaciones"
+              color="success"
+              size="small"
+              className="ml-2"
+              onClick={() => router.push("/notificaciones")}
+            />
           )}
-          {rol !== "Cajero" && rol!== "Docente" &&  (
-          <Boton
-            label="Roles"
-            color="success"
-            size="small"
-            className="ml-2"
-            onClick={() => router.push("/rol")}
-          />
+          {rol !== "Cajero" && rol !== "Docente" && (
+            <Boton
+              label="Roles"
+              color="success"
+              size="small"
+              className="ml-2"
+              onClick={() => router.push("/rol")}
+            />
           )}
           {rol !== "Cajero" && (
-          <Boton
-            label="Asignaciones"
-            color="success"
-            size="small"
-            className="ml-2"
-            onClick={() => router.push("/asignacion")}
-          />
+            <Boton
+              label="Asignaciones"
+              color="success"
+              size="small"
+              className="ml-2"
+              onClick={() => router.push("/asignacion")}
+            />
           )}
-          {rol !== "Cajero" && rol!== "Docente" &&  (
-          <Boton
-            label="Cursos"
-            color="success"
-            size="small"
-            className="ml-2"
-            onClick={() => router.push("/cursos")}
-          />
+          {rol !== "Cajero" && rol !== "Docente" && (
+            <Boton
+              label="Cursos"
+              color="success"
+              size="small"
+              className="ml-2"
+              onClick={() => router.push("/cursos")}
+            />
           )}
           <Boton
             label="Auditoria"
@@ -128,6 +128,13 @@ export default function Navbar() {
             size="small"
             className="ml-2"
             onClick={() => router.push("/auditoria")}
+          />
+          <Boton
+            label="Avisos"
+            color="success"
+            size="medium"
+            className="ml-2"
+            onClick={() => router.push("/aviso")}
           />
           <LogoutButton />
         </Toolbar>
