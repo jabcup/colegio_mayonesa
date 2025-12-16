@@ -142,7 +142,7 @@ export class EstudianteService {
           estudiante: nuevoEstudiante,
           cantidad: 800,
           descuento: 0,
-          concepto: 'creo que el otro estaba mal',
+          concepto: 'Mensualidad',
           total: 800,
           numero_pago: i,
         });
