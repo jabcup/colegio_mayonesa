@@ -15,7 +15,6 @@ import { getAuthData } from "../lib/auth";
 import { Boton } from "../components/botones/botonNav";
 
 
-
 interface EstudianteFull {
   id: number;
   estudiante: {
@@ -113,9 +112,9 @@ export default function EstudiantesPage() {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
-
+      {rol !== "Cajero" && rol !== "Docente" && (
       <Boton label="Registrar Estudiante" className="m-2" color="success" onClick={() => setShowForm(true)}/>
-        
+      )}
 
       <FormEstudiante
         open={showForm}

@@ -122,20 +122,24 @@ export default function Navbar() {
               onClick={() => router.push("/cursos")}
             />
           )}
-          <Boton
-            label="Auditoria"
-            color="success"
-            size="small"
-            className="ml-2"
-            onClick={() => router.push("/auditoria")}
-          />
+          {rol === "Administrador" && (
+            <Boton
+              label="Auditoria"
+              color="success"
+              size="small"
+              className="ml-2"
+              onClick={() => router.push("/auditoria")}
+            />
+          )}
+          {rol !== "Docente" && (
           <Boton
             label="Avisos"
             color="success"
             size="medium"
             className="ml-2"
-            onClick={() => router.push("/aviso")}
+            onClick={() => router.push("/avisos")}
           />
+          )}
           <LogoutButton />
         </Toolbar>
       </AppBar>

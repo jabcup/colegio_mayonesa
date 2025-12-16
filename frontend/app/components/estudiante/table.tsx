@@ -22,6 +22,7 @@ import { useState } from "react";
 import { api } from "@/app/lib/api";
 import EditPadreDialog from "../padre/EditPadreDialog";
 import EditEstudianteDialog from "./EditEstudianteDialog";
+import { getAuthData } from "@/app/lib/auth";
 
 interface EstudianteFull {
   id: number;
@@ -68,6 +69,8 @@ export default function TableEstudiante({ estudiantes }: Props) {
   const [openEditEstudiante, setOpenEditEstudiante] = useState(false);
   const [selectedEstudiante, setSelectedEstudiante] = useState<any>(null);
 
+  const { rol, idPersonal } = getAuthData();
+
   const handleEliminarPadre = async (id: number) => {
     if (!confirm("¿Seguro que deseas eliminar este tutor?")) return;
 
@@ -104,7 +107,9 @@ export default function TableEstudiante({ estudiantes }: Props) {
             <TableCell><strong>Correo</strong></TableCell>
             <TableCell><strong>Tutor</strong></TableCell>
             <TableCell><strong>Estado</strong></TableCell>
+            {rol !== "Cajero" && rol !== "Docente" && (
             <TableCell><strong>Acciones</strong></TableCell>
+            )}
           </TableRow>
         </TableHead>
 
@@ -138,7 +143,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                   <TableCell>{e.estudiante.correo}</TableCell>
                   <TableCell>{tutorName}</TableCell>
                   <TableCell>{e.estudiante.estado}</TableCell>
-
+                  {rol !== "Cajero" && rol !== "Docente" && (
                   <TableCell>
                     <Button
                       size="small"
@@ -162,6 +167,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                       Eliminar Estudiante
                     </Button>
                   </TableCell>
+                  )}
                 </TableRow>
 
                 {/* FILA EXPANDIBLE */}
@@ -219,7 +225,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                           <Typography>
                             <b>Estado Tutor:</b> {e.tutor.estado}
                           </Typography>
-
+                          {rol !== "Cajero" && rol !== "Docente" && (
                           <Box mt={1} display="flex" gap={1}>
                             <Button
                               size="small"
@@ -243,6 +249,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                               Eliminar Tutor
                             </Button>
                           </Box>
+                          )}
                         </Box>
                       </Box>
                     </Collapse>

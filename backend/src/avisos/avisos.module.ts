@@ -10,5 +10,6 @@ import { Personal } from '../personal/personal.entity';
   imports: [TypeOrmModule.forFeature([Avisos, Curso, Personal])],
   controllers: [AvisosController],
   providers: [AvisosService],
+  exports: [AvisosService],
 })
 export class AvisosModule {}
