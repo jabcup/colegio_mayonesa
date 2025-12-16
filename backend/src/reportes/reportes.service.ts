@@ -157,7 +157,7 @@ export class ReportesService {
     let y = height - 50;
 
     // 🏫 Encabezado
-    page.drawText('UNIDAD EDUCATIVA XYZ', {
+    page.drawText('COLEGIO MAYO', {
       x: 50,
       y,
       size: 14,
@@ -285,7 +285,7 @@ export class ReportesService {
     let y = height - 50;
 
     // 🏫 Encabezado
-    page.drawText('UNIDAD EDUCATIVA XYZ', {
+    page.drawText('COLEGIO MAYO', {
       x: 50,
       y,
       size: 14,
@@ -404,7 +404,7 @@ export class ReportesService {
     let y = height - 50;
 
     // 🏫 Encabezado institucional
-    page.drawText('UNIDAD EDUCATIVA XYZ', {
+    page.drawText('COLEGIO MAYO', {
       x: 50,
       y,
       size: 14,
@@ -546,7 +546,7 @@ export class ReportesService {
     let y = height - 50;
 
     // 🏫 Encabezado
-    page.drawText('UNIDAD EDUCATIVA XYZ', {
+    page.drawText('COLEGIO MAYO', {
       x: 50,
       y,
       size: 14,
@@ -692,7 +692,7 @@ export class ReportesService {
     let y = height - 50;
 
     // 🏫 Encabezado
-    page.drawText('UNIDAD EDUCATIVA XYZ', {
+    page.drawText('COLEGIO MAYO', {
       x: 50,
       y,
       size: 14,
@@ -854,7 +854,7 @@ export class ReportesService {
     let y = height - 50;
 
     // 🏫 Encabezado institucional
-    page.drawText('UNIDAD EDUCATIVA XYZ', {
+    page.drawText('COLEGIO MAYO', {
       x: 50,
       y,
       size: 14,
@@ -1009,7 +1009,7 @@ export class ReportesService {
     let y = height - 50;
 
     // 🏫 Encabezado institucional
-    page.drawText('UNIDAD EDUCATIVA XYZ', {
+    page.drawText('COLEGIO MAYO', {
       x: 50,
       y,
       size: 14,
@@ -1165,7 +1165,7 @@ export class ReportesService {
     let y = height - 50;
 
     // 🏫 Encabezado institucional
-    page.drawText('UNIDAD EDUCATIVA XYZ', {
+    page.drawText('COLEGIO MAYO', {
       x: 50,
       y,
       size: 14,
