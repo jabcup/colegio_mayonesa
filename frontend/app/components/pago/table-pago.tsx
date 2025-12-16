@@ -1,7 +1,23 @@
 "use client"
 
 import { useState } from "react"
-import { Button, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Paper, TextField } from "@mui/material"
+import {
+  Button,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  TableContainer,
+  Paper,
+  TextField,
+  TablePagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  IconButton,
+} from "@mui/material"
+import CloseIcon from "@mui/icons-material/Close"
 import { api } from "@/app/lib/api"
 import DetallePago from "./detalle-pago"
 import FormPago from "./form-pago"
@@ -17,6 +33,7 @@ interface Pago {
   deuda: "pendiente" | "cancelado"
   concepto: string
   fecha_creacion: string
+  estado: string
 }
 
 interface Props {
@@ -29,14 +46,17 @@ export default function TablePagos({ pagos, estudiantes }: Props) {
   const [anioFiltro, setAnioFiltro] = useState("")
   const [pagoAEditar, setPagoAEditar] = useState<Pago | undefined>()
 
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(5)
+
+  const personalId = Number(Cookies.get('personal_id') ?? 0)
+
   const visibles = pagos.filter(p => p.estado === 'activo')
   const filtered = anioFiltro
     ? visibles.filter(p => new Date(p.fecha_creacion).getFullYear().toString() === anioFiltro)
     : visibles
 
-  const personalId = Number(Cookies.get('personal_id') ?? 0)
-  //eliminar esto
-  console.log('id del personal usando esto: ' + personalId)
+  const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
 
   const handleVer = async (pagoId: number) => {
     try {
@@ -71,6 +91,12 @@ export default function TablePagos({ pagos, estudiantes }: Props) {
     }
   }
 
+  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage)
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10))
+    setPage(0)
+  }
+
   return (
     <>
       <div className="flex items-center gap-4 mb-3">
@@ -99,7 +125,7 @@ export default function TablePagos({ pagos, estudiantes }: Props) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filtered.map((p) => (
+            {paginated.map((p) => (
               <TableRow key={p.id}>
                 <TableCell>{p.nombreEstudiante}</TableCell>
                 <TableCell>{p.concepto}</TableCell>
@@ -128,18 +154,57 @@ export default function TablePagos({ pagos, estudiantes }: Props) {
         </Table>
       </TableContainer>
 
-      {pagoSeleccionado && (
-        <DetallePago pago={pagoSeleccionado} onClose={() => setPagoSeleccionado(null)} />
-      )}
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
+        count={filtered.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        labelRowsPerPage="Filas por página"
+      />
 
-      {pagoAEditar && (
-        <FormPago
-          estudiantes={estudiantes}
-          pagoInicial={pagoAEditar}
-          onCreate={handleRecargar}
-          onClose={handleCerrarForm}
-        />
-      )}
+      {/* Modal para ver detalle */}
+      <Dialog open={!!pagoSeleccionado} onClose={() => setPagoSeleccionado(null)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          Detalle del pago
+          <IconButton
+            aria-label="close"
+            onClick={() => setPagoSeleccionado(null)}
+            sx={{ position: "absolute", right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          {pagoSeleccionado && <DetallePago pago={pagoSeleccionado} onClose={() => setPagoSeleccionado(null)} />}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para actualizar */}
+      <Dialog open={!!pagoAEditar} onClose={handleCerrarForm} maxWidth="md" fullWidth>
+        <DialogTitle>
+          Actualizar pago
+          <IconButton
+            aria-label="close"
+            onClick={handleCerrarForm}
+            sx={{ position: "absolute", right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          {pagoAEditar && (
+            <FormPago
+              estudiantes={estudiantes}
+              pagoInicial={pagoAEditar}
+              onCreate={handleRecargar}
+              onClose={handleCerrarForm}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

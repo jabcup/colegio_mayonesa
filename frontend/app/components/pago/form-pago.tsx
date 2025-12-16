@@ -7,8 +7,7 @@ import Cookies from "js-cookie"
 
 interface Estudiante {
   id: number
-  nombres: string
-  apellidoPat: string
+  label: string
 }
 
 interface Pago {
@@ -56,13 +55,17 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!form.idEstudiante || !form.cantidad || Number(form.cantidad) <= 0) {
+      alert("Completa cantidad válida y selecciona estudiante")
+      return
+    }
     const payload = {
       idEstudiante: Number(form.idEstudiante),
       idPersonal: personalId,
       cantidad: Number(form.cantidad),
       descuento: Number(form.descuento),
       total,
-      concepto: form.concepto,
+      concepto: form.concepto.trim(),
       deuda: form.deuda
     }
     try {
@@ -71,12 +74,10 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
       } else {
         await api.post("/pagos", payload)
       }
-
       onCreate()
       onClose()
-    } catch (error) {
-      alert("Error al guardar pago")
-      console.error(error)
+    } catch (e: any) {
+      alert(e.response?.data?.message || "Error al guardar")
     }
   }
 
@@ -95,20 +96,9 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
           disabled={esEdicion}
           SelectProps={{ MenuProps: { sx: { maxHeight: 300 } } }}
         >
-{estudiantes.map((est) => (
-  <MenuItem key={est.id} value={est.id} sx={{ minHeight: 36 }}>
-    {est.label}
-  </MenuItem>
-))}{estudiantes.map((est, idx) => {
-  console.log(idx, est) // ← verifica aquí
-  return (
-    <MenuItem key={est.id} value={est.id} sx={{ minHeight: 36 }}>
-      {est.nombres} {est.apellidoPat}
-    </MenuItem>
-  )
-})}          {estudiantes.map((est) => (
+          {estudiantes.map((est) => (
             <MenuItem key={est.id} value={est.id} sx={{ minHeight: 36 }}>
-              {est.nombres} {est.apellidoPat}
+              {est.label}
             </MenuItem>
           ))}
         </TextField>
@@ -121,6 +111,7 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
         value={form.cantidad}
         onChange={(e) => setForm({ ...form, cantidad: e.target.value })}
         required
+        inputProps={{ min: 0, step: 0.01 }}
       />
 
       <TextField
@@ -129,6 +120,7 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
         label="Descuento"
         value={form.descuento}
         onChange={(e) => setForm({ ...form, descuento: e.target.value })}
+        inputProps={{ min: 0, step: 0.01 }}
       />
 
       <TextField
@@ -137,6 +129,7 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
         value={form.concepto}
         onChange={(e) => setForm({ ...form, concepto: e.target.value })}
         required
+        inputProps={{ maxLength: 150 }}
       />
 
       <TextField
