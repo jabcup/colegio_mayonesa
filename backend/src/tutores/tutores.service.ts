@@ -23,11 +23,11 @@ export class TutoresService {
   async getTutores(): Promise<Tutores[]> {
     return this.tutoresRepository.find({
       relations: ['personal', 'curso'],
+      where: { estado: 'activo' },
     });
   }
 
   async createTutores(dto: CreateTutoresDto): Promise<Tutores> {
-    // 1. Buscar el personal
     const personal = await this.personalRepository.findOne({
       where: { id: dto.idPersonal },
     });

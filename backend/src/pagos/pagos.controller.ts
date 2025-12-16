@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PagosService } from './pagos.service';
@@ -22,6 +23,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Usuarios } from 'src/usuarios/usuarios.entity';
 import { ForbiddenException } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 class SoloIdPersonal implements PipeTransform {
   transform(value: any) {
@@ -52,6 +54,7 @@ async function esCajero(
   return usuario?.rol?.nombre === 'Cajero' && usuario.estado === 'activo';
 }
 
+@UseGuards(JwtAuthGuard)
 @ApiTags('Pagos')
 @Controller('pagos')
 export class PagosController {

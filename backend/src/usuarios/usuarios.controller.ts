@@ -6,6 +6,7 @@ import {
   Param,
   Put,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
 import { ApiOperation } from '@nestjs/swagger';
@@ -13,7 +14,9 @@ import { UpdateCorreoUsuarioDto } from './dto/update-correo-usuario.dto';
 import { UpdateContrasenaUsuarioDto } from './dto/update-contrasena-usuario.dto';
 import { UpdateUsuarioCompletoDto } from './dto/update-usuario.dto';
 import { LoginUsuarioDto } from './dto/login-usuarios.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}

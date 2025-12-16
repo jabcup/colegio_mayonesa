@@ -30,7 +30,6 @@ export default function LoginForm() {
         return;
       }
 
-      // ✅ COOKIES CON PATH CORRECTO
       Cookies.set("usuario_id", usuario.id.toString(), {
         expires: 1,
         path: "/",
@@ -42,13 +41,11 @@ export default function LoginForm() {
       Cookies.set("usuario_rol", usuario.rol, { expires: 1, path: "/" });
       Cookies.set("personal_id", usuario.idPersonal, { expires: 1, path: "/" });
 
-      // TOKEN PARA AUDITORIA
       Cookies.set("access_token", res.data.access_token, {
         expires: 1,
         path: "/",
       });
 
-      // ✅ REDIRECCIÓN ABSOLUTA
       router.replace("/estudiante");
     } catch (err: any) {
       const serverMessage =

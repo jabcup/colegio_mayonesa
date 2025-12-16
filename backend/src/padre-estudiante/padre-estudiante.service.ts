@@ -23,14 +23,12 @@ export class PadreEstudianteService {
       relations: ['tutor', 'estudiante'],
     });
   }
-  //Lista a un estudiante y todo su historial de padres asignados
   async listarTodosEstudiantePadresEspecifico(idEstudiante: number) {
     return await this.estudianteTutorRepository.find({
       where: { estudiante: { id: idEstudiante } },
       relations: ['tutor', 'estudiante'],
     });
   }
-  //Lista a un estudiante y el padre asignado actual
 
   async listarUltimoEstudiantePadreEspecifico(idEstudiante: number) {
     return await this.estudianteTutorRepository.find({
@@ -41,18 +39,15 @@ export class PadreEstudianteService {
       relations: ['tutor', 'estudiante'],
     });
   }
-  // Muestra a un padre y todos sus estudiantes actuales
   async listarPadreEstudiantes(idPadre: number) {
     return await this.estudianteTutorRepository.find({
       where: { tutor: { id: idPadre }, estado: 'activo' },
       relations: ['tutor', 'estudiante'],
     });
   }
-  // CRear DTO
   async asignarEstudiante(
     dtoPadreEstudiante: CreatePadreEstudianteDto,
   ): Promise<EstudianteTutor> {
-    // 1. Validar si ya está asignado el mismo tutor
     const existente = await this.estudianteTutorRepository.findOne({
       where: {
         estudiante: { id: dtoPadreEstudiante.idEstudiante },
@@ -65,12 +60,10 @@ export class PadreEstudianteService {
       throw new ConflictException('Este tutor ya está asignado al estudiante');
     }
 
-    // 2. Desactivar asignaciones activas anteriores (si existieran)
     await this.desactivarAsignacionesAnteriores(
       dtoPadreEstudiante.idEstudiante,
     );
 
-    // 3. Crear nueva asignación
     return this.estudianteTutorRepository.save(
       this.estudianteTutorRepository.create({
         relacion: dtoPadreEstudiante.relacion,

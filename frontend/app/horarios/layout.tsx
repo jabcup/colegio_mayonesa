@@ -7,7 +7,6 @@ export default async function EstudianteLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // ✅ await porque cookies() devuelve Promise
   const cookieStore = await cookies();
   const estudianteId = cookieStore.get("usuario_id")?.value;
 

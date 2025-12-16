@@ -7,12 +7,15 @@ import {
   Delete,
   Param,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreatePersonalDto } from './dto/create-personal.dto';
 import { PersonalService } from './personal.service';
 import { CreatePersonalFullDto } from './dto/create-personal-full.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('personal')
 export class PersonalController {
   constructor(private readonly personalService: PersonalService) {}

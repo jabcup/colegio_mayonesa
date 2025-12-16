@@ -67,7 +67,6 @@ export default function TableNotificaciones() {
       const res = await api.get(`/notificaciones/Estudiante/${selectedEstudiante.id}`);
       let data = res.data as Notificacion[];
 
-      // Ordenar por fecha (más reciente primero por defecto)
       data = data.sort((a, b) =>
         sortDesc
           ? new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime()

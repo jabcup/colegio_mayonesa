@@ -41,7 +41,7 @@ export default function TablaCurso({ cursos, onEdit, onDelete }: Props) {
                         <TableCell>Nombre</TableCell>
                         <TableCell>Paralelo</TableCell>
                         <TableCell>Gestion</TableCell>
-                        <TableCell>Capacidad</TableCell>
+                        {/* <TableCell>Capacidad</TableCell> */}
                         <TableCell>Acciones</TableCell>
                     </TableRow>
                 </TableHead>
@@ -51,7 +51,7 @@ export default function TablaCurso({ cursos, onEdit, onDelete }: Props) {
                             <TableCell>{c.nombre}</TableCell>
                             <TableCell>{c.paralelo}</TableCell>
                             <TableCell>{c.gestion}</TableCell>
-                            <TableCell>{c.capacidad}</TableCell>
+                            {/* <TableCell>{c.capacidad}</TableCell> */}
                             <TableCell>
                                 <Button 
                                   variant="outlined"

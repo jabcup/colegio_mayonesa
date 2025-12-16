@@ -26,21 +26,17 @@ export class CalificacionesService {
 
   async getCalificaciones(): Promise<Calificaciones[]> {
     return this.calificacionesRepository.find({
-      relations: ['materia', 'estudiante'], // asignacionClase
+      relations: ['materia', 'estudiante'],
     });
   }
-
-  //CAMBIO DE MATERIA POR ASIGNACION
   async getCalificacionesPorAsignacion(
-    // idAsignacion: number,
     idMateria: number,
   ): Promise<Calificaciones[]> {
     return this.calificacionesRepository.find({
       where: {
         materia: { id: idMateria },
-        // asignacionClase: { id: idAsignacion },
       },
-      relations: ['materia', 'estudiante'], // asignacionClase
+      relations: ['materia', 'estudiante'],
     });
   }
 
@@ -79,7 +75,7 @@ export class CalificacionesService {
       where: {
         estudiante: { id: idEstudiante },
       },
-      relations: ['materia', 'estudiante'], // asignacionClase
+      relations: ['materia', 'estudiante'],
     });
   }
   async getCalificacionesPorEstudianteGestionActual(
@@ -103,10 +99,6 @@ export class CalificacionesService {
   async createCalificacion(
     dto: CreateCalificacionDto,
   ): Promise<Calificaciones> {
-    // const asignacion = await this.asignacionClaseRepository.findOne({
-    //   where: { id: dto.idAsignacion },
-    // });
-
     const materia = await this.materiasRepository.findOne({
       where: { id: dto.idMateria },
     });
@@ -114,10 +106,6 @@ export class CalificacionesService {
     if (!materia) {
       throw new Error('Materia no encontrada');
     }
-
-    // if (!asignacion) {
-    //   throw new Error('Asignacion no encontrada');
-    // }
 
     const estudiante = await this.estudianteRepository.findOne({
       where: { id: dto.idEstudiante },
@@ -129,12 +117,10 @@ export class CalificacionesService {
 
     const aprobacion = dto.calificacion >= 51 ? true : false;
 
-    // Crear calificación
     const calificacion = this.calificacionesRepository.create({
       calificacion: dto.calificacion,
       aprobacion: aprobacion,
       materia: materia,
-      //asignacionClase: asignacion,
       estudiante: estudiante,
     });
 

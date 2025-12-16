@@ -48,7 +48,6 @@ export default function TutoresPage() {
     cargarTutores();
   };
 
-  // obtener ultima gestiok
   const maxGestion = useMemo(() => {
     if (tutores.length === 0) return new Date().getFullYear();
     return Math.max(...tutores.map((t) => t.curso.gestion));

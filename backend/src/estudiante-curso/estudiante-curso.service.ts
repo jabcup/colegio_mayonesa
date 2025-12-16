@@ -89,7 +89,6 @@ export class EstudianteCursoService {
         );
       }
 
-      // Actualizamos el curso en la relación
       asignacion.curso = nuevoCurso;
 
       return await manager.save(asignacion);

@@ -14,7 +14,7 @@ interface RequestConUsuario extends Request {
 
 interface ResponseConId {
   id?: number;
-  [key: string]: any; // Para no perder otras propiedades
+  [key: string]: any;
 }
 
 @Injectable()

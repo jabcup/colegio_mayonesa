@@ -66,6 +66,8 @@ export default function Rol() {
         try {
             await api.post("/roles/CrearRol", data);
             alert("Rol creado con éxito");
+
+            cargarRoles();
         } catch (err) {
             console.error(err);
             alert("Error al crear el rol");

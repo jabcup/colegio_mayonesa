@@ -92,7 +92,7 @@ export default function Rol() {
       await api.delete(`/cursos/EliminarCurso/${id}`);
       alert("Curso eliminado");
 
-      cargarCursos(); // recargar tabla
+      cargarCursos();
     } catch (err) {
       console.error(err);
       alert("Error al eliminar");

@@ -7,12 +7,15 @@ import {
   Put,
   Param,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { AsignacionClasesService } from './asignacion-clases.service';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateAsignacionFulDto } from './dto/create-asignacion-full.dto';
 import { UpdateAsignacionFulDto } from './dto/update-asignacion-full.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('asignacion-clases')
 export class AsignacionClasesController {
   constructor(private readonly asignacionService: AsignacionClasesService) {}

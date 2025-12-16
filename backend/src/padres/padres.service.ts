@@ -17,7 +17,7 @@ export class PadresService {
   }
 
   async todos(): Promise<Padres[]> {
-    return this.padreRepository.find(); // select * from padres
+    return this.padreRepository.find();
   }
 
   async updatePadre(id: number, dtoPadre: CreatePadreDto): Promise<Padres> {
@@ -27,7 +27,6 @@ export class PadresService {
       throw new Error('Padre no encontrado');
     }
 
-    // Mezcla los datos nuevos con los actuales
     Object.assign(padre, dtoPadre);
 
     return this.padreRepository.save(padre);

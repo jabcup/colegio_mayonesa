@@ -52,13 +52,11 @@ export default function FormTutor({
     idCurso: 0,
   });
 
-  // Cargar combos
   useEffect(() => {
     api.get("/personal/Docentes").then((res) => setDocentes(res.data));
     api.get("/cursos/CursosActivos").then((res) => setCursos(res.data));
   }, []);
 
-  // Precargar o limpiar
   useEffect(() => {
     if (isEdit && selectedTutor) {
       setForm({

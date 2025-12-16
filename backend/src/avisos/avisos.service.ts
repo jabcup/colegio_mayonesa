@@ -96,7 +96,7 @@ export class AvisosService {
       });
 
       await manager.save(aviso);
-      return this.findOne(id); // Devuelve aviso actualizado con relaciones
+      return this.findOne(id);
     });
   }
 

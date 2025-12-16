@@ -1,4 +1,3 @@
-// app/avisos/components/TableAvisos.tsx
 "use client";
 
 import {
@@ -40,7 +39,6 @@ interface Aviso {
 }
 
 export default function TableAvisos({ onEdit }: { onEdit?: (aviso: Aviso) => void }) {
-  // onEdit se lo pasamos desde la página principal para abrir el modal en modo edición
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [selectedCurso, setSelectedCurso] = useState<Curso | null>(null);
   const [avisos, setAvisos] = useState<Aviso[]>([]);
@@ -115,7 +113,7 @@ export default function TableAvisos({ onEdit }: { onEdit?: (aviso: Aviso) => voi
     try {
       await api.delete(`/avisos/${id}`);
       alert("Aviso eliminado correctamente");
-      cargarAvisos(); // Recargar la lista
+      cargarAvisos();
     } catch (err) {
       alert("Error al eliminar el aviso");
     }

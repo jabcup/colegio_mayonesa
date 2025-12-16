@@ -136,7 +136,7 @@ export default function CalificacionPage() {
           nombre: c.materia_nombre,
         },
       }));
-      setCalificaciones(calificacionesMap); // suponer que backend devuelve estudiantes con calificaciones
+      setCalificaciones(calificacionesMap);
     } catch (err) {
       console.error(err);
       alert("Error al cargar calificaciones");
@@ -283,8 +283,6 @@ export default function CalificacionPage() {
           </MenuItem>
         ))}
       </TextField>
-
-      {/* Tabla */}
       {loading ? (
         <CircularProgress />
       ) : (

@@ -89,12 +89,14 @@ export default function AsignacionPage() {
   const cargarHorarios = async () => {
     try {
       const horariosRes = await api.get(`/horarios/mostrarHorarios`);
-      setHorarios(horariosRes.data.filter((h: Horario) => h.estado === "activo"));
+      setHorarios(
+        horariosRes.data.filter((h: Horario) => h.estado === "activo")
+      );
     } catch (err) {
       console.error(err);
       alert("Error al cargar los horarios");
     }
-  }
+  };
 
   useEffect(() => {
     cargarCursos();
@@ -138,8 +140,11 @@ export default function AsignacionPage() {
       await api.put(
         `/asignacion-clases/ActualizarAsignacion/${contextoAsignacion.idAsignacion}`,
         {
+          dia: contextoAsignacion.dia,
+          idHorario: contextoAsignacion.idHorario,
           idMateria,
           idPersonal: idDocente,
+          idCurso: selectedCurso,
         }
       );
     } else {
@@ -188,7 +193,7 @@ export default function AsignacionPage() {
         onChange={(e) => {
           const cursoId = Number(e.target.value);
           setSelectedCurso(cursoId);
-          cargarAsignaciones(e.target.value); // Al seleccionar un curso, cargar las asignaciones
+          cargarAsignaciones(e.target.value);
         }}
       >
         {cursos.map((c) => (
@@ -198,7 +203,11 @@ export default function AsignacionPage() {
         ))}
       </TextField>
 
-      {loadingAsignaciones ? (
+      {!selectedCurso ? (
+        <Typography sx={{ mt: 3 }} color="text.secondary">
+          Selecciona un curso para visualizar las asignaciones
+        </Typography>
+      ) : loadingAsignaciones ? (
         <CircularProgress />
       ) : (
         <HorarioTabla

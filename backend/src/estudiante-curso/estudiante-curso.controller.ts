@@ -7,11 +7,14 @@ import {
   Param,
   Query,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { UpdateEstudianteFullDto } from './dto/update-estudiante-full.dto';
 import { EstudianteCursoService } from './estudiante-curso.service';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('estudiante-curso')
 export class EstudianteCursoController {
   constructor(

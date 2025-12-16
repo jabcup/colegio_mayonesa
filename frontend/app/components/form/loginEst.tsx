@@ -30,11 +30,9 @@ export default function LoginEst() {
         return;
       }
 
-      // ✅ COOKIES CON PATH CORRECTO
       Cookies.set("estudiante_id", estudiante.id.toString(), { expires: 1, path: "/" });
       Cookies.set("estudiante_correo", estudiante.correo ?? correo, { expires: 1, path: "/" });
 
-      // ✅ REDIRECCIÓN ABSOLUTA
       router.replace("/familiares");
     } catch (err: any) {
       const serverMessage =

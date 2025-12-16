@@ -74,6 +74,7 @@ export default function HorarioTabla({
                       <Typography variant="body2">
                         {asignacion.docente}
                       </Typography>
+                      {rol !== "Docente" && (
                       <Button
                         color="warning"
                         onClick={() =>
@@ -88,6 +89,7 @@ export default function HorarioTabla({
                       >
                         Editar
                       </Button>
+                      )}
                     </>
                   ) : rol !== "Docente" ? (
                     <Button

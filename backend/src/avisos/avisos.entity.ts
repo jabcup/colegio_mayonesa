@@ -6,7 +6,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Curso } from '../cursos/cursos.entity'; // Asumiendo que la entidad Curso existe en esta ruta; ajústala si es necesario
+import { Curso } from '../cursos/cursos.entity';
 import { Personal } from '../personal/personal.entity';
 
 @Entity('avisos')

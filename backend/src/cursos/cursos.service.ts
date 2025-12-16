@@ -30,8 +30,6 @@ export class CursosService {
     if (!curso) {
       throw new Error('Curso no encontrado');
     }
-
-    // Mezcla los datos nuevos con los actuales
     Object.assign(curso, dtoCurso);
 
     return this.cursoRepository.save(curso);

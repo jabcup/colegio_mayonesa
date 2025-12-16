@@ -6,12 +6,15 @@ import {
   Param,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreatePadreDto } from './dto/create-padre.dto';
 import { PadresService } from './padres.service';
 import { UpdatePadreDto } from './dto/update-padre.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('padres')
 export class PadresController {
   constructor(private readonly padresService: PadresService) {}

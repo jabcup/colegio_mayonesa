@@ -14,7 +14,6 @@ import {
 import { useEffect, useState } from "react";
 import { api } from "@/app/lib/api";
 
-//   Encabezados de Columnas y Filas
 const DIAS_SEMANA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
 
 

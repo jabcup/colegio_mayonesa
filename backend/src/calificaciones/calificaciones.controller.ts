@@ -6,13 +6,16 @@ import {
   Put,
   Delete,
   Param,
+  UseGuards,
 } from '@nestjs/common';
 
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateCalificacionDto } from './dto/create-calificacion.dto';
 import { UpdateCalificacionDto } from './dto/update-calificacion.dto';
 import { CalificacionesService } from './calificaciones.service';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('calificaciones')
 export class CalificacionesController {
   constructor(private readonly calificacionesService: CalificacionesService) {}

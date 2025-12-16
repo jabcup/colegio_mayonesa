@@ -56,7 +56,6 @@ export default function TableCalificaciones({ idEstudiante }: Props) {
 
         const calificaciones: Calificacion[] = res.data.calificaciones;
 
-        /* Agrupar por materia */
         const agrupadas: Record<number, Calificacion[]> = {};
 
         calificaciones.forEach((c) => {
@@ -66,7 +65,6 @@ export default function TableCalificaciones({ idEstudiante }: Props) {
           agrupadas[c.materia.id].push(c);
         });
 
-        /* Transformar a filas */
         const filas: FilaMateria[] = Object.values(agrupadas).map(
           (listaMateria) => {
             const ordenadas = listaMateria.sort(

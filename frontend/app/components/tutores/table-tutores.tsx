@@ -42,7 +42,7 @@ export default function TablaTutores({ tutores, onEdit, onDelete }: Props) {
     conflictos[key] = (conflictos[key] || 0) + 1;
   });
 
-  //Detectar si hay duplicidad de tutor 
+
   const esConflicto = (tutor: Tutor) => {
     const key = `${tutor.personal.id}-${tutor.curso.gestion}`;
     return conflictos[key] > 1;

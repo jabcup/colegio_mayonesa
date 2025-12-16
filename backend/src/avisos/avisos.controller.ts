@@ -6,13 +6,16 @@ import {
   Param,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { AvisosService } from './avisos.service';
 import { CreateAvisosDto } from './dto/create-avisos.dto';
 import { UpdateAvisosDto } from './dto/update-avisos.dto';
 import { Curso } from '../cursos/cursos.entity';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('avisos')
 export class AvisosController {
   constructor(private readonly avisosService: AvisosService) {}

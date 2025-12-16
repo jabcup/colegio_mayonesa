@@ -77,7 +77,7 @@ export class NotificacionesService {
     dto: UpdateNotificacionesDto,
   ): Promise<Notificaciones> {
     return this.dataSource.transaction(async (manager) => {
-      const notificacion = await this.findOne(id); // Valida existencia
+      const notificacion = await this.findOne(id);
 
       if (dto.idEstudiante) {
         const estudiante = await manager.findOne(Estudiante, {
@@ -101,7 +101,7 @@ export class NotificacionesService {
       });
 
       await manager.save(notificacion);
-      return this.findOne(id); // Devuelve notificación actualizada
+      return this.findOne(id);
     });
   }
 

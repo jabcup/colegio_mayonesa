@@ -1,4 +1,3 @@
-// app/avisos/components/FormAviso.tsx
 "use client";
 
 import {
@@ -33,7 +32,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  avisoToEdit?: AvisoExisting | null; // Si es null → modo crear, si tiene datos → modo editar
+  avisoToEdit?: AvisoExisting | null;
 }
 
 export default function FormAviso({ open, onClose, onSuccess, avisoToEdit }: Props) {
@@ -43,7 +42,7 @@ export default function FormAviso({ open, onClose, onSuccess, avisoToEdit }: Pro
   const [asunto, setAsunto] = useState("");
   const [mensaje, setMensaje] = useState("");
 
-  const idPersonal = 1; // Cambiar cuando tengas autenticación
+  const idPersonal = 1;
 
   const isEditMode = !!avisoToEdit;
 
@@ -85,7 +84,7 @@ export default function FormAviso({ open, onClose, onSuccess, avisoToEdit }: Pro
 
     const payload = {
       idCurso: selectedCurso.id,
-      idPersonal, // Solo se necesita en creación, pero no molesta enviarlo en update
+      idPersonal,
       asunto: asunto.trim(),
       mensaje: mensaje.trim(),
     };
@@ -133,7 +132,7 @@ export default function FormAviso({ open, onClose, onSuccess, avisoToEdit }: Pro
                 />
               )}
               noOptionsText="No se encontraron cursos"
-              disabled={isEditMode} // En edición no permitimos cambiar el curso (opcional, puedes quitarlo si quieres permitirlo)
+              disabled={isEditMode}
             />
 
             <TextField

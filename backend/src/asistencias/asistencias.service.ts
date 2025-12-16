@@ -291,7 +291,7 @@ export class AsistenciasService {
     // setear hora por zona horaria
     fecha.setHours(12, 0, 0, 0);
 
-    const diaSemana = fecha.getDay(); // 6=domingo
+    const diaSemana = fecha.getDay();
 
     const diffLunes = diaSemana === 6 ? -6 : 1 - diaSemana;
 

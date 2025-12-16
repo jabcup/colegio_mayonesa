@@ -35,7 +35,6 @@ export class EstudianteService {
 
   async createEstudianteFull(dto: CreateEstudianteFullDto) {
     return this.dataSource.transaction(async (manager) => {
-      // 1️⃣ Validaciones base
       if (dto.idPadre && dto.padreData) {
         throw new BadRequestException(
           'Envía solo idPadre o padreData, no ambos',
@@ -45,8 +44,6 @@ export class EstudianteService {
       if (!dto.idPadre && !dto.padreData) {
         throw new BadRequestException('Debe enviar idPadre o padreData');
       }
-
-      // 2️⃣ Verificar duplicado de estudiante
       const existe = await manager.findOne(Estudiante, {
         where: { identificacion: dto.identificacion },
       });
@@ -57,7 +54,6 @@ export class EstudianteService {
         );
       }
 
-      // 3️⃣ Crear estudiante
       const estudiante = manager.create(Estudiante, {
         nombres: dto.nombres,
         apellidoPat: dto.apellidoPat,
@@ -77,7 +73,6 @@ export class EstudianteService {
 
       const nuevoEstudiante = await manager.save(estudiante);
 
-      // 4️⃣ Obtener o crear padre
       let padre: Padres;
 
       if (dto.idPadre) {
@@ -92,7 +87,6 @@ export class EstudianteService {
         padre = await manager.save(manager.create(Padres, dto.padreData));
       }
 
-      // 5️⃣ Relación estudiante - padre
       await manager.save(
         manager.create(EstudianteTutor, {
           estudiante: nuevoEstudiante,
@@ -101,7 +95,6 @@ export class EstudianteService {
         }),
       );
 
-      // 6️⃣ Asignar curso
       const curso = await manager.findOne(Curso, {
         where: { id: dto.idCurso },
       });
@@ -117,7 +110,6 @@ export class EstudianteService {
         }),
       );
 
-      // 7️⃣ Generar pagos
       const pagos = [];
 
       for (let i = 1; i <= 10; i++) {

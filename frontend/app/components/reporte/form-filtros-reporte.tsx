@@ -286,7 +286,7 @@ export default function FormFiltrosReporte({
                   value={form.estado}
                   onChange={handleChange}
                 >
-                  <MenuItem value="pagado">Pagado</MenuItem>
+                  <MenuItem value="cancelado">Cancelado</MenuItem>
                   <MenuItem value="pendiente">Pendiente</MenuItem>
                 </TextField>
               )}

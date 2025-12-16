@@ -18,7 +18,6 @@ export interface UpdateCalificacionDto {
   calificacion: number;
 }
 
-// Tipo que representa la fila mostrada en la tabla (y seleccionable para editar)
 export interface CalificacionFiltrada {
   id: number;
   calificacion: number;
@@ -100,8 +99,8 @@ export default function FormCalificacion({
   const { rol, idPersonal } = getAuthData();
 
   const [form, setForm] = useState({
-    idCurso: "", // Nuevo: curso seleccionado
-    idMateria: "", // Si quieres guardar la clase específica (materia + horario)
+    idCurso: "",
+    idMateria: "",
     idEstudiante: "",
     calificacion: "",
   });
@@ -115,7 +114,7 @@ export default function FormCalificacion({
   useEffect(() => {
     if (selectedCalificacion) {
       setForm({
-        idCurso: "", // puedes dejarlo vacío, porque no se usa en edición
+        idCurso: "",
         idMateria: selectedCalificacion.materia.id.toString(),
         idEstudiante: selectedCalificacion.estudiante.id.toString(),
         calificacion: selectedCalificacion.calificacion.toString(),
@@ -164,18 +163,6 @@ export default function FormCalificacion({
 
     setLoading(true);
     try {
-      // const estudiantesRes = await api.get(`/estudiante-curso/${idCurso}`);
-      // const estudiantesMap = (estudiantesRes.data as BackEstudianteCurso[]).map(
-      //   (ec) => ({
-      //     id: ec.estudiante.id,
-      //     nombres: ec.estudiante.nombres,
-      //     apellidoPat: ec.estudiante.apellidoPat,
-      //     apellidoMat: ec.estudiante.apellidoMat,
-      //   })
-      // );
-
-      // setEstudiantesCurso(estudiantesMap);
-
       const materiaRes = await api.get(
         `/asignacion-clases/materias-por-docente-curso/${idDocente}/${Number(
           idCurso
@@ -203,12 +190,11 @@ export default function FormCalificacion({
     setForm({ ...form, idMateria, idEstudiante: "" });
 
     const idCurso = form.idCurso;
-    if (!idCurso) return; // No hay curso seleccionado
+    if (!idCurso) return;
 
     setLoading(true);
 
     try {
-      // Llamamos al endpoint de NO CALIFICADOS según curso y materia
       const estudiantesRes = await api.get(
         `/estudiante-curso/no-calificados?idCurso=${idCurso}&idMateria=${idMateria}`
       );
@@ -282,7 +268,7 @@ export default function FormCalificacion({
               {cursosDocente.map((c) => (
                 <MenuItem
                   key={c.idCurso}
-                  value={c.idCurso.toString()} // mantener string
+                  value={c.idCurso.toString()}
                 >
                   {c.nombre} - {c.paralelo}
                 </MenuItem>
@@ -300,7 +286,7 @@ export default function FormCalificacion({
               {materiasCurso.map((m) => (
                 <MenuItem
                   key={m.idMateria}
-                  value={m.idMateria.toString()} // mantener string
+                  value={m.idMateria.toString()}
                 >
                   {m.nombre}
                 </MenuItem>

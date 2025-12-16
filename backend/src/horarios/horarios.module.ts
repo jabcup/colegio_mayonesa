@@ -7,6 +7,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 @Module({
   imports: [TypeOrmModule.forFeature([Horarios])],
   controllers: [HorariosController],
-  providers: [HorariosService]
+  providers: [HorariosService],
 })
 export class HorariosModule {}

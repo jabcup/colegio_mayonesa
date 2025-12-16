@@ -33,7 +33,6 @@ export class UsuariosService {
         },
         fecha_creacion: true,
         estado: true,
-        // No incluyas la contraseña
       },
       relations: ['personal', 'rol'],
     });
@@ -112,7 +111,6 @@ export class UsuariosService {
       throw new UnauthorizedException('Credenciales incorrectas');
     }
 
-    //Cambio JWT
     const payload = {
       sub: usuario.id,
       rol: usuario.rol.nombre,

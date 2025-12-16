@@ -127,10 +127,29 @@ export class AsignacionClasesService {
       const asignacion = await manager.findOne(AsignacionClase, {
         where: { id },
       });
+
       if (!asignacion) {
         throw new Error('Asignacion no encontrada');
       }
-      asignacion.dia = dto.dia || asignacion.dia;
+
+      asignacion.dia = dto.dia ?? asignacion.dia;
+
+      if (dto.idPersonal) {
+        asignacion.personal = { id: dto.idPersonal } as any;
+      }
+
+      if (dto.idCurso) {
+        asignacion.curso = { id: dto.idCurso } as any;
+      }
+
+      if (dto.idMateria) {
+        asignacion.materia = { id: dto.idMateria } as any;
+      }
+
+      if (dto.idHorario) {
+        asignacion.horario = { id: dto.idHorario } as any;
+      }
+
       return await manager.save(asignacion);
     });
   }

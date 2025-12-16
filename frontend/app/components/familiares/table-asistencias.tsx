@@ -125,6 +125,11 @@ export default function TableAsistencia({ idEstudiante }: Props) {
     fetchAsistencias();
   }, [idEstudiante, fechaSeleccionada]);
 
+  useEffect(() => {
+    console.log(horarios);
+  });
+
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
       <Box sx={{ width: "95%", mx: "auto"}}>
@@ -140,7 +145,6 @@ export default function TableAsistencia({ idEstudiante }: Props) {
             renderInput={(params) => <TextField {...params} fullWidth />}
           />
         </Box>
-        {/* Leyenda de colores */}
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 2 }}>
           {Object.entries(COLORES_ASISTENCIA).map(([estado, color]) => (
             <Box

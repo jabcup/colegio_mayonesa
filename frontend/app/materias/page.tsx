@@ -29,7 +29,7 @@ export default function MateriasPage() {
   const cargarMaterias = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/materias/MostrarMaterias"); // activas
+      const res = await api.get("/materias/MostrarMaterias");
       setMaterias(res.data);
     } catch (err) {
       console.error(err);
@@ -41,7 +41,7 @@ export default function MateriasPage() {
 
   const cargarInactivas = async () => {
     try {
-      const res = await api.get("/materias/mostrarMateriasInactivas"); // inactivas
+      const res = await api.get("/materias/mostrarMateriasInactivas");
       setMaterias(res.data);
     } catch (err) {
       console.error(err);
@@ -84,14 +84,12 @@ export default function MateriasPage() {
           Materias
         </Typography>
 
-        {/* Botón de crear */}
         <Boton
           label="Crear Materia"
           onClick={() => setShowForm(true)}
           className="ml-2"
         />
 
-        {/* Formulario de creación */}
         {showForm && (
           <MateriasForm
             open={showForm}
@@ -100,7 +98,6 @@ export default function MateriasPage() {
           />
         )}
 
-        {/* Tabs */}
         <Tabs value={tab} onChange={handleChangeTab} sx={{ mb: 2 }}>
           <Tab label="Activas" value="activas" />
           <Tab label="Inactivas" value="inactivas" />

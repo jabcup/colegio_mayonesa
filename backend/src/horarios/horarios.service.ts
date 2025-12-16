@@ -38,9 +38,9 @@ export class HorariosService {
     id: number,
     dto: UpdateHorarioDto,
   ): Promise<Horarios> {
-    await this.findOne(id); // Valida existencia
+    await this.findOne(id);
     await this.repo.update(id, dto);
-    return this.findOne(id); // Devuelve horario actualizado
+    return this.findOne(id);
   }
 
   async reactivarHorario(id: number): Promise<Horarios> {

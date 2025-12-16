@@ -5,6 +5,7 @@ import {
   TableCell,
   TableBody,
   TableContainer,
+  TablePagination,
   Paper,
   Button,
   Tab,

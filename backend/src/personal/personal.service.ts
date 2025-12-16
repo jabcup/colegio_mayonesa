@@ -96,7 +96,6 @@ export class PersonalService {
       throw new Error('Personal no encontrado');
     }
 
-    // Mezcla los datos nuevos con los actuales
     Object.assign(personal, dtoPersonal);
 
     return this.personalRepository.save(personal);
@@ -113,8 +112,6 @@ export class PersonalService {
 
   async crearPersonalCompleto(dto: CreatePersonalFullDto) {
     return this.dataSource.transaction(async (manager) => {
-      // const personal = manager.create(Personal, dto);
-
       const personal = manager.create(Personal, {
         nombres: dto.nombres,
         apellidoPat: dto.apellidoPat,

@@ -96,6 +96,15 @@ export default function Navbar() {
               onClick={() => router.push("/notificaciones")}
             />
           )}
+          {rol !== "Docente" && (
+            <Boton
+              label="Avisos"
+              color="success"
+              size="small"
+              className="ml-2"
+              onClick={() => router.push("/avisos")}
+            />
+          )}
           {rol !== "Cajero" && rol !== "Docente" && (
             <Boton
               label="Roles"
@@ -132,22 +141,15 @@ export default function Navbar() {
               onClick={() => router.push("/auditoria")}
             />
           )}
-          {rol !== "Docente" && (
+          {rol !== "Cajero" && rol !== "Docente" && (
             <Boton
-              label="Avisos"
+              label="Tutores"
               color="success"
-              size="medium"
+              size="small"
               className="ml-2"
-              onClick={() => router.push("/avisos")}
+              onClick={() => router.push("/tutor")}
             />
           )}
-          <Boton
-            label="Tutores"
-            color="success"
-            size="small"
-            className="ml-2"
-            onClick={() => router.push("/tutor")}
-          />
           <LogoutButton />
         </Toolbar>
       </AppBar>

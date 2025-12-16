@@ -6,13 +6,16 @@ import {
   Param,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateEstudianteFullDto } from './dto/create-estudiante-full.dto';
 import { EstudianteService } from './estudiante.service';
 import { LoginEstudianteDto } from './dto/login-estudiante.dto';
 import { UpdateEstudianteDto } from './dto/update-estudiante.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('estudiante')
 export class EstudianteController {
   constructor(private readonly estudianteService: EstudianteService) {}
