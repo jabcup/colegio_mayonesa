@@ -108,7 +108,7 @@ export default function Navbar() {
           color="success"
           size="small"
           className="ml-2"
-          onClick={() => router.push("/aviso")}
+          onClick={() => router.push("/avisos")}
         />
 
         {rol !== "Cajero" && rol !== "Docente" && (

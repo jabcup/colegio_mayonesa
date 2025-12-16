@@ -32,9 +32,29 @@ export default function TableNotificacionesEstudiante({ idEstudiante }: Props) {
 
     const fetchNotificaciones = async () => {
       try {
-        const res = await api.get(`/notificaciones/Estudiante/${idEstudiante}`);
 
-        const ordenadas = res.data.sort(
+        const cursoRes = await api.get(`/estudiante-curso/cursoEstudiante/${idEstudiante}`);
+
+        const idCurso = cursoRes.data?.[0]?.curso?.id;
+
+
+        const notiEstudianteReq = api.get(
+          `/notificaciones/Estudiante/${idEstudiante}`
+        );
+        console.log(idCurso);
+        
+        const notiCursoReq = idCurso
+          ? api.get(`/avisos/Curso/${idCurso}`)
+          : Promise.resolve({ data: [] });
+
+        const [notiEstudianteRes, notiCursoRes] = await Promise.all([
+          notiEstudianteReq,
+          notiCursoReq,
+        ]);
+
+        const todas = [...notiEstudianteRes.data, ...notiCursoRes.data];
+
+        const ordenadas = todas.sort(
           (a: Notificacion, b: Notificacion) =>
             new Date(b.fecha_creacion).getTime() -
             new Date(a.fecha_creacion).getTime()

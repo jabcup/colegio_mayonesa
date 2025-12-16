@@ -30,6 +30,12 @@ export class EstudianteCursoService {
     private readonly dataSource: DataSource,
   ) {}
 
+  async getCursoEstudiante(idEstudiante: number) {
+    return this.estudianteCursoRepository.find({
+      where: { estudiante: { id: idEstudiante }, estado: 'activo' },
+      relations: ['curso'],
+    });
+  }
   async getEstudiantesPorCurso(idCurso: number) {
     return this.estudianteCursoRepository.find({
       where: { curso: { id: idCurso }, estado: 'activo' },
