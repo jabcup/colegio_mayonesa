@@ -149,7 +149,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                     <Boton
                     label="Editar Estudiante"
                       size="small"
-                      color="primary"
+                      color="warning"
                       onClick={() => {
                         setSelectedEstudiante(e);
                         setOpenEditEstudiante(true);
