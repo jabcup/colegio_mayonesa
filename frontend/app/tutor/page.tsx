@@ -8,6 +8,7 @@ import { api } from "../lib/api";
 import TablaTutores, { Tutor } from "../components/tutores/table-tutores";
 import FormTutor from "../components/tutores/form-tutor";
 import SelectorGestion from "../components/tutores/selector-gestion";
+import { Boton } from "../components/botones/botonNav";
 
 export default function TutoresPage() {
   const [tutores, setTutores] = useState<Tutor[]>([]);
@@ -84,17 +85,19 @@ export default function TutoresPage() {
         gestiones={gestiones}
         onChange={setGestionSeleccionada}
       />
-      <Button
-        variant="contained"
-        sx={{ mb: 2 }}
+      <Boton
+      label= "Asignar Nuevo Tutor"
+        color="success"
+        className="ml-2"
         onClick={() => {
           setIsEdit(false);
           setSelectedTutor(null);
           setShowForm(true);
         }}
-      >
-        Asignar Tutor
-      </Button>
+        size="small"
+      />
+        
+      
 
       <TablaTutores
         tutores={tutoresFiltrados}

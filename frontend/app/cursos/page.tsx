@@ -10,6 +10,7 @@ import { getAuthData } from "../lib/auth";
 
 import FormCurso from "../components/cursos/form-curso";
 import TablaCurso from "../components/cursos/tabla-curso";
+import { Boton } from "../components/botones/botonNav";
 
 interface Curso {
   id: number;
@@ -128,13 +129,14 @@ export default function Rol() {
       <Typography variant="h4" align="center" gutterBottom>
         Pagina de Cursos
       </Typography>
-      <Button
-        variant="contained"
+      <Boton
+        label="Crear Curso"
+        color="success"
         onClick={() => setShowForm(true)}
-        sx={{ mb: 2 }}
-      >
-        Crear Curso
-      </Button>
+        className="ml-2"
+        size="small"
+      />
+        
       <FormCurso
         open={showForm}
         onClose={() => setShowForm(false)}

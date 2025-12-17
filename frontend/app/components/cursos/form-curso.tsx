@@ -7,6 +7,8 @@ import {
   TextField,
   DialogActions,
   Button,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 
@@ -121,6 +123,7 @@ export default function FormCurso({
           onChange={handleChange}
         />
         <TextField
+        select
           margin="dense"
           name="paralelo"
           label="Paralelo"
@@ -128,7 +131,11 @@ export default function FormCurso({
           fullWidth
           value={form.paralelo}
           onChange={handleChange}
-        />
+        >
+          <MenuItem value="A">A</MenuItem>
+          <MenuItem value="B">B</MenuItem>
+          <MenuItem value="C">C</MenuItem>
+        </TextField>
         <TextField
           margin="dense"
           name="gestion"

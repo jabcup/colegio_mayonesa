@@ -12,6 +12,7 @@ import {
     Tab,
 } from "@mui/material";
 import { getAuthData } from "@/app/lib/auth";
+import { Boton } from "../botones/botonNav";
 
 interface Curso {
   id: number;
@@ -53,19 +54,19 @@ export default function TablaCurso({ cursos, onEdit, onDelete }: Props) {
                             <TableCell>{c.gestion}</TableCell>
                             {/* <TableCell>{c.capacidad}</TableCell> */}
                             <TableCell>
-                                <Button 
-                                  variant="outlined"
+                                <Boton 
+                                  label="Editar"
+                                  color="warning"
+                                  size="small"
+                                  className="mr-2"
                                   onClick={() => onEdit(c)}
-                                >
-                                    Editar
-                                </Button>
-                                <Button 
-                                  variant="outlined"
+                                />
+                                <Boton 
+                                  label="Eliminar"
+                                  size="small"
                                   color="error"
                                   onClick={() => onDelete(c.id)}
-                                >
-                                    Eliminar
-                                </Button>
+                                />
                             </TableCell>
                         </TableRow>
                     ))}

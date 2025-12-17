@@ -130,9 +130,18 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
             <TextField label="Dirección" name="direccion" onChange={handleChange} />
             <TextField label="Teléfono" name="telefono_referencia" onChange={handleChange} />
             <TextField type="date" label="Fecha Nacimiento" name="fecha_nacimiento" onChange={handleChange} InputLabelProps={{ shrink: true }} />
-            <TextField label="Sexo" name="sexo" onChange={handleChange} />
+            <TextField select label="Sexo" name="sexo" onChange={handleChange} >
+              <MenuItem value="M">Masculino</MenuItem>
+              <MenuItem value="F">Femenino</MenuItem>
+            </TextField>
             <TextField label="Nacionalidad" name="nacionalidad" onChange={handleChange} />
-            <TextField label="Relación" name="relacion" onChange={handleChange} />
+            <TextField select label="Relación" name="relacion" onChange={handleChange} >
+              <MenuItem value="Padre">Padre</MenuItem>
+              <MenuItem value="Madre">Madre</MenuItem>
+              <MenuItem value="Hermano">Hermano</MenuItem>
+              <MenuItem value="Hermana">Hermana</MenuItem>
+              <MenuItem value="Tutor">Tutor</MenuItem>
+            </TextField>
 
             <FormControlLabel
               control={<Checkbox checked={crearNuevoPadre} onChange={(e) => setCrearNuevoPadre(e.target.checked)} />}

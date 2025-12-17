@@ -11,6 +11,7 @@ import {
     Button,
 } from "@mui/material";
 import { getAuthData } from "@/app/lib/auth";
+import { Boton } from "../botones/botonNav";
 
 interface Rol {
     id: number;
@@ -34,7 +35,7 @@ export default function TablaRol({ roles, onEdit, onDelete }: Props) {
                     <TableRow>
                         <TableCell>Nombre</TableCell>
                         {rol !== "Secretaria-o" && (
-                        <TableCell>Acciones</TableCell>
+                            <TableCell>Acciones</TableCell>
                         )}
                     </TableRow>
                 </TableHead>
@@ -43,21 +44,21 @@ export default function TablaRol({ roles, onEdit, onDelete }: Props) {
                         <TableRow key={r.id}>
                             <TableCell>{r.nombre}</TableCell>
                             {rol !== "Secretaria-o" && (
-                            <TableCell>
-                                <Button 
-                                  variant="outlined"
-                                  onClick={() => onEdit(r)}
-                                >
-                                    Editar
-                                </Button>
-                                <Button 
-                                  variant="outlined"
-                                  color="error"
-                                  onClick={() => onDelete(r.id)}
-                                >
-                                    Eliminar
-                                </Button>
-                            </TableCell>
+                                <TableCell>
+                                    <Boton
+                                        label="Editar"
+                                        color="warning"
+                                        size="small"
+                                        onClick={() => onEdit(r)}
+                                        className="mr-2"
+                                    />
+                                    <Boton
+                                      label="Eliminar"
+                                        color="error"
+                                        size="small"
+                                        onClick={() => onDelete(r.id)}
+                                    />
+                                </TableCell>
                             )}
                         </TableRow>
                     ))}
