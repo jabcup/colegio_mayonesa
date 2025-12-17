@@ -19,7 +19,8 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
-import "dayjs/locale/es"; // idioma espaniol chaval
+import "dayjs/locale/es";
+
 const DIAS_SEMANA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
 
 const COLORES_ASISTENCIA: Record<string, string> = {
@@ -127,46 +128,63 @@ export default function TableAsistencia({ idEstudiante }: Props) {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
-      <Box sx={{ width: "95%", mx: "auto"}}>
-        {/* Selector de fecha */}
-        <Box sx={{ mb: 2, maxWidth: 250 }}>
-          <DatePicker
-            label="Semana de referencia"
-            value={fechaSeleccionada}
-            onChange={(newValue) => {
-              if (newValue) setFechaSeleccionada(newValue);
-            }}
-            disableFuture
-            renderInput={(params) => <TextField {...params} fullWidth />}
-          />
-        </Box>
-        {/* Leyenda de colores */}
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 2 }}>
-          {Object.entries(COLORES_ASISTENCIA).map(([estado, color]) => (
-            <Box
-              key={estado}
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
-            >
-              <Box
-                sx={{
-                  width: 24,
-                  height: 16,
-                  backgroundColor: color,
-                  borderRadius: 0.5,
-                  border: "1px solid #ccc",
-                }}
-              />
-              <Typography variant="body2">
-                {estado.charAt(0).toUpperCase() + estado.slice(1)}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-        <TableContainer component={Paper}>
-          <Typography variant="h6" sx={{ p: 2 }}>
-            Horario Académico
-          </Typography>
+      <Box sx={{ width: "95%", mx: "auto" }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: 3,
+            mb: 3,
+          }}
+        >
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              Horario Académico
+            </Typography>
 
+            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+              {Object.entries(COLORES_ASISTENCIA).map(([estado, color]) => (
+                <Box
+                  key={estado}
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                >
+                  <Box
+                    sx={{
+                      width: 22,
+                      height: 14,
+                      backgroundColor: color,
+                      borderRadius: 0.5,
+                      border: "1px solid #ccc",
+                    }}
+                  />
+                  <Typography variant="body2">
+                    {estado.charAt(0).toUpperCase() + estado.slice(1)}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+
+          <Box sx={{ width: 260 }}>
+            <DatePicker
+              label="Semana de referencia"
+              value={fechaSeleccionada}
+              onChange={(newValue) => {
+                if (newValue) setFechaSeleccionada(newValue);
+              }}
+              disableFuture
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                },
+              }}
+            />
+          </Box>
+        </Box>
+
+        {/* TABLA */}
+        <TableContainer component={Paper}>
           <Table>
             <TableHead>
               <TableRow>
