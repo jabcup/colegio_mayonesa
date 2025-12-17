@@ -16,7 +16,7 @@ import { UpdateUsuarioCompletoDto } from './dto/update-usuario.dto';
 import { LoginUsuarioDto } from './dto/login-usuarios.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
-// @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
