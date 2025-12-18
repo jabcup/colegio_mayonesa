@@ -18,7 +18,6 @@ interface Rol {
 }
 interface Personal {
   id: number;
-  idRol: number;
   nombres: string;
   apellidoPat: string;
   apellidoMat: string;
@@ -31,7 +30,6 @@ interface Personal {
 
 const defaultValues: Personal = {
   id: 0,
-  idRol: 1,
   nombres: "",
   apellidoPat: "",
   apellidoMat: "",
@@ -83,23 +81,26 @@ export default function PersonalForm({
       alert("Completa todos los campos obligatorios");
       return;
     }
+    if (!/^\d+$/.test(form.identificacion)) {
+      alert("CI solo números");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo)) {
+      alert("Correo inválido");
+      return;
+    }
+    if (form.telefono && !/^\d+$/.test(form.telefono)) {
+      alert("Teléfono solo números");
+      return;
+    }
     try {
-      const payload = {
-        nombres: form.nombres,
-        apellidoPat: form.apellidoPat,
-        apellidoMat: form.apellidoMat,
-        telefono: form.telefono,
-        identificacion: form.identificacion,
-        direccion: form.direccion,
-        correo: form.correo,
-        fecha_nacimiento: form.fecha_nacimiento,
-        idRol: Number(form.idRol),
-      };
-
-      delete payload.id;
+      const { id, fecha_creacion, estado, ...payload } = form;
       isEdit
         ? await api.put(`/personal/EditarPersonal/${form.id}`, payload)
-        : await api.post("/personal/CrearPersonalCompleto", payload);
+        : await api.post("/personal/CrearPersonalCompleto", {
+            ...payload,
+            idRol: roles[0]?.id || 1,
+          });
       alert(isEdit ? "Personal actualizado" : "Personal creado");
       onClose ? onClose() : router.back();
     } catch (e: any) {
@@ -119,20 +120,22 @@ export default function PersonalForm({
         flexDirection="column"
         gap={2}
       >
-        <TextField
-          select
-          label="Rol"
-          name="idRol"
-          value={form.idRol}
-          onChange={handleChange}
-          required
-        >
-          {roles.map((r) => (
-            <MenuItem key={r.id} value={r.id}>
-              {r.nombre}
-            </MenuItem>
-          ))}
-        </TextField>
+        {!isEdit && (
+          <TextField
+            select
+            label="Rol"
+            name="idRol"
+            value={form.idRol}
+            onChange={handleChange}
+            required
+          >
+            {roles.map((r) => (
+              <MenuItem key={r.id} value={r.id}>
+                {r.nombre}
+              </MenuItem>
+            ))}
+          </TextField>
+        )}
         <TextField
           label="Nombres"
           name="nombres"
