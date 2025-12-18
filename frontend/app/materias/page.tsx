@@ -86,6 +86,7 @@ export default function MateriasPage() {
 
         <Boton
           label="Crear Materia"
+          color="success"
           onClick={() => setShowForm(true)}
           className="ml-2"
         />

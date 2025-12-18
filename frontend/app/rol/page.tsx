@@ -16,6 +16,7 @@ import { getAuthData } from "../lib/auth";
 
 import FormRol from "../components/rol/form-rol";
 import TablaRol from "../components/rol/tabla-rol";
+import { Boton } from "../components/botones/botonNav";
 
 interface Rol {
     id: number;
@@ -118,13 +119,13 @@ export default function Rol() {
                 Pagina de Roles
             </Typography>
             {rol !== "Secretaria-o" && (
-            <Button
-                variant="contained"
+            <Boton
+            label="Crear Rol"
+            color="success"
+                size="small"
                 onClick={() => setShowForm(true)}
-                sx={{mb:2}}
-            >
-                Crear Rol
-            </Button>
+                className="ml-2"
+            />
             )}
             <FormRol 
                 open={showForm}

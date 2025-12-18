@@ -15,6 +15,7 @@ import {
 import { getAuthData } from "@/app/lib/auth";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { Boton } from "../botones/botonNav";
 
 interface Rol {
   id: number;

@@ -18,6 +18,7 @@ import { getAuthData } from "@/app/lib/auth";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useState } from "react";
+import { Boton } from "../botones/botonNav";
 
 interface Curso {
   id: number;
@@ -80,11 +81,10 @@ export default function TablaCurso({ cursos, onEdit, onDelete }: Props) {
                                 <Button 
                                   variant="outlined"
                                   onClick={() => onEdit(c)}
-                                >
-                                    Editar
-                                </Button>
-                                <Button 
-                                  variant="outlined"
+                                />
+                                <Boton 
+                                  label="Eliminar"
+                                  size="small"
                                   color="error"
                                   onClick={() => onDelete(c.id)}
                                 >

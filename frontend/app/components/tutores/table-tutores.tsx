@@ -10,6 +10,7 @@ import {
   Paper,
   Button,
 } from "@mui/material";
+import { Boton } from "../botones/botonNav";
 
 export interface Tutor {
   id: number;
@@ -79,20 +80,20 @@ export default function TablaTutores({ tutores, onEdit, onDelete }: Props) {
                   {`${t.personal.nombres} ${t.personal.apellidoPat} ${t.personal.apellidoMat}`}
                 </TableCell>
                 <TableCell>
-                  <Button
-                    variant="outlined"
-                    sx={{ mr: 1 }}
+                  <Boton
+                    label="Editar"
+                    color="warning"
                     onClick={() => onEdit(t)}
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    variant="outlined"
+                    size="small"
+                  />
+
+                  <Boton
+                    label="Eliminar"
                     color="error"
+                    size="small"
                     onClick={() => onDelete(t.id)}
-                  >
-                    Eliminar
-                  </Button>
+                    className="ml-2"
+                  />
                 </TableCell>
               </TableRow>
             );

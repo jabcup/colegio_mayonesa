@@ -23,6 +23,7 @@ import { api } from "@/app/lib/api";
 import EditPadreDialog from "../padre/EditPadreDialog";
 import EditEstudianteDialog from "./EditEstudianteDialog";
 import { getAuthData } from "@/app/lib/auth";
+import { Boton } from "../botones/botonNav";
 
 interface EstudianteFull {
   id: number;
@@ -106,7 +107,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
             <TableCell><strong>CI</strong></TableCell>
             <TableCell><strong>Correo</strong></TableCell>
             <TableCell><strong>Tutor</strong></TableCell>
-            <TableCell><strong>Estado</strong></TableCell>
+            {/* <TableCell><strong>Estado</strong></TableCell> */}
             {rol !== "Cajero" && rol !== "Docente" && (
             <TableCell><strong>Acciones</strong></TableCell>
             )}
@@ -142,30 +143,30 @@ export default function TableEstudiante({ estudiantes }: Props) {
                   <TableCell>{e.estudiante.identificacion}</TableCell>
                   <TableCell>{e.estudiante.correo}</TableCell>
                   <TableCell>{tutorName}</TableCell>
-                  <TableCell>{e.estudiante.estado}</TableCell>
+                  {/* <TableCell>{e.estudiante.estado}</TableCell> */}
                   {rol !== "Cajero" && rol !== "Docente" && (
                   <TableCell>
-                    <Button
+                    <Boton
+                    label="Editar Estudiante"
                       size="small"
-                      variant="outlined"
+                      color="warning"
                       onClick={() => {
                         setSelectedEstudiante(e);
                         setOpenEditEstudiante(true);
                       }}
-                    >
-                      Editar Estudiante
-                    </Button>
+                      className="mr-2"
+                    />
 
-                    <Button
+                    <Boton
+                    label="Eliminar Estudiante"
                       size="small"
-                      variant="outlined"
-                      color="error"
+                      color = "error"
                       onClick={() =>
                         handleEliminarEstudiante(e.estudiante.id)
                       }
-                    >
-                      Eliminar Estudiante
-                    </Button>
+                      className="ml-2"
+                    />
+                     
                   </TableCell>
                   )}
                 </TableRow>
@@ -179,7 +180,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                       unmountOnExit
                     >
                       <Box margin={2}>
-                        <Typography variant="subtitle2">
+                        <Typography variant="h6">
                           Información del Estudiante
                         </Typography>
 
@@ -209,7 +210,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                         </Typography>
 
                         <Box mt={2}>
-                          <Typography variant="subtitle2">
+                          <Typography variant="h6">
                             Tutor
                           </Typography>
 
@@ -222,32 +223,32 @@ export default function TableEstudiante({ estudiantes }: Props) {
                           <Typography>
                             <b>Relación:</b> {e.relacion}
                           </Typography>
-                          <Typography>
+                          {/* <Typography>
                             <b>Estado Tutor:</b> {e.tutor.estado}
-                          </Typography>
+                          </Typography> */}
+
                           {rol !== "Cajero" && rol !== "Docente" && (
                           <Box mt={1} display="flex" gap={1}>
-                            <Button
+                            <Boton
+                            label="Editar Tutor"
                               size="small"
-                              variant="outlined"
+                              color="primary"
                               onClick={() => {
                                 setSelectedPadre(e.tutor);
                                 setOpenEditPadre(true);
                               }}
-                            >
-                              Editar Tutor
-                            </Button>
-
-                            <Button
+                              className="mr-2"
+                            />
+                            
+                            <Boton
+                            label="Eliminar Tutor"
                               size="small"
-                              variant="outlined"
                               color="error"
                               onClick={() =>
                                 handleEliminarPadre(e.tutor.id)
                               }
-                            >
-                              Eliminar Tutor
-                            </Button>
+                            />
+                              
                           </Box>
                           )}
                         </Box>
