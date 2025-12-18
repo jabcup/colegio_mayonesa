@@ -11,6 +11,7 @@ import {
   DialogActions,
   Button,
 } from "@mui/material";
+import Autocomplete from "@mui/material/Autocomplete";
 import { useEffect, useState } from "react";
 import { getAuthData } from "@/app/lib/auth";
 
@@ -185,7 +186,9 @@ export default function FormCalificacion({
     }
   };
 
-  const handleMateriaChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMateriaChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const idMateria = e.target.value;
     setForm({ ...form, idMateria, idEstudiante: "" });
 
@@ -218,6 +221,16 @@ export default function FormCalificacion({
   };
 
   const handleSubmit = () => {
+    if (!form.idCurso || !form.idMateria || !form.idEstudiante){
+      alert("Todos los campos son obligatorios");
+      return;
+    }
+
+    if (Number(form.calificacion) < 0 || Number(form.calificacion) > 100) {
+      alert("La calificación debe estar entre 0 y 100");
+      return;
+    }
+
     if (selectedCalificacion && onUpdate) {
       // Modo EDITAR
       onUpdate({
@@ -266,10 +279,7 @@ export default function FormCalificacion({
               disabled={isEditing}
             >
               {cursosDocente.map((c) => (
-                <MenuItem
-                  key={c.idCurso}
-                  value={c.idCurso.toString()}
-                >
+                <MenuItem key={c.idCurso} value={c.idCurso.toString()}>
                   {c.nombre} - {c.paralelo}
                 </MenuItem>
               ))}
@@ -284,16 +294,13 @@ export default function FormCalificacion({
               disabled={!form.idCurso || isEditing}
             >
               {materiasCurso.map((m) => (
-                <MenuItem
-                  key={m.idMateria}
-                  value={m.idMateria.toString()}
-                >
+                <MenuItem key={m.idMateria} value={m.idMateria.toString()}>
                   {m.nombre}
                 </MenuItem>
               ))}
             </TextField>
 
-            <TextField
+            {/* <TextField
               select
               label="Estudiante"
               name="idEstudiante"
@@ -306,7 +313,29 @@ export default function FormCalificacion({
                   {e.nombres} {e.apellidoPat} {e.apellidoMat}
                 </MenuItem>
               ))}
-            </TextField>
+            </TextField> */}
+
+            <Autocomplete
+              options={estudiantesCurso}
+              getOptionLabel={(option) =>
+                `${option.apellidoPat} ${option.apellidoMat}, ${option.nombres}`
+              }
+              value={
+                estudiantesCurso.find(
+                  (e) => e.id.toString() === form.idEstudiante
+                ) || null
+              }
+              onChange={(_, newValue) => {
+                setForm({
+                  ...form,
+                  idEstudiante: newValue ? newValue.id.toString() : "",
+                });
+              }}
+              disabled={!form.idCurso || isEditing}
+              renderInput={(params) => (
+                <TextField {...params} label="Estudiante" />
+              )}
+            />
 
             <TextField
               label="Calificación"

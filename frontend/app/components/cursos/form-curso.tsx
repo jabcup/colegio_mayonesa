@@ -26,8 +26,18 @@ interface Props {
   //Edit
   selectedCurso: Curso | null;
 
-  onCreate: (data: { nombre: string, paralelo: string, gestion: number, capacidad: number }) => void;
-  onUpdate?: (data: { nombre: string, paralelo: string, gestion: number, capacidad: number }) => void;
+  onCreate: (data: {
+    nombre: string;
+    paralelo: string;
+    gestion: number;
+    capacidad: number;
+  }) => void;
+  onUpdate?: (data: {
+    nombre: string;
+    paralelo: string;
+    gestion: number;
+    capacidad: number;
+  }) => void;
 }
 
 export interface UpdateCursoDto {
@@ -44,12 +54,11 @@ export default function FormCurso({
   onUpdate,
   selectedCurso,
 }: Props) {
-
   const [form, setForm] = useState({
     nombre: "",
     paralelo: "",
     gestion: 0,
-    capacidad: 0
+    capacidad: 0,
   });
 
   useEffect(() => {
@@ -59,14 +68,14 @@ export default function FormCurso({
         nombre: selectedCurso.nombre,
         paralelo: selectedCurso.paralelo,
         gestion: selectedCurso.gestion,
-        capacidad: selectedCurso.capacidad
+        capacidad: selectedCurso.capacidad,
       });
     } else {
       setForm({
         nombre: "",
         paralelo: "",
         gestion: 0,
-        capacidad: 0
+        capacidad: 0,
       });
     }
   }, [selectedCurso]);
@@ -76,13 +85,23 @@ export default function FormCurso({
   };
 
   const handleSubmit = () => {
+    if (form.gestion < 1990 || form.gestion > 3000) {
+      alert("La gestion debe estar entre 1990 y 3000");
+      return;
+    }
+
+    if (form.paralelo.length !== 1 || !/^[a-zA-Z]+$/.test(form.paralelo) || form.paralelo !== form.paralelo.toUpperCase()) {
+      alert("El paralelo debe tener una sola letra");
+      return;
+    }
+
     if (selectedCurso && onUpdate) {
       // Modo EDITAR
       onUpdate({
         nombre: form.nombre,
         paralelo: form.paralelo,
         gestion: form.gestion,
-        capacidad: form.capacidad
+        capacidad: form.capacidad,
       });
       return;
     }
@@ -99,7 +118,7 @@ export default function FormCurso({
       nombre: "",
       paralelo: "",
       gestion: 0,
-      capacidad: 0
+      capacidad: 0,
     });
 
     onClose();
@@ -128,7 +147,17 @@ export default function FormCurso({
           fullWidth
           value={form.paralelo}
           onChange={handleChange}
+          inputProps={{ maxLength: 1 }}
+          error={
+            form.paralelo !== "" && !/^[A-Z]$/.test(form.paralelo) // solo una letra mayúscula
+          }
+          helperText={
+            form.paralelo !== "" && !/^[A-Z]$/.test(form.paralelo)
+              ? "El paralelo debe ser una letra MAYÚSCULA entre A y Z"
+              : ""
+          }
         />
+
         <TextField
           margin="dense"
           name="gestion"
@@ -137,6 +166,17 @@ export default function FormCurso({
           fullWidth
           value={form.gestion}
           onChange={handleChange}
+          inputProps={{ min: 1990, max: 3000 }}
+          error={
+            form.gestion !== 0 &&
+            (Number(form.gestion) < 1990 || Number(form.gestion) > 3000)
+          }
+          helperText={
+            form.gestion !== 0 &&
+            (Number(form.gestion) < 1990 || Number(form.gestion) > 3000)
+              ? "Colocar un año de gestion aceptable mayor a 1990"
+              : ""
+          }
         />
         <TextField
           margin="dense"

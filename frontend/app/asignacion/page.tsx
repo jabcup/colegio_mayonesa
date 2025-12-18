@@ -15,6 +15,8 @@ import { api } from "../lib/api";
 import HorarioTabla from "../components/asignacion/horario-tabla";
 import FormAsignacion from "../components/asignacion/form-asignacion";
 
+import Autocomplete from "@mui/material/Autocomplete";
+
 interface Curso {
   id: number;
   nombre: string;
@@ -103,7 +105,8 @@ export default function AsignacionPage() {
     cargarHorarios();
   }, []);
 
-  const [selectedCurso, setSelectedCurso] = useState<number | "">("");
+  // const [selectedCurso, setSelectedCurso] = useState<number | "">("");
+  const [selectedCurso, setSelectedCurso] = useState<Curso | null>(null);
 
   const cargarAsignaciones = async (cursoId: string) => {
     const cursoIdInt = parseInt(cursoId);
@@ -134,7 +137,9 @@ export default function AsignacionPage() {
     idMateria: number;
     idDocente: number;
   }) => {
+    // if (!contextoAsignacion || !selectedCurso) return;
     if (!contextoAsignacion || !selectedCurso) return;
+
 
     if (modoEdicion && contextoAsignacion.idAsignacion) {
       await api.put(
@@ -144,12 +149,14 @@ export default function AsignacionPage() {
           idHorario: contextoAsignacion.idHorario,
           idMateria,
           idPersonal: idDocente,
-          idCurso: selectedCurso,
+          idCurso: selectedCurso.id,
+          // idCurso: selectedCurso,
         }
       );
     } else {
       const payload = {
-        idCurso: selectedCurso,
+        idCurso: selectedCurso.id,
+        // idCurso: selectedCurso,
         dia: contextoAsignacion.dia,
         idHorario: contextoAsignacion.idHorario,
         idMateria,
@@ -163,7 +170,7 @@ export default function AsignacionPage() {
     setContextoAsignacion(null);
     setModoEdicion(false);
 
-    cargarAsignaciones(String(selectedCurso));
+    cargarAsignaciones(String(selectedCurso.id));
   };
 
   const handleEditarAsignacion = (data: {
@@ -184,7 +191,7 @@ export default function AsignacionPage() {
 
       <Typography variant="h4">Asignacion de Clases</Typography>
 
-      <TextField
+      {/* <TextField
         select
         label="Filtrar por Curso"
         value={selectedCurso}
@@ -201,7 +208,32 @@ export default function AsignacionPage() {
             {c.nombre} - {c.paralelo}
           </MenuItem>
         ))}
-      </TextField>
+      </TextField> */}
+
+      <Autocomplete
+        options={cursos}
+        getOptionLabel={(option) =>
+          `${option.nombre} - ${option.paralelo} (${option.gestion})`
+        }
+        value={selectedCurso}
+        onChange={(_, newValue) => {
+          setSelectedCurso(newValue);
+
+          if (newValue) {
+            cargarAsignaciones(String(newValue.id));
+          } else {
+            setAsignaciones([]);
+          }
+        }}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label="Filtrar por Curso"
+            margin="normal"
+            fullWidth
+          />
+        )}
+      />
 
       {!selectedCurso ? (
         <Typography sx={{ mt: 3 }} color="text.secondary">
