@@ -93,11 +93,12 @@ export class PagosController {
   @ApiBody({ schema: { example: { idpersonal: 123 } } })
   async pagar(
     @Param('id', ParseIntPipe) id: number,
-    @Body(SoloIdPersonal) dto: SoloIdPersonalBody,
+    @Body() dto: SoloIdPersonalBody,
   ): Promise<{ ok: boolean }> {
     if (!(await esCajero(this.usuariosRepo, dto.idpersonal))) {
       throw new ForbiddenException('El personal no es cajero o no está activo');
     }
+
     await this.service.pagar(id, dto);
     return { ok: true };
   }

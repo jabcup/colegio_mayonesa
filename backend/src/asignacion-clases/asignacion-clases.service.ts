@@ -78,6 +78,25 @@ export class AsignacionClasesService {
       .getRawMany();
   }
 
+  async getMateriasPorDocenteYCursoAsignacion(
+    idDocente: number,
+    idCurso: number,
+  ) {
+    return this.asignacionRepository
+      .createQueryBuilder('asignacion')
+      .leftJoin('asignacion.materia', 'materia')
+      .leftJoin('asignacion.personal', 'personal')
+      .leftJoin('asignacion.curso', 'curso')
+      .where('personal.id = :idDocente', { idDocente })
+      .andWhere('curso.id = :idCurso', { idCurso })
+      .select([
+        'asignacion.id AS idAsignacion', // 🔑 CLAVE
+        'materia.id AS idMateria',
+        'materia.nombre AS nombre',
+      ])
+      .getRawMany();
+  }
+
   async getAsignacionesPorEstudiante(idEstudiante: number) {
     const cursoActual: EstudianteCurso =
       await this.estudianteCursoRepository.findOne({

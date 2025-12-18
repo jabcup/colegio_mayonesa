@@ -69,11 +69,13 @@ export default function TablePagos({ pagos, estudiantes }: Props) {
 
   const handlePagar = async (pagoId: number) => {
     try {
+      console.log(personalId)
+      console.log(pagoId)
       await api.patch(`/pagos/pagar/${pagoId}`, { idpersonal: personalId })
       alert("Pago realizado")
       window.location.reload()
     } catch {
-      alert("Error al pagar")
+      alert("Error al pagar, debes ser un Cajero para poder realziar el pago")
     }
   }
 

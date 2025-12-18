@@ -149,12 +149,6 @@ export default function FormFiltrosReporte({
   };
 
   const generarReporte = async () => {
-    if (form.anio < 1990 || form.anio > new Date().getFullYear()) {
-      alert("El año debe estar entre 1990 y el año actual");
-      return;
-    }
-
-
     setLoading(true);
     if (
       ([
@@ -192,6 +186,10 @@ export default function FormFiltrosReporte({
           url += `AsistenciaPorEstudiante/pdf?idEstudiante=${form.estudiante}`;
           break;
         case "pagosCurso":
+          if (form.anio < 1990 || form.anio > new Date().getFullYear()) {
+            alert("El año debe estar entre 1990 y el año actual");
+            return;
+          }
           url += `PagosPorCurso/pdf?idCurso=${form.curso}&estado=${form.estado}&mes=${form.mes}&anio=${form.anio}`;
           break;
         case "pagosEstudiante":
@@ -361,11 +359,13 @@ export default function FormFiltrosReporte({
                   inputProps={{ min: 1990, max: new Date().getFullYear() }}
                   error={
                     form.anio !== 0 &&
-                    (Number(form.anio) < 1990 || Number(form.anio) > new Date().getFullYear())
+                    (Number(form.anio) < 1990 ||
+                      Number(form.anio) > new Date().getFullYear())
                   }
                   helperText={
                     form.anio !== 0 &&
-                    (Number(form.anio) < 1990 || Number(form.anio) > new Date().getFullYear())
+                    (Number(form.anio) < 1990 ||
+                      Number(form.anio) > new Date().getFullYear())
                       ? "El año debe estar entre 1990 y el año actual"
                       : ""
                   }

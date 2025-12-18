@@ -5,13 +5,26 @@ import { useRouter } from "next/navigation";
 import { Boton } from "../botones/botonNav";
 import LogoutButton from "../botones/logout";
 import { getAuthData } from "@/app/lib/auth";
+import { useEffect, useState } from "react";
 
 export default function Navbar() {
-  const { rol } = getAuthData();
-  console.log(rol);
-
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
+
+  const auth = getAuthData();
+  const rol = auth?.rol;
+
+  if (!rol) {
+    return null;
+  }
   return (
     <>
       <AppBar position="static">

@@ -32,7 +32,11 @@ export class AuditoriaInterceptor implements NestInterceptor {
     const user = request.user;
     const usuarioId: number | null = user?.id ?? null;
 
-    const noAuditar = ['/usuarios/login', '/usuarios/registro'];
+    const noAuditar = [
+      '/usuarios/login',
+      '/usuarios/registro',
+      '/estudiante/login',
+    ];
     if (noAuditar.some((ruta) => originalUrl.includes(ruta))) {
       return next.handle() as Observable<ResponseConId>;
     }
