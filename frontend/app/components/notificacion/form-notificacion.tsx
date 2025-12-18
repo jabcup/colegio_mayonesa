@@ -1,20 +1,12 @@
 "use client";
 
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  MenuItem,
-  CircularProgress,
-  Box,
-  Autocomplete,
-} from "@mui/material";
 import { useEffect, useState } from "react";
 import { api } from "@/app/lib/api";
-import Cookies from "js-cookie"
+import { toast } from "sonner";
+import { Dialog, Transition } from "@headlessui/react";
+import { Fragment } from "react";
+import { Loader2 } from "lucide-react";
+import Cookies from "js-cookie";
 
 interface Estudiante {
   id: number;
@@ -37,12 +29,11 @@ export default function FormNotificacion({ open, onClose, onSuccess }: Props) {
   const [asunto, setAsunto] = useState("");
   const [mensaje, setMensaje] = useState("");
 
-  const idPersonal = Number(Cookies.get('personal_id') ?? 0);
+  const idPersonal = Number(Cookies.get("personal_id") ?? 0);
 
   useEffect(() => {
     if (open) {
       cargarEstudiantes();
-      // Reset form
       setSelectedEstudiante(null);
       setAsunto("");
       setMensaje("");
@@ -54,9 +45,8 @@ export default function FormNotificacion({ open, onClose, onSuccess }: Props) {
     try {
       const res = await api.get("/estudiante/MostrarEstudiantes");
       setEstudiantes(res.data);
-    } catch (err) {
-      console.error(err);
-      alert("Error al cargar estudiantes");
+    } catch {
+      toast.error("Error al cargar los estudiantes");
     } finally {
       setLoading(false);
     }
@@ -64,7 +54,7 @@ export default function FormNotificacion({ open, onClose, onSuccess }: Props) {
 
   const handleSubmit = async () => {
     if (!selectedEstudiante || !asunto.trim() || !mensaje.trim()) {
-      alert("Por favor completa todos los campos");
+      toast.warning("Por favor completa todos los campos");
       return;
     }
 
@@ -77,71 +67,123 @@ export default function FormNotificacion({ open, onClose, onSuccess }: Props) {
 
     try {
       await api.post("/notificaciones/CrearNotificacion", payload);
-      alert("Notificación enviada correctamente");
+      toast.success("Notificación enviada con éxito");
       onSuccess();
       onClose();
-    } catch (err) {
-      console.error(err);
-      alert("Error al enviar la notificación");
+    } catch {
+      toast.error("Error al enviar la notificación");
     }
   };
 
-  const getOptionLabel = (option: Estudiante) =>
-    `${option.nombres} ${option.apellidoPat} ${option.apellidoMat} ${option.identificacion ? `- ${option.identificacion}` : ""}`;
+  const getNombreCompleto = (est: Estudiante) =>
+    `${est.nombres} ${est.apellidoPat} ${est.apellidoMat} ${est.identificacion ? ` - ${est.identificacion}` : ""}`.trim();
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Enviar Nueva Notificación</DialogTitle>
-      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 2 }}>
-        {loading ? (
-          <Box display="flex" justifyContent="center">
-            <CircularProgress />
-          </Box>
-        ) : (
-          <>
-            <Autocomplete
-              options={estudiantes}
-              getOptionLabel={getOptionLabel}
-              value={selectedEstudiante}
-              onChange={(_event, newValue) => setSelectedEstudiante(newValue)}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Buscar y seleccionar estudiante"
-                  placeholder="Escribe nombre o identificación..."
-                  required
-                />
-              )}
-              noOptionsText="No se encontraron estudiantes"
-            />
+    <Transition appear show={open} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black bg-opacity-40" />
+        </Transition.Child>
 
-            <TextField
-              label="Asunto"
-              value={asunto}
-              onChange={(e) => setAsunto(e.target.value)}
-              fullWidth
-              required
-            />
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-8 text-left align-middle shadow-xl transition-all">
+                <Dialog.Title className="text-2xl font-bold text-gray-900 mb-6">
+                  Enviar Nueva Notificación
+                </Dialog.Title>
 
-            <TextField
-              label="Mensaje"
-              value={mensaje}
-              onChange={(e) => setMensaje(e.target.value)}
-              multiline
-              rows={5}
-              fullWidth
-              required
-            />
-          </>
-        )}
-      </DialogContent>
+                {loading ? (
+                  <div className="flex justify-center py-10">
+                    <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+                  </div>
+                ) : (
+                  <div className="space-y-5">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Estudiante
+                      </label>
+                      <select
+                        value={selectedEstudiante?.id || ""}
+                        onChange={(e) => {
+                          const est = estudiantes.find((s) => s.id === Number(e.target.value));
+                          setSelectedEstudiante(est || null);
+                        }}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      >
+                        <option value="">Selecciona un estudiante</option>
+                        {estudiantes.map((est) => (
+                          <option key={est.id} value={est.id}>
+                            {getNombreCompleto(est)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-      <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary">
-          Enviar Notificación
-        </Button>
-      </DialogActions>
-    </Dialog>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Asunto
+                      </label>
+                      <input
+                        type="text"
+                        value={asunto}
+                        onChange={(e) => setAsunto(e.target.value)}
+                        placeholder="Ej: Recordatorio de pago"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Mensaje
+                      </label>
+                      <textarea
+                        rows={6}
+                        value={mensaje}
+                        onChange={(e) => setMensaje(e.target.value)}
+                        placeholder="Escribe el mensaje detallado..."
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-8 flex justify-end gap-3">
+                  <button
+                    onClick={onClose}
+                    className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+                  >
+                    Enviar Notificación
+                  </button>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition>
   );
 }
