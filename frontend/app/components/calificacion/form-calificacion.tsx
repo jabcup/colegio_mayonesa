@@ -248,6 +248,8 @@ export default function FormCalificacion({
     console.log("Payload enviado:", payload);
     onCreate(payload);
 
+    cargarDatos();
+
     setForm({
       idCurso: "",
       idMateria: "",

@@ -36,6 +36,17 @@ export class AsignacionClasesController {
     );
   }
 
+  @Get('materias-por-docente-curso-asignacion/:docenteId/:cursoId')
+  async materiasPorDocenteCursoAsignacion(
+    @Param('docenteId') docenteId: number,
+    @Param('cursoId') cursoId: number,
+  ) {
+    return await this.asignacionService.getMateriasPorDocenteYCursoAsignacion(
+      Number(docenteId),
+      Number(cursoId),
+    );
+  }
+
   @Get('estudiante/:id')
   @ApiOperation({
     summary: 'Obtener asignaciones de clase por ID de estudiante',

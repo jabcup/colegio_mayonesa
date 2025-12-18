@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { CreatePersonalDto } from './dto/create-personal.dto';
 import { CreatePersonalFullDto } from './dto/create-personal-full.dto';
+import { UpdatePersonalDto } from './dto/update-personal.dto';
 import { Roles } from 'src/roles/roles.entity';
 import * as bcrypt from 'bcrypt';
 
@@ -88,7 +89,7 @@ export class PersonalService {
 
   async updatePersonal(
     id: number,
-    dtoPersonal: CreatePersonalDto,
+    dtoPersonal: UpdatePersonalDto,
   ): Promise<Personal> {
     const personal = await this.personalRepository.findOne({ where: { id } });
 

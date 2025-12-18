@@ -10,6 +10,7 @@ import {
   Menu,
   MenuItem,
 } from "@mui/material";
+import { get } from "http";
 import { useEffect, useState } from "react";
 
 interface Curso {
@@ -87,8 +88,8 @@ export default function FormCurso({
   };
 
   const handleSubmit = () => {
-    if (form.gestion < 1990 || form.gestion > 3000) {
-      alert("La gestion debe estar entre 1990 y 3000");
+    if (form.gestion < 1990 || form.gestion > new Date().getFullYear()) {
+      alert("La gestion debe estar entre 1990 y el año actual");
       return;
     }
 
@@ -142,7 +143,6 @@ export default function FormCurso({
           onChange={handleChange}
         />
         <TextField
-        select
           margin="dense"
           name="paralelo"
           label="Paralelo"
@@ -169,15 +169,15 @@ export default function FormCurso({
           fullWidth
           value={form.gestion}
           onChange={handleChange}
-          inputProps={{ min: 1990, max: 3000 }}
+          inputProps={{ min: 1990, max: new Date().getFullYear() }}
           error={
             form.gestion !== 0 &&
-            (Number(form.gestion) < 1990 || Number(form.gestion) > 3000)
+            (Number(form.gestion) < 1990 || Number(form.gestion) > new Date().getFullYear())
           }
           helperText={
             form.gestion !== 0 &&
-            (Number(form.gestion) < 1990 || Number(form.gestion) > 3000)
-              ? "Colocar un año de gestion aceptable mayor a 1990"
+            (Number(form.gestion) < 1990 || Number(form.gestion) > new Date().getFullYear())
+              ? "Colocar un año de gestion aceptable mayor a 1990 y menor al actual"
               : ""
           }
         />

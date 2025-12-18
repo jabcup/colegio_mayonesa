@@ -14,6 +14,8 @@ import { EstudianteService } from './estudiante.service';
 import { LoginEstudianteDto } from './dto/login-estudiante.dto';
 import { UpdateEstudianteDto } from './dto/update-estudiante.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+// Rutas Publicas
+import { Public } from 'src/auth/public.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('estudiante')
@@ -40,6 +42,7 @@ export class EstudianteController {
     return this.estudianteService.mostrarEstudiante(id);
   }
   @Post('login')
+  @Public()
   async login(@Body() loginDto: LoginEstudianteDto) {
     return this.estudianteService.login(
       loginDto.correo_institucional,

@@ -21,7 +21,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/es";
 
-const DIAS_SEMANA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+const DIAS_SEMANA = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes"];
 
 const COLORES_ASISTENCIA: Record<string, string> = {
   presente: "#C8E6C9",

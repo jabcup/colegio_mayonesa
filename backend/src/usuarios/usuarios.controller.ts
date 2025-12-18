@@ -15,6 +15,8 @@ import { UpdateContrasenaUsuarioDto } from './dto/update-contrasena-usuario.dto'
 import { UpdateUsuarioCompletoDto } from './dto/update-usuario.dto';
 import { LoginUsuarioDto } from './dto/login-usuarios.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+// Rutas Publicas
+import { Public } from 'src/auth/public.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('usuarios')
@@ -66,6 +68,7 @@ export class UsuariosController {
   }
 
   @Post('login')
+  @Public()
   async login(@Body() loginDto: LoginUsuarioDto) {
     return this.usuariosService.login(
       loginDto.correo_institucional,
