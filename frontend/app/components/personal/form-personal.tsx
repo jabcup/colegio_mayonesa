@@ -6,9 +6,9 @@ import { Container, TextField, Button, Box, Typography, MenuItem } from "@mui/ma
 import { api } from "@/app/lib/api"
 
 interface Rol { id: number; nombre: string }
-interface Personal { id: number; idRol: number; nombres: string; apellidoPat: string; apellidoMat: string; telefono: string; identificacion: string; direccion: string; correo: string; fecha_nacimiento: string }
+interface Personal { id: number; nombres: string; apellidoPat: string; apellidoMat: string; telefono: string; identificacion: string; direccion: string; correo: string; fecha_nacimiento: string }
 
-const defaultValues: Personal = { id: 0, idRol: 1, nombres: "", apellidoPat: "", apellidoMat: "", telefono: "", identificacion: "", direccion: "", correo: "", fecha_nacimiento: "" }
+const defaultValues: Personal = { id: 0, nombres: "", apellidoPat: "", apellidoMat: "", telefono: "", identificacion: "", direccion: "", correo: "", fecha_nacimiento: "" }
 
 export default function PersonalForm({ personalToEdit, onClose }: { personalToEdit?: Personal; onClose?: () => void }) {
   const router = useRouter()
@@ -17,7 +17,9 @@ export default function PersonalForm({ personalToEdit, onClose }: { personalToEd
   const [roles, setRoles] = useState<Rol[]>([])
 
   useEffect(() => {
-    api.get("/roles/MostrarRoles").then(r => setRoles(r.data)).catch(() => alert("Error al cargar roles"))
+    api.get("/roles/MostrarRoles")
+      .then(r => setRoles(r.data))
+      .catch(() => alert("Error al cargar roles"))
   }, [])
 
   useEffect(() => setForm(personalToEdit ? { ...defaultValues, ...personalToEdit } : defaultValues), [personalToEdit])
@@ -27,15 +29,16 @@ export default function PersonalForm({ personalToEdit, onClose }: { personalToEd
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.nombres.trim() || !form.apellidoPat.trim() || !form.identificacion.trim() || !form.correo.trim()) {
-      alert("Completa todos los campos obligatorios")
-      return
+      alert("Completa todos los campos obligatorios"); return
     }
+    if (!/^\d+$/.test(form.identificacion)) { alert("CI solo números"); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo)) { alert("Correo inválido"); return }
+    if (form.telefono && !/^\d+$/.test(form.telefono)) { alert("Teléfono solo números"); return }
     try {
-      const payload = { ...form, idRol: Number(form.idRol) }
-      delete payload.id
+      const { id, fecha_creacion, estado, ...payload } = form
       isEdit
         ? await api.put(`/personal/EditarPersonal/${form.id}`, payload)
-        : await api.post("/personal/CrearPersonalCompleto", payload)
+        : await api.post("/personal/CrearPersonalCompleto", { ...payload, idRol: roles[0]?.id || 1 })
       alert(isEdit ? "Personal actualizado" : "Personal creado")
       onClose ? onClose() : router.back()
     } catch (e: any) {
@@ -47,9 +50,11 @@ export default function PersonalForm({ personalToEdit, onClose }: { personalToEd
     <Container maxWidth="sm" sx={{ mt: 4 }}>
       <Typography variant="h4" mb={3}>{isEdit ? "Editar Personal" : "Nuevo Personal"}</Typography>
       <Box component="form" onSubmit={handleSubmit} display="flex" flexDirection="column" gap={2}>
-        <TextField select label="Rol" name="idRol" value={form.idRol} onChange={handleChange} required>
-          {roles.map(r => <MenuItem key={r.id} value={r.id}>{r.nombre}</MenuItem>)}
-        </TextField>
+        {!isEdit && (
+          <TextField select label="Rol" name="idRol" value={form.idRol} onChange={handleChange} required>
+            {roles.map(r => <MenuItem key={r.id} value={r.id}>{r.nombre}</MenuItem>)}
+          </TextField>
+        )}
         <TextField label="Nombres" name="nombres" value={form.nombres} onChange={handleChange} required inputProps={{ maxLength: 100 }} />
         <TextField label="Apellido Paterno" name="apellidoPat" value={form.apellidoPat} onChange={handleChange} required inputProps={{ maxLength: 50 }} />
         <TextField label="Apellido Materno" name="apellidoMat" value={form.apellidoMat} onChange={handleChange} required inputProps={{ maxLength: 50 }} />
