@@ -11,6 +11,10 @@ import {
   Tab,
   Typography,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 
 import { useState } from "react";
@@ -50,6 +54,25 @@ interface Props {
 }
 
 export default function TablaAuditoria({ auditorias, loading }: Props) {
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const auditoriasPaginadas = auditorias.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
+  //Modal de los Jsons
+  const [openJson, setOpenJson] = useState(false);
+  const [jsonData, setJsonData] = useState<any>(null);
+  const [jsonTitle, setJsonTitle] = useState("");
+
+  const abrirJson = (titulo: string, data: any) => {
+    setJsonTitle(titulo);
+    setJsonData(data);
+    setOpenJson(true);
+  };
+
   if (loading) return <CircularProgress />;
 
   if (auditorias.length === 0)
@@ -71,24 +94,83 @@ export default function TablaAuditoria({ auditorias, loading }: Props) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {auditorias.map((aud) => (
+          {auditoriasPaginadas.map((aud) => (
             <TableRow key={aud.id}>
               <TableCell>{aud.id}</TableCell>
               <TableCell>{aud.tabla}</TableCell>
               <TableCell>{aud.operacion}</TableCell>
-              <TableCell>{aud.idRegistro ?? '-'}</TableCell>
+              <TableCell>{aud.idRegistro ?? "-"}</TableCell>
               <TableCell>{aud.usuarioId}</TableCell>
-              <TableCell>{new Date(aud.fecha_registro).toLocaleString()}</TableCell>
               <TableCell>
-                <pre>{aud.datosAntes ? JSON.stringify(aud.datosAntes, null, 2) : '-'}</pre>
+                {new Date(aud.fecha_registro).toLocaleString()}
               </TableCell>
               <TableCell>
-                <pre>{aud.datosDespues ? JSON.stringify(aud.datosDespues, null, 2) : '-'}</pre>
+                {aud.datosAntes ? (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => abrirJson("Datos Antes", aud.datosAntes)}
+                  >
+                    Ver
+                  </Button>
+                ) : (
+                  "-"
+                )}
+              </TableCell>
+
+              <TableCell>
+                {aud.datosDespues ? (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => abrirJson("Datos Después", aud.datosDespues)}
+                  >
+                    Ver
+                  </Button>
+                ) : (
+                  "-"
+                )}
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+      <TablePagination
+        component="div"
+        count={auditorias.length}
+        page={page}
+        onPageChange={(_, newPage) => setPage(newPage)}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={(e) => {
+          setRowsPerPage(parseInt(e.target.value, 5));
+          setPage(0);
+        }}
+        rowsPerPageOptions={[5, 10, 25]}
+      />
+      <Dialog
+        open={openJson}
+        onClose={() => setOpenJson(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>{jsonTitle}</DialogTitle>
+        <DialogContent dividers>
+          <pre
+            style={{
+              maxHeight: "400px",
+              overflow: "auto",
+              background: "#f5f5f5",
+              padding: "12px",
+              borderRadius: "4px",
+            }}
+          >
+            {JSON.stringify(jsonData, null, 2)}
+          </pre>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenJson(false)}>Cerrar</Button>
+        </DialogActions>
+      </Dialog>
     </TableContainer>
   );
 }

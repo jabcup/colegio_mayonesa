@@ -8,7 +8,9 @@ import {
   MenuItem,
   TextField,
   Typography,
+  Box,
 } from "@mui/material";
+import Autocomplete from "@mui/material/Autocomplete";
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { getAuthData } from "../lib/auth";
@@ -181,6 +183,33 @@ export default function CalificacionPage() {
     }
   };
 
+  // const handleCursoAutocomplete = async (idCurso: string) => {
+  //   const idDocente = idPersonal;
+
+  //   setLoading(true);
+  //   try {
+  //     const materiaRes = await api.get(
+  //       `/asignacion-clases/materias-por-docente-curso/${idDocente}/${Number(
+  //         idCurso
+  //       )}`
+  //     );
+
+  //     const materiasMap = (materiaRes.data as BackMateriaDocente[]).map(
+  //       (m) => ({
+  //         idMateria: m.id,
+  //         nombre: m.nombre,
+  //       })
+  //     );
+
+  //     setMateriasCurso(materiasMap);
+  //   } catch (err) {
+  //     console.error(err);
+  //     alert("Error al cargar materias");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleMateriaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const idMateria = e.target.value;
     setFiltro({ ...filtro, idMateria });
@@ -243,46 +272,83 @@ export default function CalificacionPage() {
   return (
     <>
       <Navbar />
-      <Typography variant="h4" align="center" gutterBottom>
+      <Typography variant="h4" align="center" gutterBottom sx={{ mt: 4 }}>
         Página de Calificaciones
       </Typography>
-
-      <Button
-        variant="contained"
-        onClick={() => setShowForm(true)}
-        sx={{ mb: 2 }}
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        gap={2}
+        flexWrap="wrap"
+        sx={{ mb: 3 }}
       >
-        Realizar una Calificación
-      </Button>
+        <Button
+          variant="contained"
+          onClick={() => setShowForm(true)}
+          sx={{ mb: 2 }}
+        >
+          Realizar una Calificación
+        </Button>
 
-      <TextField
-        select
-        label="Filtrar por Curso"
-        value={filtro.idCurso}
-        onChange={handleCursoChange}
-        sx={{ mr: 2, mb: 2, minWidth: 200 }}
-      >
-        {cursosDocente.map((c) => (
-          <MenuItem key={c.idCurso} value={c.idCurso.toString()}>
-            {c.nombre} - {c.paralelo}
-          </MenuItem>
-        ))}
-      </TextField>
+        <TextField
+          select
+          label="Filtrar por Curso"
+          value={filtro.idCurso}
+          onChange={handleCursoChange}
+          sx={{ mr: 2, mb: 2, minWidth: 200 }}
+        >
+          {cursosDocente.map((c) => (
+            <MenuItem key={c.idCurso} value={c.idCurso.toString()}>
+              {c.nombre} - {c.paralelo}
+            </MenuItem>
+          ))}
+        </TextField>
 
-      <TextField
-        select
-        label="Filtrar por Materia"
-        value={filtro.idMateria}
-        onChange={handleMateriaChange}
-        sx={{ mr: 2, mb: 2, minWidth: 200 }}
-        disabled={!filtro.idCurso}
-      >
-        {materiasCurso.map((m) => (
-          <MenuItem key={m.idMateria} value={m.idMateria.toString()}>
-            {m.nombre}
-          </MenuItem>
-        ))}
-      </TextField>
+        {/* <Autocomplete
+          options={cursosDocente}
+          getOptionLabel={(option) => `${option.nombre} - ${option.paralelo}`}
+          value={
+            cursosDocente.find(
+              (c) => c.idCurso.toString() === filtro.idCurso
+            ) || null
+          }
+          onChange={(_, newValue) => {
+            if (!newValue) {
+              setFiltro({ idCurso: "", idMateria: "" });
+              setMateriasCurso([]);
+              return;
+            }
+
+            const idCurso = newValue.idCurso.toString();
+
+            setFiltro({ idCurso, idMateria: "" });
+            handleCursoAutocomplete(idCurso);
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Filtrar por Curso"
+              sx={{ mr: 2, mb: 2, minWidth: 300 }}
+            />
+          )}
+        /> */}
+
+        <TextField
+          select
+          label="Filtrar por Materia"
+          value={filtro.idMateria}
+          onChange={handleMateriaChange}
+          sx={{ mr: 2, mb: 2, minWidth: 200 }}
+          disabled={!filtro.idCurso}
+        >
+          {materiasCurso.map((m) => (
+            <MenuItem key={m.idMateria} value={m.idMateria.toString()}>
+              {m.nombre}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Box>
       {loading ? (
         <CircularProgress />
       ) : (

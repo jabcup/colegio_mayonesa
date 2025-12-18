@@ -9,7 +9,14 @@ import {
   TableContainer,
   Paper,
   Button,
+  TablePagination,
+  Tooltip,
+  IconButton,
 } from "@mui/material";
+import { useState } from "react";
+
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 interface CalificacionFiltrada {
   id: number;
@@ -39,10 +46,29 @@ export default function TableCalificacion({
   onEdit,
   onDelete,
 }: Props) {
-  
+  //Paginacion
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const handleChangePage = (_: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const calificacionesPaginadas = calificaciones.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
   return (
     <>
-      <TableContainer component={Paper} sx={{ mt: 2 }}>
+      <TableContainer component={Paper} sx={{ mt: 2, pr: 4, pl: 4 }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -53,7 +79,7 @@ export default function TableCalificacion({
             </TableRow>
           </TableHead>
           <TableBody>
-            {calificaciones.map((c) => (
+            {calificacionesPaginadas.map((c) => (
               <TableRow key={c.id}>
                 <TableCell>
                   {c.estudiante.nombres} {c.estudiante.apellidoPat}{" "}
@@ -61,7 +87,17 @@ export default function TableCalificacion({
                 </TableCell>
                 <TableCell>{c.calificacion}</TableCell>
                 <TableCell>{c.aprobacion ? "Aprobado" : "Reprobado"}</TableCell>
-                <TableCell>
+                <Tooltip title="Editar">
+                  <IconButton color="primary" onClick={() => onEdit(c)}>
+                    <EditIcon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Eliminar">
+                  <IconButton color="error" onClick={() => onDelete(c.id)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </Tooltip>
+                {/* <TableCell>
                   <Button variant="outlined" onClick={() => onEdit(c)}>
                     Editar
                   </Button>
@@ -73,11 +109,21 @@ export default function TableCalificacion({
                   >
                     Eliminar
                   </Button>
-                </TableCell>
+                </TableCell> */}
               </TableRow>
             ))}
           </TableBody>
         </Table>
+        <TablePagination
+          component="div"
+          count={calificaciones.length}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          rowsPerPageOptions={[5, 10, 15]}
+          labelRowsPerPage="Filas por página"
+        />
       </TableContainer>
     </>
   );

@@ -12,6 +12,7 @@ import {
   Button,
 } from "@mui/material";
 import { useEffect, useState } from "react";
+import { Autocomplete } from "@mui/material";
 
 interface Materias {
   id: number;
@@ -136,37 +137,43 @@ export default function FormAsignacion({
           {loadingMaterias ? (
             <CircularProgress />
           ) : (
-            <TextField
-              select
-              fullWidth
-              label="Materia"
-              value={idMateria}
-              onChange={(e) => setIdMateria(Number(e.target.value))}
-            >
-              {materias.map((materia) => (
-                <MenuItem key={materia.id} value={materia.id}>
-                  {materia.nombre}
-                </MenuItem>
-              ))}
-            </TextField>
+            <Autocomplete
+              options={materias}
+              getOptionLabel={(option) => option.nombre}
+              value={materias.find((m) => m.id === idMateria) || null}
+              onChange={(_, newValue) => {
+                setIdMateria(newValue ? newValue.id : 0);
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Materia"
+                  fullWidth
+                  margin="normal"
+                />
+              )}
+            />
           )}
 
           {loadingDocentes ? (
             <CircularProgress />
           ) : (
-            <TextField
-              select
-              fullWidth
-              label="Docente"
-              value={docentes.some((d) => d.id === idDocente) ? idDocente : ""}
-              onChange={(e) => setIdDocente(Number(e.target.value))}
-            >
-              {docentes.map((docente) => (
-                <MenuItem key={docente.id} value={docente.id}>
-                  {docente.nombre}
-                </MenuItem>
-              ))}
-            </TextField>
+            <Autocomplete
+              options={docentes}
+              getOptionLabel={(option) => option.nombre}
+              value={docentes.find((d) => d.id === idDocente) || null}
+              onChange={(_, newValue) => {
+                setIdDocente(newValue ? newValue.id : 0);
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Docente"
+                  fullWidth
+                  margin="normal"
+                />
+              )}
+            />
           )}
         </DialogContent>
         <DialogActions>

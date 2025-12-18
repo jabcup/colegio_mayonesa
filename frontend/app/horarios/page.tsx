@@ -88,6 +88,7 @@ export default function HorariosPage() {
 
         <Boton
           label="Crear Horario"
+          color="success"
           onClick={() => setShowForm(true)}
           className="ml-2"
         />
