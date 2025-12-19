@@ -219,15 +219,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                       </Box>
                     )}
                   </TableCell>
-                  
-                  {/* <TableCell>
-                    <Chip 
-                      label={e.estudiante.estado}
-                      size="small"
-                      color={e.estudiante.estado === 'activo' ? 'success' : 'error'}
-                      variant="outlined"
-                    />
-                  </TableCell> */}
+                
                   
                   {rol !== "Cajero" && rol !== "Docente" && (
                     <TableCell>
@@ -323,14 +315,6 @@ export default function TableEstudiante({ estudiantes }: Props) {
                                 <Typography>{e.estudiante.nacionalidad}</Typography>
                               </Box>
                               
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">Estado</Typography>
-                                <Chip 
-                                  label={e.estudiante.estado}
-                                  size="small"
-                                  color={e.estudiante.estado === 'activo' ? 'success' : 'error'}
-                                />
-                              </Box>
                             </Box>
                           </Box>
                         </Box>
@@ -338,7 +322,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                         {/* Sección de Tutores */}
                         <Box mt={4}>
                           <Typography variant="h6" gutterBottom>
-                            Tutores ({e.tutores.length})
+                            Tutor Principal
                           </Typography>
                           
                           {e.tutores.length === 0 ? (
