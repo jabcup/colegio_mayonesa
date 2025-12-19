@@ -197,4 +197,14 @@ export class PagosService {
       tipo: p.tipo,
     };
   }
+
+async findOneRaw(id: number): Promise<Pagos> {
+  const p = await this.repo.findOne({
+    where: { id },
+    relations: ['estudiante', 'personal'],
+  });
+  if (!p) throw new NotFoundException('Pago no encontrado');
+  return p;
+}
+  
 }

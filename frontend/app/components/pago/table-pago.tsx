@@ -15,6 +15,8 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogActions,
+  Typography,
   IconButton,
 } from "@mui/material"
 import CloseIcon from "@mui/icons-material/Close"
@@ -39,15 +41,18 @@ interface Pago {
 interface Props {
   pagos: Pago[]
   estudiantes: { id: number; nombres: string; apellidoPat: string }[]
+  onUpdate?: (updated: Pago[]) => void
 }
 
-export default function TablePagos({ pagos, estudiantes }: Props) {
+export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
   const [pagoSeleccionado, setPagoSeleccionado] = useState<Pago | null>(null)
   const [anioFiltro, setAnioFiltro] = useState("")
   const [pagoAEditar, setPagoAEditar] = useState<Pago | undefined>()
 
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(5)
+
+  const [confirm, setConfirm] = useState<{ open: boolean; pagoId: number; total: number }>({ open: false, pagoId: 0, total: 0 })
 
   const personalId = Number(Cookies.get('personal_id') ?? 0)
 
@@ -67,13 +72,31 @@ export default function TablePagos({ pagos, estudiantes }: Props) {
     }
   }
 
-  const handlePagar = async (pagoId: number) => {
+  const handlePagar = async () => {
+    const { pagoId } = confirm
     try {
       await api.patch(`/pagos/pagar/${pagoId}`, { idpersonal: personalId })
-      alert("Pago realizado")
-      window.location.reload()
-    } catch {
-      alert("Error al pagar")
+
+      const pdfRes = await api.get(`/pagos/comprobante/${pagoId}`, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([pdfRes.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `comprobante-${pagoId}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+
+      const idx = pagos.findIndex(p => p.id === pagoId)
+      if (idx !== -1) {
+        const updated = { ...pagos[idx], deuda: 'cancelado' as const }
+        const newList = [...pagos.slice(0, idx), updated, ...pagos.slice(idx + 1)]
+        onUpdate?.(newList)
+      }
+
+      setConfirm({ open: false, pagoId: 0, total: 0 })
+    } catch (e: any) {
+      alert(e.response?.data?.message || 'Error al pagar')
     }
   }
 
@@ -137,7 +160,7 @@ export default function TablePagos({ pagos, estudiantes }: Props) {
                 <TableCell>
                   <Button size="small" onClick={() => handleVer(p.id)}>Ver</Button>
                   {p.deuda === "pendiente" && (
-                    <Button size="small" color="success" onClick={() => handlePagar(p.id)} sx={{ ml: 1 }}>
+                    <Button size="small" color="success" onClick={() => setConfirm({ open: true, pagoId: p.id, total: p.total })} sx={{ ml: 1 }}>
                       Pagar
                     </Button>
                   )}
@@ -204,6 +227,19 @@ export default function TablePagos({ pagos, estudiantes }: Props) {
             />
           )}
         </DialogContent>
+      </Dialog>
+
+      {/* Confirmación y descarga */}
+      <Dialog open={confirm.open} onClose={() => setConfirm({ open: false, pagoId: 0, total: 0 })} maxWidth="xs">
+        <DialogTitle>Confirmar pago</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">Concepto: {pagos.find(p => p.id === confirm.pagoId)?.concepto}</Typography>
+          <Typography variant="h6" sx={{ mt: 1 }}>Total: {confirm.total}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirm({ open: false, pagoId: 0, total: 0 })}>Cancelar</Button>
+          <Button variant="contained" onClick={handlePagar}>Pagar y descargar</Button>
+        </DialogActions>
       </Dialog>
     </>
   )
