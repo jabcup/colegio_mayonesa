@@ -34,24 +34,19 @@ export class EstudianteService {
 
   async createEstudianteFull(dto: CreateEstudianteFullDto) {
     return this.dataSource.transaction(async (manager) => {
-      // Validación: Debe enviar padre existente o uno nuevo
-      if (!dto.idPadre && !dto.padreData) {
-        throw new BadRequestException(
-          'Debe enviar idPadre o padreData para crear el padre.',
-        );
-      }
-
       // 1. CREAR ESTUDIANTE
       const estudiante = manager.create(Estudiante, {
         nombres: dto.nombres,
         apellidoPat: dto.apellidoPat,
-        apellidoMat: dto.apellidoMat,
+        apellidoMat: dto.apellidoMat, // nullable
         identificacion: dto.identificacion,
         correo: dto.correo,
         correo_institucional: `${
           dto.nombres.toLowerCase().split(' ')[0]
         }.${dto.apellidoPat.toLowerCase()}@mayonesa.estudiante.edu.bo`,
-        rude: `R${dto.identificacion}${dto.nombres.charAt(0).toUpperCase()}${dto.apellidoPat.charAt(0).toUpperCase()}${dto.apellidoMat.charAt(0).toUpperCase()}`,
+        rude: `R${dto.identificacion}${dto.nombres.charAt(0).toUpperCase()}${dto.apellidoPat.charAt(0).toUpperCase()}${(
+          dto.apellidoMat || ''
+        ).charAt(0).toUpperCase()}`,
         direccion: dto.direccion,
         telefono_referencia: dto.telefono_referencia,
         fecha_nacimiento: dto.fecha_nacimiento,
@@ -63,12 +58,8 @@ export class EstudianteService {
 
       // 2. OBTENER O CREAR PADRE
       let padre;
-
       if (dto.idPadre) {
-        padre = await manager.findOne(Padres, {
-          where: { id: dto.idPadre },
-        });
-
+        padre = await manager.findOne(Padres, { where: { id: dto.idPadre } });
         if (!padre) throw new NotFoundException('Padre no encontrado');
       } else {
         padre = await manager.save(
@@ -91,62 +82,31 @@ export class EstudianteService {
         }),
       );
 
-    // 3. ASIGNAR PADRE AL ESTUDIANTE
-    await manager.save(
-      manager.create(EstudianteTutor, {
-        estudiante: nuevoEstudiante,
-        tutor: padre,
-        relacion: dto.relacion,
-      }),
-    );
+      // 4. ASIGNAR CURSO
+      const curso = await manager.findOne(Curso, { where: { id: dto.idCurso } });
+      if (!curso) throw new NotFoundException('Curso no encontrado');
+      await manager.save(
+        manager.create(EstudianteCurso, {
+          estudiante: nuevoEstudiante,
+          curso: curso,
+        }),
+      );
 
-    // 4. ASIGNAR CURSO
-    const curso = await manager.findOne(Curso, {
-      where: { id: dto.idCurso },
-    });
-
-    if (!curso) throw new NotFoundException('Curso no encontrado');
-
-    await manager.save(
-      manager.create(EstudianteCurso, {
-        estudiante: nuevoEstudiante,
-        curso: curso,
-      }),
-    );
-
-    // 5. GENERAR PAGOS
-    // const pagosGenerados = [];
-    // for (let i = 1; i <= 10; i++) {
-    //   const pago = manager.create(Pagos, {
-    //     estudiante: nuevoEstudiante,
-    //     cantidad: 800,
-    //     descuento: 0,
-    //     total: 800,
-    //     concepto: 'Mensualidad',
-    //     numero_pago: i,
-    //   });
-
-    //   if (!curso) throw new NotFoundException('Curso no encontrado');
-
-    //   await manager.save(
-    //     manager.create(EstudianteCurso, {
-    //       estudiante: nuevoEstudiante,
-    //       curso: curso,
-    //     }),
-    //   );
-
-      // 5. GENERAR PAGOS // este es el que funciona
-      const pagosGenerados = [];
+      // 5. GENERAR PAGOS (10 mensualidades)
+      const pagosGenerados: Pagos[] = [];
+      const anioActual = new Date().getFullYear();
       for (let i = 1; i <= 10; i++) {
         const pago = manager.create(Pagos, {
           estudiante: nuevoEstudiante,
           cantidad: 800,
           descuento: 0,
-          concepto: 'Mensualidad',
           total: 800,
-          numero_pago: i,
+          concepto: `Mensualidad ${i}/10`,
+          deuda: 'pendiente',
+          anio: anioActual,
+          mes: i as any,
+          tipo: 'mensual',
         });
-
         pagosGenerados.push(await manager.save(pago));
       }
 
@@ -172,17 +132,13 @@ export class EstudianteService {
     const estudiante = await this.estudianteRepository.findOne({
       where: { correo_institucional },
     });
-    if (!estudiante) {
-      throw new UnauthorizedException('Credenciales incorrectas');
-    }
-    if (estudiante.estado === 'inactivo') {
+    if (!estudiante) throw new UnauthorizedException('Credenciales incorrectas');
+    if (estudiante.estado === 'inactivo')
       throw new UnauthorizedException('Cuenta inactiva');
-    }
-    if (estudiante.rude !== rude) {
+    if (estudiante.rude !== rude)
       throw new UnauthorizedException('Credenciales incorrectas');
-    }
     return {
-      message: 'Inicio de sesión exitoso',
+      message: 'Inicio de sesión exitoso',
       estudiante: {
         id: estudiante.id,
         correo: estudiante.correo_institucional,

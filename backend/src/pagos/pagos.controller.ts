@@ -9,21 +9,23 @@ import {
   ParseIntPipe,
   HttpCode,
   HttpStatus,
+  Injectable,
+  PipeTransform,
+  BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PagosService } from './pagos.service';
 import { CreatePagoDto } from './dto/create-pago.dto';
 import { UpdatePagoDto } from './dto/update-pago.dto';
 import { PagoResponseDto } from './dto/response-pago.dto';
-import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
-import { PersonalService } from 'src/personal/personal.service';
 import { UsuariosService } from 'src/usuarios/usuarios.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Usuarios } from 'src/usuarios/usuarios.entity';
-import { ForbiddenException } from '@nestjs/common';
 
-class SoloIdPersonal implements PipeTransform {
+@Injectable()
+class SoloIdPersonalPipe implements PipeTransform {
   transform(value: any) {
     const keys = Object.keys(value);
     if (keys.length !== 1 || keys[0] !== 'idpersonal')
@@ -34,7 +36,9 @@ class SoloIdPersonal implements PipeTransform {
   }
 }
 
-interface SoloIdPersonalBody { idpersonal: number; }
+interface SoloIdPersonalBody {
+  idpersonal: number;
+}
 
 async function esCajero(
   usuarioRepository: Repository<Usuarios>,
@@ -45,6 +49,7 @@ async function esCajero(
     .leftJoinAndSelect('u.rol', 'r')
     .where('u.idPersonal = :id', { id: idPersonal })
     .getOne();
+
   return usuario?.rol?.nombre === 'Cajero' && usuario.estado === 'activo';
 }
 
@@ -76,17 +81,21 @@ export class PagosController {
     return this.service.findOne(id);
   }
 
+  // Cambiado para aceptar múltiples IDs o uno solo
   @Patch('pagar/:id')
-  @ApiOperation({ summary: 'Pagar (cancelar) un pago' })
+  @ApiOperation({ summary: 'Pagar (cancelar) uno o varios pagos' })
   @ApiBody({ schema: { example: { idpersonal: 123 } } })
   async pagar(
     @Param('id', ParseIntPipe) id: number,
-    @Body(SoloIdPersonal) dto: SoloIdPersonalBody,
+    @Body(SoloIdPersonalPipe) dto: SoloIdPersonalBody,
   ): Promise<{ ok: boolean }> {
     if (!(await esCajero(this.usuariosRepo, dto.idpersonal))) {
       throw new ForbiddenException('El personal no es cajero o no está activo');
     }
-    await this.service.pagar(id, dto);
+
+    // Ahora pagar espera un array de IDs
+    await this.service.pagar([id], dto.idpersonal);
+
     return { ok: true };
   }
 
@@ -100,7 +109,7 @@ export class PagosController {
   }
 
   @Patch('estudiante/:idEstudiante/pagar_ultima_gestion')
-  @ApiOperation({ summary: 'Pagar todo un año de un estudiante' })
+  @ApiOperation({ summary: 'Pagar toda la última gestión (año) pendiente de un estudiante' })
   @ApiBody({ schema: { example: { idpersonal: 123 } } })
   @ApiResponse({
     status: 200,
@@ -112,20 +121,60 @@ export class PagosController {
       },
     },
   })
-  async pagarUltimaGestion(
-    @Param('idEstudiante', ParseIntPipe) idEstudiante: number,
-    @Body(SoloIdPersonal) dto: SoloIdPersonalBody,
-  ): Promise<{ message: string; updatedCount: number }> {
-    if (!(await esCajero(this.usuariosRepo, dto.idpersonal))) {
-      throw new ForbiddenException('El personal no es cajero o no está activo');
-    }
-    return this.service.pagarUltimaGestion(idEstudiante, dto.idpersonal);
-  }
+  // async pagarUltimaGestion(
+  //   @Param('idEstudiante', ParseIntPipe) idEstudiante: number,
+  //   @Body(SoloIdPersonalPipe) dto: SoloIdPersonalBody,
+  // ): Promise<{ message: string; updatedCount: number }> {
+  //   if (!(await esCajero(this.usuariosRepo, dto.idpersonal))) {
+  //     throw new ForbiddenException('El personal no es cajero o no está activo');
+  //   }
 
-  @Delete(':id')
-  @ApiOperation({ summary: 'Eliminación de un pago de la base de datos' })
+  //   return this.service.pagarUltimaGestion(idEstudiante, dto.idpersonal);
+  // }
+@Patch('pagar-trimestre')
+@ApiOperation({ summary: 'Pagar un trimestre completo (3 mensualidades)' })
+@ApiBody({
+  schema: {
+    example: { ids: [4, 5, 6], idpersonal: 123 },
+    properties: {
+      ids: { type: 'array', items: { type: 'number' } },
+      idpersonal: { type: 'number' },
+    },
+  },
+})
+@ApiResponse({
+  status: 200,
+  description: 'Resumen de la operación',
+  schema: {
+    example: { message: 'Se marcaron como cancelados 3 pagos.', updatedCount: 3 },
+  },
+})
+async pagarTrimestre(
+  @Body('ids') ids: number[],
+  @Body('idpersonal') idpersonal: number,
+) {
+  return this.service.pagarTrimestre(ids, idpersonal);
+}  @Delete(':id')
+  @ApiOperation({ summary: 'Eliminación lógica de un pago' })
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.service.remove(id);
   }
+
+@Patch('estudiante/:idEstudiante/pagar-anio')
+@ApiOperation({ summary: 'Pagar las 10 mensualidades del año (descuento 10 %)' })
+@ApiBody({ schema: { example: { idpersonal: 123 } } })
+@ApiResponse({
+  status: 200,
+  description: 'Resumen de la operación',
+  schema: { example: { message: 'Se marcaron como cancelados 10 pagos.', updatedCount: 10 } },
+})
+async pagarAnio(
+  @Param('idEstudiante', ParseIntPipe) idEstudiante: number,
+  @Body('idpersonal') idpersonal: number,
+) {
+  return this.service.pagarAnio(idEstudiante, idpersonal);
+}
+
+  
 }
