@@ -24,7 +24,6 @@ import { UsuariosService } from 'src/usuarios/usuarios.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Usuarios } from 'src/usuarios/usuarios.entity';
-import { ForbiddenException } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Injectable()
