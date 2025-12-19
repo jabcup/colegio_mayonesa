@@ -25,7 +25,7 @@ export class CreatePadreDto {
   })
   @IsOptional()
   @IsString()
-  apellidoMat: string;
+  apellidoMat?: string;
   
   @ApiProperty({
     example: '12345678',

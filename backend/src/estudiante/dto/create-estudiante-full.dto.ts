@@ -11,7 +11,6 @@ import {
 import { PadreDataDto } from './padre-data.dto';
 
 export class CreateEstudianteFullDto {
-  // Padre existente (opcional)
   @ApiProperty({
     example: 1,
     description: 'Id del Padre (solo si ya existe)',
@@ -22,7 +21,6 @@ export class CreateEstudianteFullDto {
   @IsNumber()
   idPadre?: number;
 
-  // Crear padre nuevo (opcional)
   @ApiProperty({
     description: 'Datos del padre si se desea crear uno nuevo',
     required: false,
@@ -33,7 +31,6 @@ export class CreateEstudianteFullDto {
   @Type(() => PadreDataDto)
   padreData?: PadreDataDto;
 
-  // Curso
   @ApiProperty({
     example: 1,
     description: 'Id del Curso',
@@ -43,7 +40,6 @@ export class CreateEstudianteFullDto {
   @IsNumber()
   idCurso: number;
 
-  // Datos del Estudiante
   @ApiProperty({ example: 'Juan Pérez' })
   @IsNotEmpty()
   @IsString()
@@ -54,10 +50,14 @@ export class CreateEstudianteFullDto {
   @IsString()
   apellidoPat: string;
 
-  @ApiProperty({ example: 'Gómez' })
-  @IsNotEmpty()
+  @ApiProperty({
+    example: 'Gómez',
+    description: 'Apellido materno (opcional)',
+    required: false
+  })
+  @IsOptional() 
   @IsString()
-  apellidoMat: string;
+  apellidoMat?: string;
 
   @ApiProperty({ example: '12345678' })
   @IsString()
