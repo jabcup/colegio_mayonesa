@@ -206,23 +206,6 @@ export class CalificacionesService {
     return await this.calificacionesRepository.save(nuevaCalificacion);
   }
 
-  // async updateCalificacion(id: number, dto: UpdateCalificacionDto) {
-  //   const calificacion = await this.calificacionesRepository.findOne({
-  //     where: { id },
-  //   });
-
-  //   if (!calificacion) {
-  //     throw new Error('Calificacion no encontrada');
-  //   }
-
-  //   const new_aprobacion = dto.calificacion >= 51 ? true : false;
-
-  //   calificacion.calificacion = dto.calificacion;
-  //   calificacion.aprobacion = new_aprobacion;
-
-  //   return this.calificacionesRepository.save(calificacion);
-  // }
-
   async updateCalificacion(
     id: number,
     dto: UpdateCalificacionDto,
