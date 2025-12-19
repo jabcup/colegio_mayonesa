@@ -30,7 +30,12 @@ interface Docentes {
 interface Props {
   open: boolean;
   onClose: () => void;
-  onGuardar: (data: { idDocente: number; idMateria: number }) => void;
+  onGuardar: (data: {
+    idDocente: number;
+    idMateria: number;
+    nombreMateria: string;
+    nombreDocente: string;
+  }) => void;
   modoEdicion: boolean;
   valoresIniciales?: {
     idDocente?: number;
@@ -125,6 +130,22 @@ export default function FormAsignacion({
     }
   };
 
+  const handleGuardarClick = () => {
+    const selectedMateria = materias.find((m) => m.id === idMateria) || null;
+    const selectedDocente = docentes.find((d) => d.id === idDocente) || null;
+
+    if (!selectedMateria || !selectedDocente) return;
+
+    onGuardar({
+      idMateria: selectedMateria.id,
+      idDocente: selectedDocente.id,
+      nombreMateria: selectedMateria.nombre,        // ← aquí va el nombre real
+      nombreDocente: selectedDocente.nombre         // ← aquí va el nombre real
+    });
+
+    onClose();
+  };
+
   return (
     <>
       <Dialog open={open} onClose={onClose}>
@@ -181,7 +202,7 @@ export default function FormAsignacion({
           <Button
             variant="contained"
             disabled={!idMateria || !idDocente}
-            onClick={() => onGuardar({ idMateria, idDocente })}
+            onClick={handleGuardarClick}
           >
             Guardar
           </Button>

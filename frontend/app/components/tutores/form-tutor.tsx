@@ -21,7 +21,10 @@ interface Docente {
 interface Curso {
   id: number;
   nombre: string;
-  paralelo: string;
+  paralelo: {
+    id: number;
+    nombre: string;
+  };
   gestion: number;
 }
 
@@ -111,7 +114,7 @@ export default function FormTutor({
         >
           {cursos.map((c) => (
             <MenuItem key={c.id} value={c.id}>
-              {c.nombre} {c.paralelo} - {c.gestion}
+              {c.nombre} {c.paralelo.nombre} - {c.gestion}
             </MenuItem>
           ))}
         </TextField>

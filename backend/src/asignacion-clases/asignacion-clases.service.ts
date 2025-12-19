@@ -55,11 +55,12 @@ export class AsignacionClasesService {
       .createQueryBuilder('asignacion')
       .leftJoin('asignacion.curso', 'curso')
       .leftJoin('asignacion.personal', 'personal')
+      .leftJoin('curso.paralelo', 'paralelo')
       .where('personal.id = :idDocente', { idDocente })
       .select([
         'curso.id AS id',
         'curso.nombre AS nombre',
-        'curso.paralelo AS paralelo',
+        'paralelo.nombre AS paralelo',
       ])
       .distinct(true)
       .getRawMany();

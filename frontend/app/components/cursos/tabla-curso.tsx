@@ -8,22 +8,24 @@ import {
   TableBody,
   TableContainer,
   Paper,
-  Button,
-  Tab,
   Tooltip,
   IconButton,
   TablePagination,
 } from "@mui/material";
-import { getAuthData } from "@/app/lib/auth";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useState } from "react";
-import { Boton } from "../botones/botonNav";
+import { getAuthData } from "@/app/lib/auth";
+
+interface Paralelo {
+  id: number;
+  nombre: string;
+}
 
 interface Curso {
   id: number;
   nombre: string;
-  paralelo: string;
+  paralelo: Paralelo | null; // ← Permitimos null por seguridad
   gestion: number;
   capacidad: number;
   fechaCreacion: string;
@@ -38,9 +40,10 @@ interface Props {
 
 export default function TablaCurso({ cursos, onEdit, onDelete }: Props) {
   const { rol } = getAuthData();
-  // Paginacion
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
   const cursosPaginados = cursos.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
@@ -53,19 +56,22 @@ export default function TablaCurso({ cursos, onEdit, onDelete }: Props) {
           <TableRow>
             <TableCell>Nombre</TableCell>
             <TableCell>Paralelo</TableCell>
-            <TableCell>Gestion</TableCell>
-            {/* <TableCell>Capacidad</TableCell> */}
-            <TableCell>Acciones</TableCell>
+            <TableCell>Gestión</TableCell>
+            <TableCell>Capacidad</TableCell>
+            <TableCell align="center">Acciones</TableCell>
           </TableRow>
         </TableHead>
+
         <TableBody>
           {cursosPaginados.map((c) => (
-            <TableRow key={c.id}>
+            <TableRow key={c.id} hover>
               <TableCell>{c.nombre}</TableCell>
-              <TableCell>{c.paralelo}</TableCell>
-              <TableCell>{c.gestion}</TableCell>
-              {/* <TableCell>{c.capacidad}</TableCell> */}
               <TableCell>
+                {c.paralelo ? c.paralelo.nombre : "-"} {/* ← Protección contra null */}
+              </TableCell>
+              <TableCell>{c.gestion}</TableCell>
+              <TableCell>{c.capacidad}</TableCell>
+              <TableCell align="center">
                 <Tooltip title="Editar">
                   <IconButton color="primary" onClick={() => onEdit(c)}>
                     <EditIcon />
@@ -77,24 +83,11 @@ export default function TablaCurso({ cursos, onEdit, onDelete }: Props) {
                   </IconButton>
                 </Tooltip>
               </TableCell>
-              {/* <TableCell>
-                                <Button 
-                                  variant="outlined"
-                                  onClick={() => onEdit(c)}
-                                />
-                                <Boton 
-                                  label="Eliminar"
-                                  size="small"
-                                  color="error"
-                                  onClick={() => onDelete(c.id)}
-                                >
-                                    Eliminar
-                                </Button>
-                            </TableCell> */}
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
       <TablePagination
         component="div"
         count={cursos.length}
@@ -105,7 +98,9 @@ export default function TablaCurso({ cursos, onEdit, onDelete }: Props) {
           setRowsPerPage(parseInt(e.target.value, 10));
           setPage(0);
         }}
-        rowsPerPageOptions={[5, 10, 25]}
+        rowsPerPageOptions={[5, 10, 25, 50]}
+        labelRowsPerPage="Filas por página:"
+        labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
       />
     </TableContainer>
   );

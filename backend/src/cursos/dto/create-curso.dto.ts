@@ -12,12 +12,21 @@ export class CreateCursoDto {
   nombre: string;
 
   @ApiProperty({
-    example: 'A',
-    description: 'Paralelo del curso',
+    example: 1,
+    description: 'Id del Paralelo',
   })
   @IsNotEmpty()
-  @IsString()
-  paralelo: string;
+  @Type(() => Number)
+  @IsNumber()
+  idParalelo: number;
+
+  // @ApiProperty({
+  //   example: 'A',
+  //   description: 'Paralelo del curso',
+  // })
+  // @IsNotEmpty()
+  // @IsString()
+  // paralelo: string;
 
   @ApiProperty({
     example: 2024,

@@ -22,7 +22,7 @@ export class TutoresService {
 
   async getTutores(): Promise<Tutores[]> {
     return this.tutoresRepository.find({
-      relations: ['personal', 'curso'],
+      relations: ['personal', 'curso', 'curso.paralelo'],
       where: { estado: 'activo' },
     });
   }

@@ -27,7 +27,16 @@ export class VistaCalificacionesEstudiante {
   materia: string;
 
   @ViewColumn()
-  calificacion: number;
+  trim1: number;
+
+  @ViewColumn()
+  trim2: number;
+
+  @ViewColumn()
+  trim3: number;
+
+  @ViewColumn()
+  calificacionFinal: number;
 
   @ViewColumn()
   estado: string;

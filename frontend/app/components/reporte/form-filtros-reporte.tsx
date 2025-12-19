@@ -18,7 +18,10 @@ import Autocomplete from "@mui/material/Autocomplete";
 interface Cursos {
   id: number;
   nombre: string;
-  paralelo: string;
+  paralelo: {
+    id: number;
+    nombre: string;
+  };
   gestion: number;
   capacidad: number;
   fechaCreacion: string;
@@ -69,7 +72,6 @@ export default function FormFiltrosReporte({
   const [form, setForm] = useState({
     curso: 0,
     estudiante: 0,
-    paralelo: "",
     mes: 0,
     anio: 0,
     estado: "",
@@ -95,12 +97,12 @@ export default function FormFiltrosReporte({
         capacidad: a.capacidad,
         fechaCreacion: a.fechaCreacion,
         estado: a.estado,
-      }));
+      }))
 
       setCursos(cursosMap);
     } catch (err) {
       console.error(err);
-      alert("Error al cargar los datos");
+      alert("Error al cargar los datos. Ingrese de nuevo, verifique que los datos sean correctos y no sean repetidos");
     } finally {
       setLoading(false);
     }
@@ -213,7 +215,6 @@ export default function FormFiltrosReporte({
       setForm({
         curso: 0,
         estudiante: 0,
-        paralelo: "",
         mes: 0,
         anio: 0,
         estado: "",
@@ -262,7 +263,7 @@ export default function FormFiltrosReporte({
                   sx={{ mb: 2, width: 400 }}
                   options={cursos}
                   getOptionLabel={(option) =>
-                    `${option.nombre} - ${option.paralelo} (${option.gestion})`
+                    `${option.nombre} - ${option.paralelo.nombre} (${option.gestion})`
                   }
                   value={cursos.find((c) => c.id === form.curso) || null}
                   onChange={(_, newValue) => {
@@ -283,19 +284,6 @@ export default function FormFiltrosReporte({
                 "asistenciasEstudiante",
                 "pagosEstudiante",
               ].includes(tipoReporte) && (
-                // <TextField
-                //   select
-                //   label="Estudiante"
-                //   name="estudiante"
-                //   value={form.estudiante}
-                //   onChange={handleChange}
-                // >
-                //   {estudiantes.map((e) => (
-                //     <MenuItem key={e.id} value={e.id}>
-                //       {e.nombres} {e.apellidoPat} {e.apellidoMat}
-                //     </MenuItem>
-                //   ))}
-                // </TextField>
                 <Autocomplete
                   sx={{ mb: 2, width: 400 }}
                   options={estudiantes}
@@ -319,13 +307,6 @@ export default function FormFiltrosReporte({
 
               {/* Si el reporte necesita mes */}
               {["asistenciasCurso", "pagosCurso"].includes(tipoReporte) && (
-                // <TextField
-                //   label="Mes"
-                //   name="mes"
-                //   value={form.mes}
-                //   onChange={handleChange}
-                //   type="number"
-                // />
                 <TextField
                   select
                   label="Mes"

@@ -9,7 +9,10 @@ interface Curso {
   id: number;
   nombre: string;
   nivel?: string;
-  paralelo?: string;
+  paralelo?: {
+    id: number;
+    nombre: string;
+  };
 }
 
 interface Aviso {
@@ -88,7 +91,7 @@ export default function TableAvisos({ onEdit }: { onEdit?: (aviso: Aviso) => voi
     });
 
   const getNombreCurso = (curso: Curso) =>
-    `${curso.nombre} ${curso.nivel ? `- ${curso.nivel}` : ""} ${curso.paralelo || ""}`.trim();
+    `${curso.nombre} ${curso.nivel ? `- ${curso.nivel}` : ""} ${curso.paralelo?.nombre || ""}`.trim();
 
   return (
     <div className="space-y-6">

@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
 import { Calificaciones } from './calificaciones.entity';
@@ -41,31 +45,72 @@ export class CalificacionesService {
   }
 
   async getCalificacionesPorCursoYMateria(idCurso: number, idMateria: number) {
-    return this.calificacionesRepository
-      .createQueryBuilder('calificacion')
-      .leftJoinAndSelect('calificacion.estudiante', 'estudiante')
-      .leftJoinAndSelect('calificacion.materia', 'materia')
-      .leftJoin(
-        'asignacion_clases',
-        'asignacion',
-        'asignacion.idMateria = materia.id',
+    const anioEscolar = new Date().getFullYear(); // 2025
+
+    return await this.estudianteRepository
+      .createQueryBuilder('e')
+      // Join directo con la tabla pivote estudiante_curso
+      .innerJoin(
+        'estudiante_curso',
+        'ec',
+        'ec.idEstudiante = e.id AND ec.estado = :estadoEc',
+        { estadoEc: 'activo' },
       )
-      .leftJoin('asignacion.curso', 'curso')
-      .where('materia.id = :idMateria', { idMateria })
-      .andWhere('curso.id = :idCurso', { idCurso })
-      .andWhere('calificacion.estado = "activo"')
+      // Join con el curso
+      .innerJoin(
+        'cursos',
+        'c',
+        'c.id = ec.idCurso AND c.estado = :estadoCurso',
+        { estadoCurso: 'activo' },
+      )
+      // Left join con calificaciones (puede no existir)
+      .leftJoin(
+        'calificaciones',
+        'cal',
+        'cal.idEstudiante = e.id ' +
+          'AND cal.idMateria = :idMateria ' +
+          'AND cal.anioEscolar = :anioEscolar ' +
+          'AND cal.estado = :estadoCal',
+        { idMateria, anioEscolar, estadoCal: 'activo' },
+      )
+      // Filtro por curso
+      .where('c.id = :idCurso', { idCurso })
+      // Selección de campos
       .select([
-        'calificacion.id',
-        'calificacion.calificacion',
-        'calificacion.aprobacion',
-        'estudiante.id',
-        'estudiante.nombres',
-        'estudiante.apellidoPat',
-        'estudiante.apellidoMat',
-        'materia.id',
-        'materia.nombre',
+        'e.id AS estudiante_id',
+        'e.nombres AS estudiante_nombres',
+        'e.apellidoPat AS estudiante_apellido_pat',
+        'e.apellidoMat AS estudiante_apellido_mat',
+        'cal.id AS calificacion_id',
+        'cal.trim1 AS trim1',
+        'cal.trim2 AS trim2',
+        'cal.trim3 AS trim3',
+        'cal.calificacionFinal AS calificacion_final',
+        'cal.aprobacion AS aprobacion',
       ])
-      .getRawMany();
+      // Parámetros
+      .setParameter('idMateria', idMateria)
+      .setParameter('anioEscolar', anioEscolar)
+      .setParameter('idCurso', idCurso)
+      .getRawMany()
+      .then((rows) =>
+        rows.map((row) => ({
+          calificacion_id: row.calificacion_id || null,
+          trim1: row.trim1 ? Number(row.trim1) : null,
+          trim2: row.trim2 ? Number(row.trim2) : null,
+          trim3: row.trim3 ? Number(row.trim3) : null,
+          calificacion_final: row.calificacion_final
+            ? Number(row.calificacion_final)
+            : null,
+          aprobacion: Boolean(row.aprobacion),
+          estudiante: {
+            id: row.estudiante_id,
+            nombres: row.estudiante_nombres,
+            apellidoPat: row.estudiante_apellido_pat,
+            apellidoMat: row.estudiante_apellido_mat,
+          },
+        })),
+      );
   }
 
   async getCalificacionesPorEstudiante(
@@ -99,49 +144,129 @@ export class CalificacionesService {
   async createCalificacion(
     dto: CreateCalificacionDto,
   ): Promise<Calificaciones> {
+    // Validar materia
     const materia = await this.materiasRepository.findOne({
       where: { id: dto.idMateria },
     });
-
     if (!materia) {
-      throw new Error('Materia no encontrada');
+      throw new NotFoundException(
+        `Materia con ID ${dto.idMateria} no encontrada`,
+      );
     }
 
+    // Validar estudiante
     const estudiante = await this.estudianteRepository.findOne({
       where: { id: dto.idEstudiante },
     });
-
     if (!estudiante) {
-      throw new Error('Estudiante no encontrado');
+      throw new NotFoundException(
+        `Estudiante con ID ${dto.idEstudiante} no encontrado`,
+      );
     }
 
-    const aprobacion = dto.calificacion >= 51 ? true : false;
-
-    const calificacion = this.calificacionesRepository.create({
-      calificacion: dto.calificacion,
-      aprobacion: aprobacion,
-      materia: materia,
-      estudiante: estudiante,
+    const existente = await this.calificacionesRepository.findOne({
+      where: {
+        estudiante: { id: dto.idEstudiante },
+        materia: { id: dto.idMateria },
+        anioEscolar: dto.anioEscolar,
+      },
     });
 
-    return this.calificacionesRepository.save(calificacion);
+    if (existente) {
+      throw new BadRequestException(
+        `Ya existe un registro de calificaciones para este estudiante en la materia ID ${dto.idMateria} para el año ${dto.anioEscolar}. Usa PATCH para actualizar.`,
+      );
+    }
+
+    // Calcular promedio solo con los trimestres que tengan nota
+    const notas = [dto.trim1, dto.trim2, dto.trim3].filter(
+      (n) => n !== undefined && n !== null,
+    );
+    const calificacionFinal =
+      notas.length > 0
+        ? Number((notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(2))
+        : null;
+
+    // Determinar aprobación (ajusta el 61 según tu regla: 61, 70, etc.)
+    const aprobacion = calificacionFinal !== null && calificacionFinal >= 51;
+
+    // Crear nueva calificación
+    const nuevaCalificacion = this.calificacionesRepository.create({
+      materia,
+      estudiante,
+      anioEscolar: dto.anioEscolar,
+      trim1: dto.trim1 ?? null,
+      trim2: dto.trim2 ?? null,
+      trim3: dto.trim3 ?? null,
+      calificacionFinal,
+      aprobacion,
+      estado: 'activo',
+    });
+
+    return await this.calificacionesRepository.save(nuevaCalificacion);
   }
 
-  async updateCalificacion(id: number, dto: UpdateCalificacionDto) {
+  // async updateCalificacion(id: number, dto: UpdateCalificacionDto) {
+  //   const calificacion = await this.calificacionesRepository.findOne({
+  //     where: { id },
+  //   });
+
+  //   if (!calificacion) {
+  //     throw new Error('Calificacion no encontrada');
+  //   }
+
+  //   const new_aprobacion = dto.calificacion >= 51 ? true : false;
+
+  //   calificacion.calificacion = dto.calificacion;
+  //   calificacion.aprobacion = new_aprobacion;
+
+  //   return this.calificacionesRepository.save(calificacion);
+  // }
+
+  async updateCalificacion(
+    id: number,
+    dto: UpdateCalificacionDto,
+  ): Promise<Calificaciones> {
     const calificacion = await this.calificacionesRepository.findOne({
       where: { id },
+      relations: ['materia', 'estudiante'],
     });
 
     if (!calificacion) {
-      throw new Error('Calificacion no encontrada');
+      throw new NotFoundException(`Calificación con ID ${id} no encontrada`);
+    }
+    console.log('calificacion', calificacion);
+
+    // Actualizar trimestres
+    if (dto.trim1 !== undefined) calificacion.trim1 = dto.trim1;
+    if (dto.trim2 !== undefined) calificacion.trim2 = dto.trim2;
+    if (dto.trim3 !== undefined) calificacion.trim3 = dto.trim3;
+
+    // Obtener solo valores numéricos válidos
+    const notas = [
+      calificacion.trim1,
+      calificacion.trim2,
+      calificacion.trim3,
+    ].filter((n): n is number => typeof n === 'number' && !isNaN(n));
+
+    console.log('notas', notas);
+
+    // Calcular promedio de forma segura
+    if (notas.length > 0) {
+      const promedio = notas.reduce((a, b) => a + b, 0) / notas.length;
+      // Redondear a 2 decimales de forma segura
+      calificacion.calificacionFinal = Math.round(promedio * 100) / 100;
+    } else {
+      calificacion.calificacionFinal = null;
     }
 
-    const new_aprobacion = dto.calificacion >= 51 ? true : false;
+    console.log('Calificacion Final', calificacion.calificacionFinal);
+    // Aprobación
+    calificacion.aprobacion =
+      calificacion.calificacionFinal !== null &&
+      calificacion.calificacionFinal >= 51;
 
-    calificacion.calificacion = dto.calificacion;
-    calificacion.aprobacion = new_aprobacion;
-
-    return this.calificacionesRepository.save(calificacion);
+    return await this.calificacionesRepository.save(calificacion);
   }
 
   async deleteCalificacion(id: number): Promise<Calificaciones> {
