@@ -1,10 +1,12 @@
 // dto/update-calificacion.dto.ts
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsOptional, IsNumber, Min, Max } from 'class-validator';
 
 export class UpdateCalificacionDto {
   @ApiPropertyOptional({ example: 85.5 })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   @Max(100)
@@ -12,6 +14,7 @@ export class UpdateCalificacionDto {
 
   @ApiPropertyOptional({ example: 90.0 })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   @Max(100)
@@ -19,6 +22,7 @@ export class UpdateCalificacionDto {
 
   @ApiPropertyOptional({ example: 78.0 })
   @IsOptional()
+  @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   @Max(100)

@@ -107,12 +107,9 @@ export default function CalificacionPage() {
           apellidoMat: item.estudiante.apellidoMat,
           nombresCompletos:
             `${item.estudiante.nombres} ${item.estudiante.apellidoPat} ${item.estudiante.apellidoMat}`.trim(),
-          trim1: item.trim1 !== undefined ? Number(item.trim1) : null,
-          trim2: item.trim2 !== undefined ? Number(item.trim2) : null,
-          trim3: item.trim3 !== undefined ? Number(item.trim3) : null,
-          calificacionFinal: item.calificacion_final
-            ? Number(item.calificacion_final)
-            : null,
+          trim1: item.trim1 !== null ? Number(item.trim1) : null,
+          trim2: item.trim2 !== null ? Number(item.trim2) : null,
+          trim3: item.trim3 !== null ? Number(item.trim3) : null,
           aprobacion: item.aprobacion,
           registroId: item.calificacion_id || null,
         })
