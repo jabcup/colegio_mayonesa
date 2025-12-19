@@ -67,13 +67,21 @@ interface Props {
 }
 
 export default function TableEstudiante({ estudiantes }: Props) {
-  const [openRow, setOpenRow] = useState<number | null>(null);
+  const [openRows, setOpenRows] = useState<number[]>([]);
   const [openEditPadre, setOpenEditPadre] = useState(false);
   const [selectedPadre, setSelectedPadre] = useState<any>(null);
   const [openEditEstudiante, setOpenEditEstudiante] = useState(false);
   const [selectedEstudiante, setSelectedEstudiante] = useState<any>(null);
 
   const { rol, idPersonal } = getAuthData();
+
+  const toggleRow = (id: number) => {
+    setOpenRows(prev =>
+      prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]
+    );
+  };
+
+  const isRowOpen = (id: number) => openRows.includes(id);
 
   const handleEliminarPadre = async (id: number) => {
     if (!confirm("¿Seguro que deseas eliminar este tutor?")) return;
@@ -100,6 +108,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
   };
 
 
+  // Función para obtener color según la relación
   const getRelacionColor = (relacion: string) => {
     switch (relacion.toLowerCase()) {
       case 'padre': return 'primary';
@@ -113,6 +122,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
     }
   };
 
+  // Función para obtener ícono según la relación
   const getRelacionIcon = (relacion: string) => {
     switch (relacion.toLowerCase()) {
       case 'padre': return '👨';
@@ -126,18 +136,48 @@ export default function TableEstudiante({ estudiantes }: Props) {
     }
   };
 
+  // Formatear fecha
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "No especificado";
+    try {
+      return new Date(dateString).toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  // Calcular edad a partir de la fecha de nacimiento
+  const calcularEdad = (fechaNacimiento: string) => {
+    if (!fechaNacimiento) return "N/A";
+    try {
+      const hoy = new Date();
+      const nacimiento = new Date(fechaNacimiento);
+      let edad = hoy.getFullYear() - nacimiento.getFullYear();
+      const mes = hoy.getMonth() - nacimiento.getMonth();
+      if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+        edad--;
+      }
+      return `${edad} años`;
+    } catch {
+      return "N/A";
+    }
+  };
+
   return (
     <TableContainer component={Paper} sx={{ mt: 2 }}>
       <Table>
         <TableHead>
-          <TableRow>
+          <TableRow sx={{ backgroundColor: 'primary.light' }}>
             <TableCell width="50px" />
             <TableCell><strong>ID</strong></TableCell>
             <TableCell><strong>Estudiante</strong></TableCell>
             <TableCell><strong>CI</strong></TableCell>
             <TableCell><strong>Correo</strong></TableCell>
-            <TableCell><strong>Tutores ({estudiantes.reduce((acc, e) => acc + e.tutores.length, 0)})</strong></TableCell>
-            {/* <TableCell><strong>Estado</strong></TableCell> */}
+            <TableCell><strong>Tutores</strong></TableCell>
             {rol !== "Cajero" && rol !== "Docente" && (
               <TableCell width="250px"><strong>Acciones</strong></TableCell>
             )}
@@ -145,277 +185,422 @@ export default function TableEstudiante({ estudiantes }: Props) {
         </TableHead>
 
         <TableBody>
-          {estudiantes.map((e) => {
-            const estudianteFullName = `${e.estudiante.nombres} ${e.estudiante.apellidoPat} ${e.estudiante.apellidoMat || ""}`;
+          {estudiantes.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                <Typography variant="body1" color="text.secondary">
+                  No hay estudiantes registrados
+                </Typography>
+              </TableCell>
+            </TableRow>
+          ) : (
+            estudiantes.map((e) => {
+              const estudianteFullName = `${e.estudiante.nombres} ${e.estudiante.apellidoPat} ${e.estudiante.apellidoMat || ""}`.trim();
+              const isOpen = isRowOpen(e.estudiante.id);
 
-            return (
-              <>
-                <TableRow key={e.estudiante.id}>
-                  <TableCell>
-                    <IconButton
-                      size="small"
-                      onClick={() =>
-                        setOpenRow(openRow === e.estudiante.id ? null : e.estudiante.id)
-                      }
-                    >
-                      {openRow === e.estudiante.id ? (
-                        <KeyboardArrowUp />
-                      ) : (
-                        <KeyboardArrowDown />
-                      )}
-                    </IconButton>
-                  </TableCell>
+              return (
+                <>
+                  {/* Fila principal */}
+                  <TableRow 
+                    key={`row-${e.estudiante.id}`}
+                    sx={{ 
+                      '&:hover': { backgroundColor: 'action.hover' },
+                      backgroundColor: isOpen ? 'action.selected' : 'inherit'
+                    }}
+                  >
+                    <TableCell>
+                      <IconButton
+                        size="small"
+                        onClick={() => toggleRow(e.estudiante.id)}
+                        aria-label={isOpen ? "Ocultar detalles" : "Mostrar detalles"}
+                      >
+                        {isOpen ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+                      </IconButton>
+                    </TableCell>
 
-                  <TableCell>{e.estudiante.id}</TableCell>
-                  
-                  <TableCell>
-                    <Box>
-                      <Typography variant="body1" fontWeight="medium">
-                        {e.estudiante.nombres} {e.estudiante.apellidoPat}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {e.estudiante.apellidoMat || "Sin ap. materno"}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  
-                  <TableCell>{e.estudiante.identificacion}</TableCell>
-                  
-                  <TableCell>
-                    <Box>
-                      <Typography variant="body2">{e.estudiante.correo}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {e.estudiante.correo_institucional}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  
-                  <TableCell>
-                    {e.tutores.length === 0 ? (
-                      <Typography variant="body2" color="text.secondary" fontStyle="italic">
-                        Sin tutores
-                      </Typography>
-                    ) : (
+                    <TableCell>{e.estudiante.id}</TableCell>
+                    
+                    <TableCell>
                       <Box>
-                        {/* Mostrar primer tutor principal */}
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Typography variant="body2">
-                            {e.tutores[0].nombres} {e.tutores[0].apellidoPat}
-                          </Typography>
-                          <Chip 
-                            label={e.tutores[0].relacion}
-                            size="small"
-                            color={getRelacionColor(e.tutores[0].relacion)}
-                            variant="outlined"
-                          />
-                        </Box>
-                        
-                        {/* Indicador de tutores adicionales */}
-                        {e.tutores.length > 1 && (
+                        <Typography variant="body1" fontWeight="medium">
+                          {e.estudiante.nombres} {e.estudiante.apellidoPat}
+                        </Typography>
+                        {e.estudiante.apellidoMat && (
                           <Typography variant="caption" color="text.secondary">
-                            + {e.tutores.length - 1} tutor(es) más
+                            {e.estudiante.apellidoMat}
                           </Typography>
                         )}
                       </Box>
-                    )}
-                  </TableCell>
-                
-                  
-                  {rol !== "Cajero" && rol !== "Docente" && (
+                    </TableCell>
+                    
                     <TableCell>
-                      <Box display="flex" flexDirection="column" gap={1}>
-                        <Box display="flex" gap={1}>
-                          <Boton
-                            label="Editar"
-                            size="small"
-                            color="warning"
-                            onClick={() => {
-                              setSelectedEstudiante(e);
-                              setOpenEditEstudiante(true);
-                            }}
-                            
-                          />
-                          <Boton
-                            label="Eliminar"
-                            size="small"
-                            color="error"
-                            onClick={() => handleEliminarEstudiante(e.estudiante.id)}
-                            
-                          />
-                        </Box>
-
+                      <Typography variant="body2" fontFamily="monospace">
+                        {e.estudiante.identificacion}
+                      </Typography>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2" noWrap sx={{ maxWidth: 200 }}>
+                          {e.estudiante.correo || "Sin correo"}
+                        </Typography>
+                        {e.estudiante.correo_institucional && (
+                          <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 200, display: 'block' }}>
+                            {e.estudiante.correo_institucional}
+                          </Typography>
+                        )}
                       </Box>
                     </TableCell>
-                  )}
-                </TableRow>
-
-                {/* Fila expandible */}
-                <TableRow>
-                  <TableCell colSpan={8} sx={{ p: 0, bgcolor: 'background.default' }}>
-                    <Collapse
-                      in={openRow === e.estudiante.id}
-                      timeout="auto"
-                      unmountOnExit
-                    >
-                      <Box p={3}>
-                        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                          <Box>
-                            <Typography variant="h6" gutterBottom>
-                              Información del Estudiante
-                            </Typography>
-                            
-                            <Box display="grid" gridTemplateColumns="repeat(auto-fill, minmax(250px, 1fr))" gap={2}>
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">Nombre Completo</Typography>
-                                <Typography>{estudianteFullName}</Typography>
-                              </Box>
-                              
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">CI</Typography>
-                                <Typography>{e.estudiante.identificacion}</Typography>
-                              </Box>
-                              
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">RUDE</Typography>
-                                <Typography>{e.estudiante.rude}</Typography>
-                              </Box>
-                              
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">Correo Personal</Typography>
-                                <Typography>{e.estudiante.correo || "No especificado"}</Typography>
-                              </Box>
-                              
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">Correo Institucional</Typography>
-                                <Typography>{e.estudiante.correo_institucional}</Typography>
-                              </Box>
-                              
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">Dirección</Typography>
-                                <Typography>{e.estudiante.direccion}</Typography>
-                              </Box>
-                              
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">Teléfono</Typography>
-                                <Typography>{e.estudiante.telefono_referencia || "No especificado"}</Typography>
-                              </Box>
-                              
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">Fecha Nacimiento</Typography>
-                                <Typography>{new Date(e.estudiante.fecha_nacimiento).toLocaleDateString()}</Typography>
-                              </Box>
-                              
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">Sexo</Typography>
-                                <Typography>{e.estudiante.sexo}</Typography>
-                              </Box>
-                              
-                              <Box>
-                                <Typography variant="subtitle2" color="text.secondary">Nacionalidad</Typography>
-                                <Typography>{e.estudiante.nacionalidad}</Typography>
-                              </Box>
-                              
-                            </Box>
-                          </Box>
-                        </Box>
-
-                        {/* Sección de Tutores */}
-                        <Box mt={4}>
-                          <Typography variant="h6" gutterBottom>
-                            Tutor Principal
-                          </Typography>
-                          
-                          {e.tutores.length === 0 ? (
-                            <Box textAlign="center" py={3}>
-                              <Typography variant="body1" color="text.secondary">
-                                Este estudiante no tiene tutores asignados
-                              </Typography>
-                              <Boton
-                                label="Asignar Primer Tutor"
-                                color="primary"
-                                onClick={() => {
-                                }}
-                                
-                              />
+                    
+                    <TableCell>
+                      {e.tutores.length === 0 ? (
+                        <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                          Sin tutores
+                        </Typography>
+                      ) : (
+                        <Box>
+                          {/* Mostrar avatar group para múltiples tutores */}
+                          {e.tutores.length <= 3 ? (
+                            <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+                              {e.tutores.map((tutor, index) => (
+                                <Tooltip 
+                                  key={tutor.id} 
+                                  title={`${tutor.nombres} ${tutor.apellidoPat} (${tutor.relacion})`}
+                                >
+                                  <Chip 
+                                    size="small"
+                                    label={`${tutor.nombres.split(' ')[0]} ${tutor.apellidoPat.charAt(0)}.`}
+                                    color={getRelacionColor(tutor.relacion)}
+                                    variant="outlined"
+                                    sx={{ 
+                                      maxWidth: 120,
+                                      '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' }
+                                    }}
+                                  />
+                                </Tooltip>
+                              ))}
                             </Box>
                           ) : (
-                            <Box display="grid" gridTemplateColumns="repeat(auto-fill, minmax(300px, 1fr))" gap={2}>
-                              {e.tutores.map((tutor, index) => (
-                                <Paper key={tutor.id} elevation={1} sx={{ p: 2, position: 'relative' }}>
-                                  <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                                    <Box>
-                                      <Box display="flex" alignItems="center" gap={1} mb={1}>
-                                        <Typography variant="h6">
-                                          {getRelacionIcon(tutor.relacion)} {tutor.nombres} {tutor.apellidoPat}
-                                        </Typography>
-                                        <Chip 
-                                          label={tutor.relacion}
-                                          size="small"
-                                          color={getRelacionColor(tutor.relacion)}
-                                        />
-                                      </Box>
-                                      
-                                      <Typography variant="body2" color="text.secondary">
-                                        {tutor.apellidoMat || "Sin ap. materno"}
-                                      </Typography>
-                                      
-                                      <Box mt={1}>
-                                        <Typography variant="body2">
-                                          <Phone fontSize="small" sx={{ verticalAlign: 'middle', mr: 1 }} />
-                                          {tutor.telefono}
-                                        </Typography>
-                                        
-                                        {tutor.correo && (
-                                          <Typography variant="body2">
-                                            <Email fontSize="small" sx={{ verticalAlign: 'middle', mr: 1 }} />
-                                            {tutor.correo}
+                            <Tooltip 
+                              title={e.tutores.map(t => `${t.nombres} ${t.apellidoPat} (${t.relacion})`).join(', ')}
+                            >
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <AvatarGroup max={3}>
+                                  {e.tutores.slice(0, 3).map((tutor) => (
+                                    <Avatar 
+                                      key={tutor.id}
+                                      sx={{ 
+                                        width: 24, 
+                                        height: 24, 
+                                        bgcolor: getRelacionColor(tutor.relacion),
+                                        fontSize: '0.75rem'
+                                      }}
+                                    >
+                                      {tutor.nombres.charAt(0)}
+                                    </Avatar>
+                                  ))}
+                                </AvatarGroup>
+                                <Typography variant="caption" color="text.secondary">
+                                  +{e.tutores.length - 3} más
+                                </Typography>
+                              </Box>
+                            </Tooltip>
+                          )}
+                        </Box>
+                      )}
+                    </TableCell>
+                    
+                    {rol !== "Cajero" && rol !== "Docente" && (
+                      <TableCell>
+                        <Box display="flex" flexDirection="column" gap={1}>
+                          <Box display="flex" gap={1}>
+                            <Boton
+                              label="Editar"
+                              size="small"
+                              color="warning"
+                              onClick={() => {
+                                setSelectedEstudiante(e.estudiante);
+                                setOpenEditEstudiante(true);
+                              }}
+                            />
+                            <Boton
+                              label="Eliminar"
+                              size="small"
+                              color="error"
+                              onClick={() => {
+                                if (confirm(`¿Seguro que deseas eliminar al estudiante ${estudianteFullName}?`)) {
+                                  handleEliminarEstudiante(e.estudiante.id);
+                                }
+                              }}
+                            />
+                          </Box>
+                        </Box>
+                      </TableCell>
+                    )}
+                  </TableRow>
+
+                  {/* Fila expandible */}
+                  <TableRow key={`expand-${e.estudiante.id}`}>
+                    <TableCell 
+                      colSpan={rol !== "Cajero" && rol !== "Docente" ? 7 : 6} 
+                      sx={{ 
+                        p: 0, 
+                        borderBottom: isOpen ? 1 : 0, 
+                        borderColor: 'divider',
+                        backgroundColor: isOpen ? 'background.default' : 'transparent'
+                      }}
+                    >
+                      <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                        <Box p={3}>
+                          <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={3}>
+                            <Box width="100%">
+                              <Typography variant="h6" gutterBottom color="primary">
+                                👤 Información del Estudiante
+                              </Typography>
+                              
+                              <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)' }} gap={3}>
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    Nombre Completo
+                                  </Typography>
+                                  <Typography variant="body1" fontWeight="medium">
+                                    {estudianteFullName}
+                                  </Typography>
+                                </Box>
+                                
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    CI / Identificación
+                                  </Typography>
+                                  <Typography variant="body1" fontFamily="monospace">
+                                    {e.estudiante.identificacion}
+                                  </Typography>
+                                </Box>
+                                
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    Edad
+                                  </Typography>
+                                  <Typography variant="body1">
+                                    {calcularEdad(e.estudiante.fecha_nacimiento)}
+                                  </Typography>
+                                </Box>
+                                
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    Fecha de Nacimiento
+                                  </Typography>
+                                  <Typography variant="body1">
+                                    {formatDate(e.estudiante.fecha_nacimiento)}
+                                  </Typography>
+                                </Box>
+                                
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    Sexo
+                                  </Typography>
+                                  <Typography variant="body1" textTransform="capitalize">
+                                    {e.estudiante.sexo}
+                                  </Typography>
+                                </Box>
+                                
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    Nacionalidad
+                                  </Typography>
+                                  <Typography variant="body1">
+                                    {e.estudiante.nacionalidad}
+                                  </Typography>
+                                </Box>
+                                
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    Correo Personal
+                                  </Typography>
+                                  <Typography variant="body1">
+                                    {e.estudiante.correo || "No especificado"}
+                                  </Typography>
+                                </Box>
+                                
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    Correo Institucional
+                                  </Typography>
+                                  <Typography variant="body1">
+                                    {e.estudiante.correo_institucional}
+                                  </Typography>
+                                </Box>
+                                
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    RUDE
+                                  </Typography>
+                                  <Typography variant="body1" fontFamily="monospace">
+                                    {e.estudiante.rude}
+                                  </Typography>
+                                </Box>
+                                
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    Dirección
+                                  </Typography>
+                                  <Typography variant="body1">
+                                    {e.estudiante.direccion}
+                                  </Typography>
+                                </Box>
+                                
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    Teléfono de Referencia
+                                  </Typography>
+                                  <Typography variant="body1">
+                                    {e.estudiante.telefono_referencia || "No especificado"}
+                                  </Typography>
+                                </Box>
+                                
+                                <Box>
+                                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                    Fecha de Registro
+                                  </Typography>
+                                  <Typography variant="body1">
+                                    {formatDate(e.estudiante.fecha_creacion)}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </Box>
+                          </Box>
+
+                          {/* Sección de Tutores */}
+                          <Box>
+                            <Typography variant="h6" gutterBottom color="primary">
+                              Tutor Principal ({e.tutores.length})
+                            </Typography>
+                            
+                            {e.tutores.length === 0 ? (
+                              <Box textAlign="center" py={4} sx={{ backgroundColor: 'grey.50', borderRadius: 1 }}>
+                                <Typography variant="body1" color="text.secondary" gutterBottom>
+                                  Este estudiante no tiene tutores asignados
+                                </Typography>
+                                <Boton
+                                  label="Asignar Primer Tutor"
+                                  color="primary"
+                                  variant="contained"
+                                  onClick={() => {
+                                    // Lógica para asignar tutor
+                                    alert(`Asignar tutor a: ${estudianteFullName}`);
+                                  }}
+                                />
+                              </Box>
+                            ) : (
+                              <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }} gap={2}>
+                                {e.tutores.map((tutor) => (
+                                  <Paper 
+                                    key={tutor.id} 
+                                    elevation={1} 
+                                    sx={{ 
+                                      p: 2, 
+                                      position: 'relative',
+                                      borderLeft: 4,
+                                      borderLeftColor: getRelacionColor(tutor.relacion),
+                                      '&:hover': { boxShadow: 3 }
+                                    }}
+                                  >
+                                    <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                                      <Box>
+                                        <Box display="flex" alignItems="center" gap={1} mb={1}>
+                                          <Typography variant="h6" component="span">
+                                            {getRelacionIcon(tutor.relacion)}
                                           </Typography>
-                                        )}
+                                          <Typography variant="h6">
+                                            {tutor.nombres} {tutor.apellidoPat}
+                                          </Typography>
+                                          <Chip 
+                                            label={tutor.relacion}
+                                            size="small"
+                                            color={getRelacionColor(tutor.relacion)}
+                                            sx={{ textTransform: 'capitalize' }}
+                                          />
+                                        </Box>
                                         
-                                        {tutor.fechaAsignacion && (
-                                          <Typography variant="caption" color="text.secondary">
-                                            Asignado: {new Date(tutor.fechaAsignacion).toLocaleDateString()}
+                                        {tutor.apellidoMat && (
+                                          <Typography variant="body2" color="text.secondary">
+                                            {tutor.apellidoMat}
                                           </Typography>
                                         )}
                                       </Box>
                                     </Box>
                                     
-                                  </Box>
-                                  
-                                  {rol !== "Cajero" && rol !== "Docente" && (
-                                    <Box mt={2} display="flex" gap={1}>
-                                      <Boton
-                                        label="Editar"
-                                        size="small"
-                                        color="warning"
-                                        onClick={() => {
-                                          setSelectedPadre(tutor);
-                                          setOpenEditPadre(true);
-                                        }}
-                                      />
+                                    <Box display="grid" gridTemplateColumns="1fr 1fr" gap={1}>
+                                      <Box>
+                                        <Typography variant="caption" color="text.secondary" display="block">
+                                          Teléfono
+                                        </Typography>
+                                        <Typography variant="body2" display="flex" alignItems="center" gap={0.5}>
+                                          <Phone fontSize="small" />
+                                          {tutor.telefono}
+                                        </Typography>
+                                      </Box>
                                       
-                                      <Boton
-                                        label="Eliminar"
-                                        size="small"
-                                        color="error"
-                                        onClick={() => handleEliminarPadre(tutor.id)}
-                                      />
+                                      {tutor.correo && (
+                                        <Box>
+                                          <Typography variant="caption" color="text.secondary" display="block">
+                                            Correo
+                                          </Typography>
+                                          <Typography variant="body2" display="flex" alignItems="center" gap={0.5}>
+                                            <Email fontSize="small" />
+                                            {tutor.correo}
+                                          </Typography>
+                                        </Box>
+                                      )}
                                       
+                                      {tutor.fechaAsignacion && (
+                                        <Box gridColumn="span 2">
+                                          <Typography variant="caption" color="text.secondary" display="block">
+                                            Fecha de Asignación
+                                          </Typography>
+                                          <Typography variant="body2">
+                                            {formatDate(tutor.fechaAsignacion)}
+                                          </Typography>
+                                        </Box>
+                                      )}
                                     </Box>
-                                  )}
-                                </Paper>
-                              ))}
-                            </Box>
-                          )}
-                        
+                                    
+                                    {rol !== "Cajero" && rol !== "Docente" && (
+                                      <Box mt={2} display="flex" gap={1} flexWrap="wrap">
+                                        <Boton
+                                          label="Editar"
+                                          size="small"
+                                          color="warning"
+                                          onClick={() => {
+                                            setSelectedPadre(tutor);
+                                            setOpenEditPadre(true);
+                                          }}
+                                        />
+                                        <Boton
+                                          label="Eliminar"
+                                          size="small"
+                                          color="error"
+                                          onClick={() => {
+                                            if (confirm(`¿Eliminar permanentemente a ${tutor.nombres} ${tutor.apellidoPat}?`)) {
+                                              handleEliminarPadre(tutor.id);
+                                            }
+                                          }}
+                                        />
+                                      </Box>
+                                    )}
+                                  </Paper>
+                                ))}
+                              </Box>
+                            )}
+                          </Box>
                         </Box>
-                      </Box>
-                    </Collapse>
-                  </TableCell>
-                </TableRow>
-              </>
-            );
-          })}
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>
+                </>
+              );
+            })
+          )}
         </TableBody>
       </Table>
 
@@ -432,7 +617,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
       {selectedEstudiante && (
         <EditEstudianteDialog
           open={openEditEstudiante}
-          estudiante={selectedEstudiante.estudiante}
+          estudiante={selectedEstudiante}
           onClose={() => setOpenEditEstudiante(false)}
           onUpdated={() => window.location.reload()}
         />
