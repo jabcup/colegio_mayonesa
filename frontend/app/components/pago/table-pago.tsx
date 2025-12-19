@@ -41,7 +41,7 @@ interface Pago {
 interface Props {
   pagos: Pago[]
   estudiantes: { id: number; nombres: string; apellidoPat: string }[]
-  onUpdate?: (updated: Pago[]) => void
+  onUpdate?: () => void | Promise<void>  // ✅ Cambio: ya no recibe datos
 }
 
 export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
@@ -87,14 +87,10 @@ export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
       link.remove()
       window.URL.revokeObjectURL(url)
 
-      const idx = pagos.findIndex(p => p.id === pagoId)
-      if (idx !== -1) {
-        const updated = { ...pagos[idx], deuda: 'cancelado' as const }
-        const newList = [...pagos.slice(0, idx), updated, ...pagos.slice(idx + 1)]
-        onUpdate?.(newList)
-      }
-
       setConfirm({ open: false, pagoId: 0, total: 0 })
+      
+      // ✅ Recargar datos
+      await onUpdate?.()
     } catch (e: any) {
       alert(e.response?.data?.message || 'Error al pagar')
     }
@@ -104,12 +100,11 @@ export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
   const handleCerrarForm = () => setPagoAEditar(undefined)
 
   const handleEliminar = async (id: number) => {
-    // Opción rápida: window.confirm
     if (typeof window === 'undefined' || !window.confirm('¿Confirma eliminar este pago?')) return
     try {
       await api.delete(`/pagos/${id}`)
-      const updated = pagos.map(p => (p.id === id ? { ...p, estado: 'inactivo' as const } : p))
-      onUpdate?.(updated)
+      // ✅ Simplemente llamar a onUpdate para recargar
+      await onUpdate?.()
     } catch (e: any) {
       alert(e.response?.data?.message || 'Error al eliminar')
     }
@@ -119,6 +114,12 @@ export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10))
     setPage(0)
+  }
+
+  // ✅ Función para manejar la actualización y recargar datos
+  const handleActualizarYRecargar = async () => {
+    handleCerrarForm()
+    await onUpdate?.()
   }
 
   return (
@@ -223,7 +224,7 @@ export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
             <FormPago
               estudiantes={estudiantes}
               pagoInicial={pagoAEditar}
-              onCreate={() => window.location.reload()}
+              onCreate={handleActualizarYRecargar}
               onClose={handleCerrarForm}
             />
           )}

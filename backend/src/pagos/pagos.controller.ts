@@ -100,7 +100,7 @@ export class PagosController {
   }
 
   @Patch('pagar-trimestre')
-  @ApiOperation({ summary: 'Pagar un trimestre completo (3 mensualidades)' })
+  @ApiOperation({ summary: 'Pagar un trimestre completo (3 mensualidades con 4% descuento)' })
   @ApiBody({
     schema: {
       example: { ids: [4, 5, 6], idpersonal: 123 },
@@ -124,40 +124,42 @@ export class PagosController {
     return this.service.pagarTrimestre(ids, idpersonal);
   }
 
-  @Patch('pagar-anio')
-  @ApiOperation({ summary: 'Pagar las 10 mensualidades del año (descuento 10 %)' })
-  @ApiBody({ schema: { example: { ids: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], idpersonal: 123 } } })
+  @Patch('estudiante/:estudianteId/pagar-anio')
+  @ApiOperation({ summary: 'Pagar todas las mensualidades pendientes del estudiante (descuento 10% si son 10)' })
+  @ApiBody({ schema: { example: { idpersonal: 123 } } })
   @ApiResponse({
     status: 200,
     description: 'Resumen de la operación',
-    schema: { example: { message: 'Se marcaron como cancelados 10 pagos.', updatedCount: 10 } },
+    schema: { example: { message: 'Se marcaron como cancelados X pagos.', updatedCount: 10 } },
   })
   async pagarAnio(
-    @Body('ids') ids: number[],
+    @Param('estudianteId', ParseIntPipe) estudianteId: number,
     @Body('idpersonal') idpersonal: number,
   ) {
-    return this.service.pagar(ids, idpersonal);
+    return this.service.pagarAnio(estudianteId, idpersonal);
   }
 
-@Get('comprobante/:id')
-@ApiOperation({ summary: 'Descargar comprobante PDF de un pago' })
-@ApiResponse({ status: 200, description: 'PDF del comprobante' })
-async comprobante(
-  @Param('id', ParseIntPipe) id: number,
-  @Res() res: Response,
-) {
-  const pagoEntity = await this.service.findOneRaw(id);   // ← necesitamos la ENTIDAD
-  if (pagoEntity.deuda !== 'cancelado') {
-    throw new BadRequestException('El pago no está cancelado');
+  @Get('comprobante/:id')
+  @ApiOperation({ summary: 'Descargar comprobante PDF de un pago' })
+  @ApiResponse({ status: 200, description: 'PDF del comprobante' })
+  async comprobante(
+    @Param('id', ParseIntPipe) id: number,
+    @Res() res: Response,
+  ) {
+    const pagoEntity = await this.service.findOneRaw(id);
+    if (pagoEntity.deuda !== 'cancelado') {
+      throw new BadRequestException('El pago no está cancelado');
+    }
+    const pdf = await this.comprobanteService.generar(pagoEntity);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="comprobante-${id}.pdf"`,
+      'Content-Length': pdf.length,
+    });
+    res.end(pdf);
   }
-  const pdf = await this.comprobanteService.generar(pagoEntity);
-  res.set({
-    'Content-Type': 'application/pdf',
-    'Content-Disposition': `inline; filename="comprobante-${id}.pdf"`,
-    'Content-Length': pdf.length,
-  });
-  res.end(pdf);
-}  @Patch(':id')
+
+  @Patch(':id')
   @ApiOperation({ summary: 'Actualizar datos de un pago' })
   update(
     @Param('id', ParseIntPipe) id: number,

@@ -72,7 +72,7 @@ export class PagosService {
     });
   }
 
-  async previewPago(ids: number[]) {
+  async previewPago(ids: number[], esTrimestre: boolean = false) {
     const pendientes = await this.repo.find({ where: { id: In(ids), deuda: 'pendiente' } });
     if (pendientes.length !== ids.length)
       throw new BadRequestException('Algunas mensualidades no están pendientes');
@@ -80,13 +80,24 @@ export class PagosService {
     const subTotal = pendientes.reduce((s, p) => s + Number(p.cantidad), 0);
     let descuento = 0;
     const esMensual = pendientes.every((p) => p.tipo === 'mensual');
-    if (esMensual && pendientes.length === 10) descuento = Number((subTotal * 0.1).toFixed(2));
+    
+    if (esMensual) {
+      // ✅ Descuento trimestral: 4%
+      if (esTrimestre && pendientes.length === 3) {
+        descuento = Number((subTotal * 0.04).toFixed(2));
+      }
+      // ✅ Descuento anual: 10% solo si son exactamente 10 mensualidades
+      else if (!esTrimestre && pendientes.length === 10) {
+        descuento = Number((subTotal * 0.1).toFixed(2));
+      }
+      // Si son menos de 10 en pago anual: descuento = 0
+    }
 
     return { subTotal, descuento, total: Number((subTotal - descuento).toFixed(2)) };
   }
 
   /*  ----  NEGOCIO  ----  */
-  async pagar(ids: number[], idPersonal: number) {
+  async pagar(ids: number[], idPersonal: number, esTrimestre: boolean = false) {
     if (!ids.length) throw new BadRequestException('Faltan ids');
 
     const pendientes = await this.repo.find({
@@ -120,7 +131,7 @@ export class PagosService {
     }
 
     // 3. Aplicar descuento y cancelar
-    const { descuento } = await this.previewPago(ids);
+    const { descuento } = await this.previewPago(ids, esTrimestre);
     const now = new Date();
 
     for (const p of pendientes) {
@@ -162,20 +173,23 @@ export class PagosService {
         'Los ids deben ser las 3 mensualidades pendientes más antiguas y consecutivas',
       );
 
-    return this.pagar(ids, idPersonal);
+    // ✅ Pasar true para indicar que es trimestre
+    return this.pagar(ids, idPersonal, true);
   }
 
   async pagarAnio(estudianteId: number, idPersonal: number) {
+    // ✅ Obtener TODAS las mensualidades pendientes (sin límite)
     const pendientes = await this.repo.find({
       where: { estudiante: { id: estudianteId }, deuda: 'pendiente', tipo: 'mensual' },
       order: { anio: 'ASC', mes: 'ASC' },
-      take: 10,
     });
+    
     if (pendientes.length === 0)
       throw new BadRequestException('No hay mensualidades pendientes');
-    if (pendientes.length < 10)
-      throw new BadRequestException('No hay 10 mensualidades pendientes para aplicar el descuento anual');
-    return this.pagar(pendientes.map(p => p.id), idPersonal);
+    
+    // ✅ Permitir pagar todas las pendientes, sin importar si son menos de 10
+    // El descuento del 10% solo se aplica si son exactamente 10
+    return this.pagar(pendientes.map(p => p.id), idPersonal, false);
   }
 
   /*  ----  MAPPER  ----  */
@@ -198,13 +212,12 @@ export class PagosService {
     };
   }
 
-async findOneRaw(id: number): Promise<Pagos> {
-  const p = await this.repo.findOne({
-    where: { id },
-    relations: ['estudiante', 'personal'],
-  });
-  if (!p) throw new NotFoundException('Pago no encontrado');
-  return p;
-}
-  
+  async findOneRaw(id: number): Promise<Pagos> {
+    const p = await this.repo.findOne({
+      where: { id },
+      relations: ['estudiante', 'personal'],
+    });
+    if (!p) throw new NotFoundException('Pago no encontrado');
+    return p;
+  }
 }
