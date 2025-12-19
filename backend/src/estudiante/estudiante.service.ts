@@ -33,109 +33,121 @@ export class EstudianteService {
     private dataSource: DataSource,
   ) {}
 
-  async createEstudianteFull(dto: CreateEstudianteFullDto) {
-    return this.dataSource.transaction(async (manager) => {
-      if (dto.idPadre && dto.padreData) {
-        throw new BadRequestException(
-          'Envía solo idPadre o padreData, no ambos',
-        );
-      }
-
-      if (!dto.idPadre && !dto.padreData) {
-        throw new BadRequestException('Debe enviar idPadre o padreData');
-      }
-      const existe = await manager.findOne(Estudiante, {
-        where: { identificacion: dto.identificacion },
-      });
-
-      if (existe) {
-        throw new BadRequestException(
-          'Ya existe un estudiante con esa identificación',
-        );
-      }
-
-      const estudiante = manager.create(Estudiante, {
-        nombres: dto.nombres,
-        apellidoPat: dto.apellidoPat,
-        apellidoMat: dto.apellidoMat,
-        identificacion: dto.identificacion,
-        correo: dto.correo,
-        correo_institucional: `${
-          dto.nombres.toLowerCase().split(' ')[0]
-        }.${dto.apellidoPat.toLowerCase()}@mayonesa.estudiante.edu.bo`,
-        rude: `R${dto.identificacion}${dto.nombres[0]}${dto.apellidoPat[0]}${dto.apellidoMat[0]}`,
-        direccion: dto.direccion,
-        telefono_referencia: dto.telefono_referencia,
-        fecha_nacimiento: dto.fecha_nacimiento,
-        sexo: dto.sexo,
-        nacionalidad: dto.nacionalidad,
-      });
-
-      const nuevoEstudiante = await manager.save(estudiante);
-
-      let padre: Padres;
-
-      if (dto.idPadre) {
-        padre = await manager.findOne(Padres, {
-          where: { id: dto.idPadre },
-        });
-
-        if (!padre) {
-          throw new NotFoundException('Padre no encontrado');
-        }
-      } else {
-        padre = await manager.save(manager.create(Padres, dto.padreData));
-      }
-
-      await manager.save(
-        manager.create(EstudianteTutor, {
-          estudiante: nuevoEstudiante,
-          tutor: padre,
-          relacion: dto.relacion,
-        }),
+async createEstudianteFull(dto: CreateEstudianteFullDto) {
+  return this.dataSource.transaction(async (manager) => {
+    if (dto.idPadre && dto.padreData) {
+      throw new BadRequestException(
+        'Envía solo idPadre o padreData, no ambos',
       );
+    }
 
-      const curso = await manager.findOne(Curso, {
-        where: { id: dto.idCurso },
-      });
+    if (!dto.idPadre && !dto.padreData) {
+      throw new BadRequestException('Debe enviar idPadre o padreData');
+    }
 
-      if (!curso) {
-        throw new NotFoundException('Curso no encontrado');
-      }
-
-      await manager.save(
-        manager.create(EstudianteCurso, {
-          estudiante: nuevoEstudiante,
-          curso,
-        }),
-      );
-
-      const pagos = [];
-
-      for (let i = 1; i <= 10; i++) {
-        pagos.push(
-          await manager.save(
-            manager.create(Pagos, {
-              estudiante: nuevoEstudiante,
-              cantidad: 800,
-              descuento: 0,
-              concepto: 'Mensualidad',
-              total: 800,
-              numero_pago: i,
-            }),
-          ),
-        );
-      }
-
-      return {
-        message: 'Estudiante creado correctamente',
-        estudiante: nuevoEstudiante,
-        padre,
-        curso,
-        pagos,
-      };
+    const existe = await manager.findOne(Estudiante, {
+      where: { identificacion: dto.identificacion },
     });
-  }
+
+    if (existe) {
+      throw new BadRequestException(
+        'Ya existe un estudiante con esa identificación',
+      );
+    }
+
+    // Manejo seguro de apellidoMat opcional
+    const apellidoMat = dto.apellidoMat || ''; // Si es undefined, usar string vacío
+    const primeraLetraApellidoMat = apellidoMat ? apellidoMat[0] : '';
+
+    // Generar correo institucional (manejar caso sin apellidoMat)
+    const nombreParte = dto.nombres.toLowerCase().split(' ')[0] || '';
+    const apellidoParte = dto.apellidoPat.toLowerCase() || '';
+    
+    const correoInstitucional = `${nombreParte}.${apellidoParte}@mayonesa.estudiante.edu.bo`;
+
+    // Generar RUDE (manejar caso sin apellidoMat)
+    const rude = `R${dto.identificacion}${dto.nombres[0] || ''}${dto.apellidoPat[0] || ''}${primeraLetraApellidoMat}`;
+
+    const estudiante = manager.create(Estudiante, {
+      nombres: dto.nombres,
+      apellidoPat: dto.apellidoPat,
+      apellidoMat: dto.apellidoMat || null, // Guardar null si no viene
+      identificacion: dto.identificacion,
+      correo: dto.correo,
+      correo_institucional: correoInstitucional,
+      rude: rude,
+      direccion: dto.direccion,
+      telefono_referencia: dto.telefono_referencia,
+      fecha_nacimiento: dto.fecha_nacimiento,
+      sexo: dto.sexo,
+      nacionalidad: dto.nacionalidad,
+    });
+
+    const nuevoEstudiante = await manager.save(estudiante);
+
+    let padre: Padres;
+
+    if (dto.idPadre) {
+      padre = await manager.findOne(Padres, {
+        where: { id: dto.idPadre },
+      });
+
+      if (!padre) {
+        throw new NotFoundException('Padre no encontrado');
+      }
+    } else {
+      padre = await manager.save(manager.create(Padres, dto.padreData));
+    }
+
+    await manager.save(
+      manager.create(EstudianteTutor, {
+        estudiante: nuevoEstudiante,
+        tutor: padre,
+        relacion: dto.relacion,
+      }),
+    );
+
+    const curso = await manager.findOne(Curso, {
+      where: { id: dto.idCurso },
+    });
+
+    if (!curso) {
+      throw new NotFoundException('Curso no encontrado');
+    }
+
+    await manager.save(
+      manager.create(EstudianteCurso, {
+        estudiante: nuevoEstudiante,
+        curso,
+      }),
+    );
+
+    const pagos = [];
+
+    for (let i = 1; i <= 10; i++) {
+      pagos.push(
+        await manager.save(
+          manager.create(Pagos, {
+            estudiante: nuevoEstudiante,
+            cantidad: 800,
+            descuento: 0,
+            concepto: 'Mensualidad',
+            total: 800,
+            numero_pago: i,
+          }),
+        ),
+      );
+    }
+
+    return {
+      message: 'Estudiante creado correctamente',
+      estudiante: nuevoEstudiante,
+      padre,
+      curso,
+      pagos,
+    };
+  });
+}
 
   async mostrarEstudiantes(): Promise<Estudiante[]> {
     return this.estudianteRepository.find();
