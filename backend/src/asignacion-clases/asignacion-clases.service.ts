@@ -1,3 +1,5 @@
+// src/asignacion-clases/asignacion-clases.service.ts
+
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Curso } from 'src/cursos/cursos.entity';
@@ -9,6 +11,9 @@ import { CreateAsignacionFulDto } from './dto/create-asignacion-full.dto';
 import { UpdateAsignacionFulDto } from './dto/update-asignacion-full.dto';
 import { Horarios } from 'src/horarios/horarios.entity';
 import { EstudianteCurso } from 'src/estudiante-curso/estudiante_curso.entity';
+
+// ← Importamos el service de notificaciones
+import { NotificacionesDocentesService } from 'src/notificaciones-docentes/notificaciones-docentes.service';
 
 @Injectable()
 export class AsignacionClasesService {
@@ -26,30 +31,72 @@ export class AsignacionClasesService {
     @InjectRepository(Horarios)
     private readonly horarioRepository: Repository<Horarios>,
     private dataSource: DataSource,
+
+    // ← Inyectamos el servicio de notificaciones
+    private readonly notiDocentesService: NotificacionesDocentesService,
   ) {}
+
   async createAsignacionFull(
     dtoAsignacion: CreateAsignacionFulDto,
   ): Promise<AsignacionClase> {
+    // Validamos conflicto de horario
     const conflicto = await this.existeConflictoDocente(
       dtoAsignacion.idPersonal,
       dtoAsignacion.dia,
       dtoAsignacion.idHorario,
     );
 
-    if (conflicto) {
+    if (conflicto > 0) {
       throw new Error('El docente ya tiene una clase en ese horario');
     }
 
-    return this.asignacionRepository.save(
-      this.asignacionRepository.create({
-        dia: dtoAsignacion.dia,
-        personal: { id: dtoAsignacion.idPersonal },
-        curso: { id: dtoAsignacion.idCurso },
-        materia: { id: dtoAsignacion.idMateria },
-        horario: { id: dtoAsignacion.idHorario },
-      }),
-    );
+    // Creamos y guardamos la nueva asignación
+    const nuevaAsignacion = this.asignacionRepository.create({
+      dia: dtoAsignacion.dia,
+      personal: { id: dtoAsignacion.idPersonal },
+      curso: { id: dtoAsignacion.idCurso },
+      materia: { id: dtoAsignacion.idMateria },
+      horario: { id: dtoAsignacion.idHorario },
+    });
+
+    const asignacionGuardada = await this.asignacionRepository.save(nuevaAsignacion);
+
+    // === GENERAMOS NOTIFICACIÓN AUTOMÁTICA AL DOCENTE ===
+    try {
+      // Cargamos la asignación con todas las relaciones para tener los nombres
+      const asignacionCompleta = await this.asignacionRepository.findOne({
+        where: { id: asignacionGuardada.id },
+        relations: ['personal', 'curso', 'materia', 'horario'],
+      });
+
+      if (asignacionCompleta) {
+        const cursoNombre = `${asignacionCompleta.curso.nombre} ${asignacionCompleta.curso.paralelo || ''}`.trim();
+        const materiaNombre = asignacionCompleta.materia.nombre;
+        const horarioTexto = asignacionCompleta.horario.horario;
+        const dia = asignacionCompleta.dia;
+
+        const mensaje = `¡Nueva asignación de clase!\n\n` +
+          `• Curso: ${cursoNombre}\n` +
+          `• Materia: ${materiaNombre}\n` +
+          `• Día: ${dia}\n` +
+          `• Horario: ${horarioTexto}`;
+
+        // Enviamos la notificación al docente
+        await this.notiDocentesService.crearNotificacionAsignacion(
+          dtoAsignacion.idPersonal,
+          mensaje,
+          asignacionGuardada.id,
+        );
+      }
+    } catch (error) {
+      // Si falla la notificación, no rompemos la creación de la asignación
+      console.error('Error al crear notificación para docente:', error);
+      // Opcional: podrías lanzar un warning o loguearlo
+    }
+
+    return asignacionGuardada;
   }
+
   async getCursosPorDocente(idDocente: number) {
     return this.asignacionRepository
       .createQueryBuilder('asignacion')
@@ -91,7 +138,7 @@ export class AsignacionClasesService {
       .where('personal.id = :idDocente', { idDocente })
       .andWhere('curso.id = :idCurso', { idCurso })
       .select([
-        'asignacion.id AS idAsignacion', // 🔑 CLAVE
+        'asignacion.id AS idAsignacion',
         'materia.id AS idMateria',
         'materia.nombre AS nombre',
       ])
@@ -123,7 +170,7 @@ export class AsignacionClasesService {
         horario: { horario: true },
       },
       where: { curso: { id: idCurso } },
-      relations: ['materia', 'horario', 'personal'], //Si se desea tener datos del docente se debe agregar personal al relation
+      relations: ['materia', 'horario', 'personal'],
     });
   }
 
@@ -205,13 +252,10 @@ export class AsignacionClasesService {
       .select([
         'asignacion.id AS idAsignacion',
         'asignacion.dia AS dia',
-
         'horario.id AS idHorario',
         'horario.horario AS horario',
-
         'personal.id AS idDocente',
         "CONCAT(personal.nombres, ' ', personal.apellidoPat) AS docente",
-
         'materia.id AS idMateria',
         'materia.nombre AS materia',
       ])
@@ -224,12 +268,14 @@ export class AsignacionClasesService {
     idDocente: number,
     dia: string,
     idHorario: number,
-  ) {
+  ): Promise<number> {
     return this.asignacionRepository
       .createQueryBuilder('asignacion')
-      .where('asignacion.idPersonal = :idDocente', { idDocente })
+      .innerJoin('asignacion.personal', 'personal')
+      .innerJoin('asignacion.horario', 'horario')
+      .where('personal.id = :idDocente', { idDocente })
       .andWhere('asignacion.dia = :dia', { dia })
-      .andWhere('asignacion.idHorario = :idHorario', { idHorario })
+      .andWhere('horario.id = :idHorario', { idHorario })
       .andWhere('asignacion.estado = :estado', { estado: 'activo' })
       .getCount();
   }
