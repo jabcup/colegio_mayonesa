@@ -1,12 +1,30 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber } from 'class-validator';
+// dto/update-calificacion.dto.ts
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsOptional, IsNumber, Min, Max } from 'class-validator';
 
 export class UpdateCalificacionDto {
-  @ApiProperty({
-    example: 100,
-    description: 'Calificacion del estudiante',
-  })
-  @IsNotEmpty()
-  @IsNumber()
-  calificacion: number;
+  @ApiPropertyOptional({ example: 85.5 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Max(100)
+  trim1?: number;
+
+  @ApiPropertyOptional({ example: 90.0 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Max(100)
+  trim2?: number;
+
+  @ApiPropertyOptional({ example: 78.0 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Max(100)
+  trim3?: number;
 }

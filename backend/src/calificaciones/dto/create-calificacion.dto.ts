@@ -1,17 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+<<<<<<< HEAD
 import { IsNotEmpty, IsNumber, Max, Min } from 'class-validator';
+=======
+import { IsNotEmpty, IsNumber, IsOptional, Max, Min } from 'class-validator';
+>>>>>>> samuel
 
 export class CreateCalificacionDto {
-  // @ApiProperty({
-  //   example: 1,
-  //   description: 'Id de la clase Asignada',
-  // })
-  // @IsNotEmpty()
-  // @Type(() => Number)
-  // @IsNumber()
-  // idAsignacion: number;
-
   @ApiProperty({
     example: 1,
     description: 'Id de la Materia',
@@ -52,12 +47,50 @@ export class CreateCalificacionDto {
   // anioEscolar: number;
 
   @ApiProperty({
-    example: 100,
-    description: 'Calificacion del estudiante',
+    example: 2023,
+    description: 'Año escolar',
   })
   @IsNotEmpty()
+<<<<<<< HEAD
   @Min(0)
   @Max(100)
+=======
+  @Type(() => Number)
+>>>>>>> samuel
   @IsNumber()
-  calificacion: number;
+  @Min(2000)
+  anioEscolar: number;
+
+  @ApiProperty({
+    example: 80,
+    description: 'Calificación 1 er Trimestre',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  trim1: number;
+
+  @ApiProperty({
+    example: 80,
+    description: 'Calificación 2do Trimestre',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  trim2: number;
+
+  @ApiProperty({
+    example: 80,
+    description: 'Calificación 3er Trimestre',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  trim3: number;
 }

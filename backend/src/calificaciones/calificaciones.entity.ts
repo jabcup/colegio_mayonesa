@@ -23,19 +23,19 @@ export class Calificaciones {
   @JoinColumn({ name: 'idEstudiante' })
   estudiante: Estudiante;
 
-  // @Column({
-  //   type: 'int',
-  //   comment: '1 = Primer trimestre, 2 = Segundo, 3 = Tercero',
-  // })
-  // trimestre: number;
+  @Column({
+    type: 'int',
+  })
+  anioEscolar: number;
 
-  // @Column({
-  //   type: 'int',
-  // })
-  // anioEscolar: number;
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  trim1: number;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2 })
-  calificacion: number;
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  trim2: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  trim3: number;
 
   @Column({ type: 'bool', default: true })
   aprobacion: boolean;

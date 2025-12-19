@@ -2,9 +2,17 @@
 import Navbar from "@/app/components/Navbar/navbar";
 
 import {
+  Box,
   Button,
   CircularProgress,
   MenuItem,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Typography,
 } from "@mui/material";
@@ -20,11 +28,8 @@ import Autocomplete from "@mui/material/Autocomplete";
 interface Curso {
   id: number;
   nombre: string;
-  paralelo: string;
+  paralelo: { nombre: string }; // Ajustado porque ahora es objeto
   gestion: number;
-  capacidad: number;
-  fechaCreacion: string;
-  estado: string;
 }
 
 interface Asignacion {
@@ -65,21 +70,15 @@ export default function AsignacionPage() {
     idMateria?: number;
   } | null>(null);
 
+  const [vistaAuditoria, setVistaAuditoria] = useState(false);
+
+  const [selectedCurso, setSelectedCurso] = useState<Curso | null>(null);
+
   const cargarCursos = async () => {
     setLoadingCursos(true);
     try {
       const cursosRes = await api.get(`/cursos/CursosActivos`);
-      const cursosMap = (cursosRes.data as Curso[]).map((a) => ({
-        id: a.id,
-        nombre: a.nombre,
-        paralelo: a.paralelo,
-        gestion: a.gestion,
-        capacidad: a.capacidad,
-        fechaCreacion: a.fechaCreacion,
-        estado: a.estado,
-      }));
-
-      setCursos(cursosMap);
+      setCursos(cursosRes.data);
     } catch (err) {
       console.error(err);
       alert("Error al cargar los datos");
@@ -100,14 +99,6 @@ export default function AsignacionPage() {
     }
   };
 
-  useEffect(() => {
-    cargarCursos();
-    cargarHorarios();
-  }, []);
-
-  // const [selectedCurso, setSelectedCurso] = useState<number | "">("");
-  const [selectedCurso, setSelectedCurso] = useState<Curso | null>(null);
-
   const cargarAsignaciones = async (cursoId: string) => {
     const cursoIdInt = parseInt(cursoId);
     setLoadingAsignaciones(true);
@@ -124,6 +115,22 @@ export default function AsignacionPage() {
     }
   };
 
+  useEffect(() => {
+    cargarCursos();
+    cargarHorarios();
+  }, []);
+
+  const handleCursoChange = (newValue: Curso | null) => {
+    setSelectedCurso(newValue);
+    setVistaAuditoria(false); // Volver al horario al cambiar curso
+
+    if (newValue) {
+      cargarAsignaciones(newValue.id);
+    } else {
+      setAsignaciones([]);
+    }
+  };
+
   const handleAbrirAsignacion = (dia: string, idHorario: number) => {
     setContextoAsignacion({ dia, idHorario });
     setModoEdicion(false);
@@ -133,13 +140,16 @@ export default function AsignacionPage() {
   const handleGuardarAsignacion = async ({
     idMateria,
     idDocente,
+    nombreMateria,
+    nombreDocente,
   }: {
     idMateria: number;
     idDocente: number;
+    nombreMateria: string;
+    nombreDocente: string;
   }) => {
     // if (!contextoAsignacion || !selectedCurso) return;
     if (!contextoAsignacion || !selectedCurso) return;
-
 
     if (modoEdicion && contextoAsignacion.idAsignacion) {
       await api.put(
@@ -191,29 +201,10 @@ export default function AsignacionPage() {
 
       <Typography variant="h4">Asignacion de Clases</Typography>
 
-      {/* <TextField
-        select
-        label="Filtrar por Curso"
-        value={selectedCurso}
-        fullWidth
-        margin="normal"
-        onChange={(e) => {
-          const cursoId = Number(e.target.value);
-          setSelectedCurso(cursoId);
-          cargarAsignaciones(e.target.value);
-        }}
-      >
-        {cursos.map((c) => (
-          <MenuItem key={c.id} value={c.id}>
-            {c.nombre} - {c.paralelo}
-          </MenuItem>
-        ))}
-      </TextField> */}
-
       <Autocomplete
         options={cursos}
         getOptionLabel={(option) =>
-          `${option.nombre} - ${option.paralelo} (${option.gestion})`
+          `${option.nombre} - ${option.paralelo.nombre} (${option.gestion})`
         }
         value={selectedCurso}
         onChange={(_, newValue) => {
@@ -242,12 +233,69 @@ export default function AsignacionPage() {
       ) : loadingAsignaciones ? (
         <CircularProgress />
       ) : (
-        <HorarioTabla
-          horarios={horarios}
-          asignaciones={asignaciones}
-          onAsignar={handleAbrirAsignacion}
-          onEditar={handleEditarAsignacion}
-        />
+        <>
+          {/* Botón para alternar vista */}
+          <Box sx={{ mb: 3, textAlign: "center" }}>
+            <Button
+              variant="outlined"
+              color={vistaAuditoria ? "secondary" : "primary"}
+              onClick={() => setVistaAuditoria(!vistaAuditoria)}
+            >
+              {vistaAuditoria
+                ? "← Volver al Horario"
+                : "Ver Auditoría de Docentes Asignados"}
+            </Button>
+          </Box>
+
+          {/* Vista condicional */}
+          {vistaAuditoria ? (
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>
+                      <strong>Día</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Hora</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Materia</strong>
+                    </TableCell>
+                    <TableCell>
+                      <strong>Docente</strong>
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {asignaciones.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center">
+                        No hay asignaciones para este curso aún.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    asignaciones.map((a) => (
+                      <TableRow key={a.idAsignacion}>
+                        <TableCell>{a.dia}</TableCell>
+                        <TableCell>{a.horario}</TableCell>
+                        <TableCell>{a.materia}</TableCell>
+                        <TableCell>{a.docente}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <HorarioTabla
+              horarios={horarios}
+              asignaciones={asignaciones}
+              onAsignar={handleAbrirAsignacion}
+              onEditar={handleEditarAsignacion}
+            />
+          )}
+        </>
       )}
 
       <FormAsignacion

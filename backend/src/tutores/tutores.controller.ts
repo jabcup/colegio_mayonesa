@@ -13,7 +13,7 @@ import { CreateTutoresDto } from './dto/create-tutores.dto';
 import { TutoresService } from './tutores.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 @Controller('tutores')
 export class TutoresController {
   constructor(private readonly tutoresService: TutoresService) {}

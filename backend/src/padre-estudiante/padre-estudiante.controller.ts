@@ -14,7 +14,7 @@ export class PadreEstudianteController {
   @Get('todos')
   @ApiOperation({ summary: 'Obtener todos los Padres-Estudiantes' })
   listarPadresEstudiantes() {
-    return this.padreEstudianteService.listarEstudiantesPadres();
+    return this.padreEstudianteService.listarEstudiantesConTodosLosTutores();
   }
 
   @Get('Activos')

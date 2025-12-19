@@ -210,7 +210,10 @@ export class ReportesController {
       paralelo: d.paralelo,
       gestion: d.gestion,
       materia: d.materia,
-      calificacion: Number(d.calificacion),
+      trim1: d.trim1,
+      trim2: d.trim2,
+      trim3: d.trim3,
+      calificacionFinal: d.calificacionFinal,
       estado: d.estado,
     }));
 

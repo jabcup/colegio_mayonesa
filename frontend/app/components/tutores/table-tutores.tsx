@@ -23,7 +23,10 @@ export interface Tutor {
   curso: {
     id: number;
     nombre: string;
-    paralelo: string;
+    paralelo: {
+      id: number;
+      nombre: string;
+    };
     gestion: number;
   };
 }
@@ -75,7 +78,7 @@ export default function TablaTutores({ tutores, onEdit, onDelete }: Props) {
               >
                 <TableCell>{t.curso.gestion}</TableCell>
                 <TableCell>{t.curso.nombre}</TableCell>
-                <TableCell>{t.curso.paralelo}</TableCell>
+                <TableCell>{t.curso.paralelo.nombre}</TableCell>
                 <TableCell>
                   {`${t.personal.nombres} ${t.personal.apellidoPat} ${t.personal.apellidoMat}`}
                 </TableCell>

@@ -1,7 +1,7 @@
 "use client";
 
 import Navbar from "../components/Navbar/navbar";
-import { Button, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 
@@ -27,9 +27,15 @@ export default function TutoresPage() {
     cargarTutores();
   }, []);
   const crearTutor = async (data: { idPersonal: number; idCurso: number }) => {
-    await api.post("/tutores/CrearTutor", data);
-    alert("Tutor asignado correctamente");
-    cargarTutores();
+    try {
+      await api.post("/tutores/CrearTutor", data);
+      alert("Tutor asignado correctamente");
+      cargarTutores();
+    } catch (error: any) {
+      alert(
+        error.response?.data?.message ?? "Ocurrió un error al asignar el tutor"
+      );
+    }
   };
 
   const editarTutor = (tutor: Tutor) => {
@@ -44,9 +50,16 @@ export default function TutoresPage() {
   }) => {
     if (!selectedTutor) return;
 
-    await api.put(`/tutores/EditarTutor/${selectedTutor.id}`, data);
-    alert("Tutor actualizado");
-    cargarTutores();
+    try {
+      await api.put(`/tutores/EditarTutor/${selectedTutor.id}`, data);
+      alert("Tutor actualizado correctamente");
+      cargarTutores();
+    } catch (error: any) {
+      alert(
+        error.response?.data?.message ??
+          "Ocurrió un error al actualizar el tutor"
+      );
+    }
   };
 
   const maxGestion = useMemo(() => {
@@ -69,8 +82,13 @@ export default function TutoresPage() {
 
   const eliminarTutor = async (id: number) => {
     if (!confirm("¿Eliminar tutor?")) return;
-    await api.delete(`/tutores/EliminarTutor/${id}`);
-    cargarTutores();
+
+    try {
+      await api.delete(`/tutores/EliminarTutor/${id}`);
+      cargarTutores();
+    } catch (error: any) {
+      alert(error.response?.data?.message ?? "Error al eliminar tutor");
+    }
   };
 
   return (
@@ -86,7 +104,7 @@ export default function TutoresPage() {
         onChange={setGestionSeleccionada}
       />
       <Boton
-      label= "Asignar Nuevo Tutor"
+        label="Asignar Nuevo Tutor"
         color="success"
         className="ml-2"
         onClick={() => {
@@ -96,8 +114,21 @@ export default function TutoresPage() {
         }}
         size="small"
       />
-        
-      
+
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box
+          sx={{
+            width: 22,
+            height: 14,
+            backgroundColor: "#FFC107",
+            borderRadius: 0.5,
+            border: "1px solid #ccc",
+          }}
+        />
+        <Typography variant="body2">
+          Tutor asignado al mismo o a dos cursos
+        </Typography>
+      </Box>
 
       <TablaTutores
         tutores={tutoresFiltrados}

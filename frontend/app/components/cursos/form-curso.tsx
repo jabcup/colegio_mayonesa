@@ -1,5 +1,6 @@
 "use client";
 
+import { api } from "@/app/lib/api";
 import {
   Dialog,
   DialogTitle,
@@ -7,20 +8,23 @@ import {
   TextField,
   DialogActions,
   Button,
-  Menu,
   MenuItem,
 } from "@mui/material";
-import { get } from "http";
 import { useEffect, useState } from "react";
 
 interface Curso {
   id: number;
   nombre: string;
-  paralelo: string;
+  paralelo: Paralelos;
   gestion: number;
   capacidad: number;
   fechaCreacion: string;
   estado: string;
+}
+
+interface Paralelos {
+  id: number;
+  nombre: string;
 }
 
 interface Props {
@@ -31,13 +35,13 @@ interface Props {
 
   onCreate: (data: {
     nombre: string;
-    paralelo: string;
+    idParalelo: number;
     gestion: number;
     capacidad: number;
   }) => void;
   onUpdate?: (data: {
     nombre: string;
-    paralelo: string;
+    idParalelo: number;
     gestion: number;
     capacidad: number;
   }) => void;
@@ -59,32 +63,56 @@ export default function FormCurso({
 }: Props) {
   const [form, setForm] = useState({
     nombre: "",
-    paralelo: "",
+    idParalelo: 0,
     gestion: 0,
     capacidad: 0,
   });
+
+  const [paralelos, setParalelos] = useState<Paralelos[]>([]);
+
+  const cargarParalelos = async() => {
+    try {
+      const res = await api.get(`/paralelos/MostrarParalelos`);;
+
+      setParalelos(res.data);
+    } catch (error) {
+      console.error(error);
+      alert("Error al cargar los paralelos");
+    }
+  }
 
   useEffect(() => {
     if (selectedCurso) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm({
         nombre: selectedCurso.nombre,
-        paralelo: selectedCurso.paralelo,
+        idParalelo: selectedCurso.paralelo.id,
         gestion: selectedCurso.gestion,
         capacidad: selectedCurso.capacidad,
       });
     } else {
       setForm({
         nombre: "",
-        paralelo: "",
+        idParalelo: 0,
         gestion: 0,
         capacidad: 0,
       });
     }
   }, [selectedCurso]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  useEffect(() => {
+    cargarParalelos();
+  }, []);
+
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: name === "idParalelo" ? Number(value) : value,
+    }));
   };
 
   const handleSubmit = () => {
@@ -93,33 +121,32 @@ export default function FormCurso({
       return;
     }
 
-    if (form.paralelo.length !== 1 || !/^[a-zA-Z]+$/.test(form.paralelo) || form.paralelo !== form.paralelo.toUpperCase()) {
-      alert("El paralelo debe tener una sola letra");
-      return;
-    }
+    const payload = {
+      nombre: form.nombre,
+      idParalelo: form.idParalelo,
+      gestion: form.gestion,
+      capacidad: form.capacidad,
+    };
+
+    console.log("Payload enviado:", payload);
 
     if (selectedCurso && onUpdate) {
       // Modo EDITAR
       onUpdate({
         nombre: form.nombre,
-        paralelo: form.paralelo,
+        idParalelo: form.idParalelo,
         gestion: form.gestion,
         capacidad: form.capacidad,
       });
       return;
     }
 
-    const payload = {
-      ...form,
-    };
-
-    console.log("Payload enviado:", payload);
 
     onCreate(payload);
 
     setForm({
       nombre: "",
-      paralelo: "",
+      idParalelo: 0,
       gestion: 0,
       capacidad: 0,
     });
@@ -143,23 +170,23 @@ export default function FormCurso({
           onChange={handleChange}
         />
         <TextField
+          select
           margin="dense"
-          name="paralelo"
+          name="idParalelo"
           label="Paralelo"
-          type="text"
           fullWidth
-          value={form.paralelo}
+          value={form.idParalelo}
           onChange={handleChange}
-          inputProps={{ maxLength: 1 }}
-          error={
-            form.paralelo !== "" && !/^[A-Z]$/.test(form.paralelo) // solo una letra mayúscula
-          }
-          helperText={
-            form.paralelo !== "" && !/^[A-Z]$/.test(form.paralelo)
-              ? "El paralelo debe ser una letra MAYÚSCULA entre A y Z"
-              : ""
-          }
-        />
+        >
+          <MenuItem value={0} disabled>
+            Seleccione un paralelo
+          </MenuItem>
+          {paralelos.map((paralelo) => (
+            <MenuItem key={paralelo.id} value={paralelo.id}>
+              {paralelo.nombre}
+            </MenuItem>
+          ))}
+        </TextField>
 
         <TextField
           margin="dense"

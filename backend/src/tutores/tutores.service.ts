@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Tutores } from './tutores.entity';
@@ -22,7 +26,7 @@ export class TutoresService {
 
   async getTutores(): Promise<Tutores[]> {
     return this.tutoresRepository.find({
-      relations: ['personal', 'curso'],
+      relations: ['personal', 'curso', 'curso.paralelo'],
       where: { estado: 'activo' },
     });
   }
@@ -33,7 +37,7 @@ export class TutoresService {
     });
 
     if (!personal) {
-      throw new Error('El personal no existe');
+      throw new NotFoundException('El personal no existe');
     }
 
     const usuario = await this.usuariosRepository.findOne({
@@ -41,11 +45,12 @@ export class TutoresService {
       relations: ['rol'],
     });
 
-    if (!usuario.rol) {
-      throw new Error('Este personal no tiene asignado un rol');
+    if (!usuario || !usuario.rol) {
+      throw new BadRequestException('Este personal no tiene rol asignado');
     }
+
     if (usuario.rol.nombre.toLowerCase() !== 'docente') {
-      throw new Error('Este personal no tiene el rol docente');
+      throw new BadRequestException('Este personal no tiene el rol Docente');
     }
 
     const curso = await this.cursosRepository.findOne({
@@ -53,22 +58,41 @@ export class TutoresService {
     });
 
     if (!curso) {
-      throw new Error('El curso no existe');
+      throw new NotFoundException('El curso no existe');
+    }
+
+    const gestionActual = new Date().getFullYear();
+
+    const estaAsignado = await this.tutoresRepository.findOne({
+      where: {
+        personal: { id: dto.idPersonal },
+        curso: { gestion: gestionActual },
+        estado: 'activo',
+      },
+    });
+
+    if (estaAsignado) {
+      throw new BadRequestException(
+        'El personal ya está asignado a un curso en la gestión actual',
+      );
     }
 
     const tutor = this.tutoresRepository.create({
-      personal: personal,
-      curso: curso,
+      personal,
+      curso,
     });
 
     return this.tutoresRepository.save(tutor);
   }
 
   async updateTutor(id: number, dto: CreateTutoresDto): Promise<Tutores> {
-    const tutor = await this.tutoresRepository.findOne({ where: { id } });
+    const tutor = await this.tutoresRepository.findOne({
+      where: { id },
+      relations: ['curso', 'personal'],
+    });
 
     if (!tutor) {
-      throw new Error('Tutor no encontrado');
+      throw new NotFoundException('Tutor no encontrado');
     }
 
     const personal = await this.personalRepository.findOne({
@@ -76,7 +100,7 @@ export class TutoresService {
     });
 
     if (!personal) {
-      throw new Error('El personal no existe');
+      throw new NotFoundException('El personal no existe');
     }
 
     const usuario = await this.usuariosRepository.findOne({
@@ -85,28 +109,49 @@ export class TutoresService {
     });
 
     if (!usuario || usuario.rol.nombre.toLowerCase() !== 'docente') {
-      throw new Error('El personal no tiene rol Docente y no puede ser Tutor');
+      throw new BadRequestException(
+        'El personal no tiene rol Docente y no puede ser Tutor',
+      );
     }
 
-    const curso = await this.cursosRepository.findOne({
+    const cursoNuevo = await this.cursosRepository.findOne({
       where: { id: dto.idCurso },
     });
 
-    if (!curso) {
-      throw new Error('El curso no existe');
+    if (!cursoNuevo) {
+      throw new NotFoundException('El curso no existe');
+    }
+
+    const gestionNueva = cursoNuevo.gestion;
+
+    const tutorExistente = await this.tutoresRepository.findOne({
+      where: {
+        personal: { id: dto.idPersonal },
+        curso: { gestion: gestionNueva },
+        estado: 'activo',
+      },
+      relations: ['curso'],
+    });
+
+    if (tutorExistente && tutorExistente.id !== tutor.id) {
+      throw new BadRequestException(
+        `El personal ya está asignado a otro curso en la gestión ${gestionNueva}`,
+      );
     }
 
     tutor.personal = personal;
-    tutor.curso = curso;
+    tutor.curso = cursoNuevo;
 
     return this.tutoresRepository.save(tutor);
   }
 
   async deleteTutores(id: number): Promise<Tutores> {
     const tutor = await this.tutoresRepository.findOne({ where: { id } });
+
     if (!tutor) {
-      throw new Error('Tutor no encontrado');
+      throw new NotFoundException('Tutor no encontrado');
     }
+
     tutor.estado = 'inactivo';
     return this.tutoresRepository.save(tutor);
   }
