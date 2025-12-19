@@ -11,7 +11,10 @@ interface Curso {
   id: number;
   nombre: string;
   nivel?: string;
-  paralelo?: string;
+  paralelo?: {
+    id: number;
+    nombre: string;
+  };
 }
 
 interface AvisoExisting {
@@ -94,7 +97,7 @@ export default function FormAviso({ open, onClose, onSuccess, avisoToEdit }: Pro
   };
 
   const getNombreCurso = (curso: Curso) =>
-    `${curso.nombre} ${curso.nivel ? `- ${curso.nivel}` : ""} ${curso.paralelo || ""}`.trim();
+    `${curso.nombre} ${curso.nivel ? `- ${curso.nivel}` : ""} ${curso.paralelo?.nombre || ""}`.trim();
 
   return (
     <Transition appear show={open} as={Fragment}>

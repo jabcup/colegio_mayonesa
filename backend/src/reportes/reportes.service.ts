@@ -15,7 +15,10 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 export interface CalificacionReporte {
   estudiante: string; // nombre completo del estudiante
   materia: string; // nombre de la materia
-  calificacion: number; // calificación obtenida
+  trim1: number;
+  trim2: number;
+  trim3: number;
+  calificacionFinal: number; // calificación obtenida
 }
 
 export interface PagoCursoReporte {
@@ -47,7 +50,10 @@ export interface CalificacionEstudianteReporte {
   paralelo: string;
   gestion: string;
   materia: string;
-  calificacion: number;
+  trim1: number;
+  trim2: number;
+  trim3: number;
+  calificacionFinal: number;
   estado: string;
 }
 
@@ -434,9 +440,12 @@ export class ReportesService {
     // 🧾 Cabecera de tabla
     const colX = {
       nro: 50,
-      estudiante: 90,
-      materia: 300,
-      nota: 480,
+      estudiante: 75,
+      materia: 220,
+      nota1: 315,
+      nota2: 370,
+      nota3: 425,
+      notaf: 480,
     };
 
     page.drawText('N°', { x: colX.nro, y, size: 11, font: fontBold });
@@ -447,7 +456,10 @@ export class ReportesService {
       font: fontBold,
     });
     page.drawText('Materia', { x: colX.materia, y, size: 11, font: fontBold });
-    page.drawText('Nota', { x: colX.nota, y, size: 11, font: fontBold });
+    page.drawText('1er Trim.', { x: colX.nota1, y, size: 11, font: fontBold });
+    page.drawText('2do Trim.', { x: colX.nota2, y, size: 11, font: fontBold });
+    page.drawText('3er Trim.', { x: colX.nota3, y, size: 11, font: fontBold });
+    page.drawText('Nota Final', { x: colX.notaf, y, size: 11, font: fontBold });
 
     y -= 10;
 
@@ -490,8 +502,26 @@ export class ReportesService {
         font,
       });
 
-      page.drawText(String(d.calificacion), {
-        x: colX.nota,
+      page.drawText(String(d.trim1), {
+        x: colX.nota1,
+        y,
+        size: 10,
+        font,
+      });
+      page.drawText(String(d.trim2), {
+        x: colX.nota2,
+        y,
+        size: 10,
+        font,
+      });
+      page.drawText(String(d.trim3), {
+        x: colX.nota3,
+        y,
+        size: 10,
+        font,
+      });
+      page.drawText(String(d.calificacionFinal), {
+        x: colX.notaf,
         y,
         size: 10,
         font,
@@ -600,14 +630,35 @@ export class ReportesService {
     const col = {
       nro: 50,
       materia: 90,
-      calificacion: 330,
+      trim1: 180,
+      trim2: 240,
+      trim3: 290,
+      calificacionFinal: 350,
       estado: 420,
     };
 
     page.drawText('N°', { x: col.nro, y, size: 10, font: fontBold });
     page.drawText('Materia', { x: col.materia, y, size: 10, font: fontBold });
-    page.drawText('Calificación', {
-      x: col.calificacion,
+    page.drawText('1er Trim.', {
+      x: col.trim1,
+      y,
+      size: 10,
+      font: fontBold,
+    });
+    page.drawText('2er Trim.', {
+      x: col.trim2,
+      y,
+      size: 10,
+      font: fontBold,
+    });
+    page.drawText('3er Trim.', {
+      x: col.trim3,
+      y,
+      size: 10,
+      font: fontBold,
+    });
+    page.drawText('Nota Final', {
+      x: col.calificacionFinal,
       y,
       size: 10,
       font: fontBold,
@@ -633,8 +684,26 @@ export class ReportesService {
 
       page.drawText(String(d.numero), { x: col.nro, y, size: 9, font });
       page.drawText(d.materia, { x: col.materia, y, size: 9, font });
-      page.drawText(String(d.calificacion), {
-        x: col.calificacion,
+      page.drawText(String(d.trim1), {
+        x: col.trim1,
+        y,
+        size: 9,
+        font,
+      });
+      page.drawText(String(d.trim2), {
+        x: col.trim2,
+        y,
+        size: 9,
+        font,
+      });
+      page.drawText(String(d.trim3), {
+        x: col.trim3,
+        y,
+        size: 9,
+        font,
+      });
+      page.drawText(String(d.calificacionFinal), {
+        x: col.calificacionFinal,
         y,
         size: 9,
         font,

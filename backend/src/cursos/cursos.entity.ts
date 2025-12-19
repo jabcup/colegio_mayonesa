@@ -2,8 +2,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Paralelos } from '../paralelos/paralelo.entity';
 
 @Entity('cursos')
 export class Curso {
@@ -17,12 +20,16 @@ export class Curso {
   })
   nombre: string;
 
-  @Column({
-    type: 'char',
-    length: 1,
-    nullable: false,
-  })
-  paralelo: string;
+  // @Column({
+  //   type: 'char',
+  //   length: 1,
+  //   nullable: false,
+  // })
+  // paralelo: string;
+
+  @ManyToOne(() => Paralelos, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'idParalelo' })
+  paralelo: Paralelos;
 
   @Column({
     type: 'int',

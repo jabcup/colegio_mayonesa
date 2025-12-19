@@ -11,7 +11,7 @@ interface Aviso {
   id: number;
   asunto: string;
   mensaje: string;
-  Curso: { id: number; nombre: string; nivel?: string; paralelo?: string };
+  Curso: { id: number; nombre: string; nivel?: string; paralelo?: { id: number; nombre: string } };
 }
 
 export default function AvisosPage() {

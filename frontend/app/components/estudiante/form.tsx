@@ -32,7 +32,7 @@ interface Padre {
 interface Curso {
   id: number;
   nombre: string;
-  paralelo: string;
+  paralelo: { nombre: string};
   gestion: number;
 }
 
@@ -87,7 +87,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
     try {
       const [p, c] = await Promise.all([
         api.get("/padres/MostrarPadres"),
-        api.get("/cursos/MostrarCursos"),
+        api.get("/cursos/CursosActivos"),
       ]);
       setPadres(p.data || []);
       setCursos(c.data || []);
@@ -694,7 +694,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               <MenuItem value="">Seleccione un curso...</MenuItem>
               {cursos.map((c) => (
                 <MenuItem key={c.id} value={c.id}>
-                  {c.nombre} - {c.paralelo} ({c.gestion})
+                  {c.nombre} - {c.paralelo.nombre} ({c.gestion})
                 </MenuItem>
               ))}
             </TextField>
