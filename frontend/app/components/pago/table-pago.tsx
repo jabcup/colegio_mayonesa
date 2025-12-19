@@ -35,7 +35,7 @@ interface Pago {
   deuda: "pendiente" | "cancelado"
   concepto: string
   fecha_creacion: string
-  estado: string
+  estado: "activo" | "inactivo"
 }
 
 interface Props {
@@ -102,15 +102,16 @@ export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
 
   const handleActualizar = (p: Pago) => setPagoAEditar(p)
   const handleCerrarForm = () => setPagoAEditar(undefined)
-  const handleRecargar = () => window.location.reload()
 
   const handleEliminar = async (id: number) => {
-    if (!confirm("¿Confirma eliminar este pago?")) return
+    // Opción rápida: window.confirm
+    if (typeof window === 'undefined' || !window.confirm('¿Confirma eliminar este pago?')) return
     try {
       await api.delete(`/pagos/${id}`)
-      window.location.reload()
+      const updated = pagos.map(p => (p.id === id ? { ...p, estado: 'inactivo' as const } : p))
+      onUpdate?.(updated)
     } catch (e: any) {
-      alert(e.response?.data?.message || "Error al eliminar")
+      alert(e.response?.data?.message || 'Error al eliminar')
     }
   }
 
@@ -222,7 +223,7 @@ export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
             <FormPago
               estudiantes={estudiantes}
               pagoInicial={pagoAEditar}
-              onCreate={handleRecargar}
+              onCreate={() => window.location.reload()}
               onClose={handleCerrarForm}
             />
           )}
