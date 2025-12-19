@@ -221,11 +221,6 @@ export default function FormCalificacion({
   };
 
   const handleSubmit = () => {
-    if (!form.idCurso || !form.idMateria || !form.idEstudiante){
-      alert("Todos los campos son obligatorios");
-      return;
-    }
-
     if (Number(form.calificacion) < 0 || Number(form.calificacion) > 100) {
       alert("La calificación debe estar entre 0 y 100");
       return;
@@ -239,6 +234,10 @@ export default function FormCalificacion({
       return;
     }
 
+    if (!form.idCurso || !form.idMateria || !form.idEstudiante) {
+      alert("Todos los campos son obligatorios");
+      return;
+    }
     const payload = {
       idMateria: Number(form.idMateria),
       idEstudiante: Number(form.idEstudiante),

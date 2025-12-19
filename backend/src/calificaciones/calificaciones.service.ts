@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
 import { Calificaciones } from './calificaciones.entity';
@@ -115,6 +115,21 @@ export class CalificacionesService {
       throw new Error('Estudiante no encontrado');
     }
 
+    // const existe = await this.calificacionesRepository.findOne({
+    //   where: {
+    //     estudiante: { id: dto.idEstudiante },
+    //     materia: { id: dto.idMateria },
+    //     trimestre: dto.trimestre,
+    //     anioEscolar: dto.anioEscolar,
+    //   },
+    // });
+
+    // if (existe) {
+    //   throw new BadRequestException(
+    //     `Ya existe una calificación para este estudiante en la materia ${materia.nombre || dto.idMateria}, trimestre ${dto.trimestre} del año ${dto.anioEscolar}`,
+    //   );
+    // }
+
     const aprobacion = dto.calificacion >= 51 ? true : false;
 
     const calificacion = this.calificacionesRepository.create({
@@ -122,6 +137,8 @@ export class CalificacionesService {
       aprobacion: aprobacion,
       materia: materia,
       estudiante: estudiante,
+      //trimestre: dto.trimestre,
+      //anioEscolar: dto.anioEscolar,
     });
 
     return this.calificacionesRepository.save(calificacion);

@@ -15,10 +15,6 @@ export class Calificaciones {
   @PrimaryGeneratedColumn()
   id: number;
 
-  // @ManyToOne(() => AsignacionClase, { onDelete: 'CASCADE' })
-  // @JoinColumn({ name: 'idAsignacion' })
-  // asignacionClase: AsignacionClase;
-
   @ManyToOne(() => Materias, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'idMateria' })
   materia: Materias;
@@ -27,7 +23,18 @@ export class Calificaciones {
   @JoinColumn({ name: 'idEstudiante' })
   estudiante: Estudiante;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  // @Column({
+  //   type: 'int',
+  //   comment: '1 = Primer trimestre, 2 = Segundo, 3 = Tercero',
+  // })
+  // trimestre: number;
+
+  // @Column({
+  //   type: 'int',
+  // })
+  // anioEscolar: number;
+
+  @Column({ type: 'decimal', precision: 5, scale: 2 })
   calificacion: number;
 
   @Column({ type: 'bool', default: true })
