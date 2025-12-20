@@ -86,21 +86,49 @@ export default function PagosPage() {
     const pendientes = data.pagos
       .filter(p => p.idEstudiante === estudianteSel.id && p.deuda === 'pendiente' && p.tipo === 'mensual')
       .sort((a, b) => a.anio - b.anio || a.mes - b.mes)
-      .slice(0, 3)
 
     if (pendientes.length < 3) {
-      alert('No hay 3 mensualidades consecutivas pendientes')
+      alert('No hay 3 mensualidades pendientes')
       return
     }
-    const total = pendientes.reduce((s, p) => s + Number(p.cantidad), 0)
-    setConfirmTrim({ open: true, ids: pendientes.map(p => p.id), total })
+
+    const sonConsecutivos = (pagos: any[]) => {
+      for (let i = 1; i < pagos.length; i++) {
+        const anterior = pagos[i - 1]
+        const actual = pagos[i]
+        
+        const mesEsperado = anterior.mes === 12 ? 1 : anterior.mes + 1
+        const anioEsperado = anterior.mes === 12 ? anterior.anio + 1 : anterior.anio
+        
+        if (actual.mes !== mesEsperado || actual.anio !== anioEsperado) {
+          return false
+        }
+      }
+      return true
+    }
+
+    const tresPrimeros = pendientes.slice(0, 3)
+    
+    if (!sonConsecutivos(tresPrimeros)) {
+      alert('Las 3 primeras mensualidades pendientes no son consecutivas')
+      return
+    }
+
+    const total = tresPrimeros.reduce((s, p) => s + Number(p.cantidad), 0)
+    setConfirmTrim({ open: true, ids: tresPrimeros.map(p => p.id), total })
   }
 
   const confirmarPagoTrimestre = async () => {
     try {
-      await api.patch('/pagos/pagar-trimestre', { ids: confirmTrim.ids, idpersonal: personalId })
+      await api.patch('/pagos/pagar-trimestre', { 
+        ids: confirmTrim.ids, 
+        idpersonal: personalId 
+      })
 
-      const pdfRes = await api.get(`/pagos/comprobante/${confirmTrim.ids[0]}`, { responseType: 'blob' })
+      const pdfRes = await api.post('/pagos/comprobante-multiple', 
+        { ids: confirmTrim.ids }, 
+        { responseType: 'blob' }
+      )
       const url = window.URL.createObjectURL(new Blob([pdfRes.data]))
       const link = document.createElement('a')
       link.href = url
@@ -134,29 +162,67 @@ export default function PagosPage() {
     setConfirmAnio({ open: true, ids: pendientes.map(p => p.id), total })
   }
 
-  const confirmarPagoAnio = async () => {
-    try {
-      await api.patch('/pagos/pagar-anio', { ids: confirmAnio.ids, idpersonal: personalId })
+const confirmarPagoAnio = async () => {
+  try {
+    if (!estudianteSel) return;
 
-      const pdfRes = await api.get(`/pagos/comprobante/${confirmAnio.ids[0]}`, { responseType: 'blob' })
-      const url = window.URL.createObjectURL(new Blob([pdfRes.data]))
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', `comprobante-anio-${estudianteSel?.id}.pdf`)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      window.URL.revokeObjectURL(url)
+    // 1. Pagar el año
+    await api.patch(`/pagos/estudiante/${estudianteSel.id}/pagar-anio`, {
+      idpersonal: personalId,
+    });
 
-      setConfirmAnio({ open: false, ids: [], total: 0 })
-      setBusquedaTemp("")
-      setBusqueda("")
-      await loadData()
-    } catch (e: any) {
-      alert(e.response?.data?.message || 'Error al pagar año')
+    // 2. Recargar pagos ANTES de filtrar
+    const fresh = await api.get('/pagos');
+    const mapNombre = new Map(data.estudiantes.map(e => [e.id, e.label]));
+    const mapId   = new Map(data.estudiantes.map(e => [e.id, e.identificacion]));
+
+    const updatedPagos = (fresh.data || []).map((p: any) => ({
+      ...p,
+      nombreEstudiante: mapNombre.get(p.idEstudiante) || 'Desconocido',
+      identificacion: mapId.get(p.idEstudiante),
+    }));
+
+    // 3. Ahora sí filtrar los recién cancelados
+    const recienPagados = updatedPagos.filter(
+      (p) =>
+        p.idEstudiante === estudianteSel.id &&
+        p.deuda === 'cancelado' &&
+        p.tipo === 'mensual' &&
+        p.mes !== null
+    );
+
+    if (recienPagados.length === 0) {
+      alert('No se encontraron pagos cancelados para generar el comprobante');
+      return;
     }
-  }
 
+    const ids = recienPagados.map((p) => p.id);
+
+    // 4. Generar comprobante
+    const pdfRes = await api.post(
+      '/pagos/comprobante-multiple',
+      { ids },
+      { responseType: 'blob' }
+    );
+
+    const url = window.URL.createObjectURL(new Blob([pdfRes.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `comprobante-anio-${estudianteSel.id}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+
+    // 5. Actualizar estado local y cerrar
+    setData((d) => ({ ...d, pagos: updatedPagos }));
+    setConfirmAnio({ open: false, ids: [], total: 0 });
+    setBusquedaTemp('');
+    setBusqueda('');
+  } catch (e: any) {
+    alert(e.response?.data?.message || 'Error al pagar año');
+  }
+};
   const handleCreate = async () => {
     await loadData()
     setShowForm(false)
