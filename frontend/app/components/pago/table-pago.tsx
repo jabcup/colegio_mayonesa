@@ -15,6 +15,8 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogActions,
+  Typography,
   IconButton,
 } from "@mui/material"
 import CloseIcon from "@mui/icons-material/Close"
@@ -33,21 +35,24 @@ interface Pago {
   deuda: "pendiente" | "cancelado"
   concepto: string
   fecha_creacion: string
-  estado: string
+  estado: "activo" | "inactivo"
 }
 
 interface Props {
   pagos: Pago[]
   estudiantes: { id: number; nombres: string; apellidoPat: string }[]
+  onUpdate?: () => void | Promise<void> 
 }
 
-export default function TablePagos({ pagos, estudiantes }: Props) {
+export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
   const [pagoSeleccionado, setPagoSeleccionado] = useState<Pago | null>(null)
   const [anioFiltro, setAnioFiltro] = useState("")
   const [pagoAEditar, setPagoAEditar] = useState<Pago | undefined>()
 
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(5)
+
+  const [confirm, setConfirm] = useState<{ open: boolean; pagoId: number; total: number }>({ open: false, pagoId: 0, total: 0 })
 
   const personalId = Number(Cookies.get('personal_id') ?? 0)
 
@@ -67,29 +72,39 @@ export default function TablePagos({ pagos, estudiantes }: Props) {
     }
   }
 
-  const handlePagar = async (pagoId: number) => {
+  const handlePagar = async () => {
+    const { pagoId } = confirm
     try {
-      console.log(personalId)
-      console.log(pagoId)
       await api.patch(`/pagos/pagar/${pagoId}`, { idpersonal: personalId })
-      alert("Pago realizado")
-      window.location.reload()
-    } catch {
-      alert("Error al pagar, debes ser un Cajero para poder realziar el pago")
+
+      const pdfRes = await api.get(`/pagos/comprobante/${pagoId}`, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([pdfRes.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `comprobante-${pagoId}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+
+      setConfirm({ open: false, pagoId: 0, total: 0 })
+      
+      await onUpdate?.()
+    } catch (e: any) {
+      alert(e.response?.data?.message || 'Error al pagar')
     }
   }
 
   const handleActualizar = (p: Pago) => setPagoAEditar(p)
   const handleCerrarForm = () => setPagoAEditar(undefined)
-  const handleRecargar = () => window.location.reload()
 
   const handleEliminar = async (id: number) => {
-    if (!confirm("¿Confirma eliminar este pago?")) return
+    if (typeof window === 'undefined' || !window.confirm('¿Confirma eliminar este pago?')) return
     try {
       await api.delete(`/pagos/${id}`)
-      window.location.reload()
+      await onUpdate?.()
     } catch (e: any) {
-      alert(e.response?.data?.message || "Error al eliminar")
+      alert(e.response?.data?.message || 'Error al eliminar')
     }
   }
 
@@ -97,6 +112,11 @@ export default function TablePagos({ pagos, estudiantes }: Props) {
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10))
     setPage(0)
+  }
+
+  const handleActualizarYRecargar = async () => {
+    handleCerrarForm()
+    await onUpdate?.()
   }
 
   return (
@@ -139,7 +159,7 @@ export default function TablePagos({ pagos, estudiantes }: Props) {
                 <TableCell>
                   <Button size="small" onClick={() => handleVer(p.id)}>Ver</Button>
                   {p.deuda === "pendiente" && (
-                    <Button size="small" color="success" onClick={() => handlePagar(p.id)} sx={{ ml: 1 }}>
+                    <Button size="small" color="success" onClick={() => setConfirm({ open: true, pagoId: p.id, total: p.total })} sx={{ ml: 1 }}>
                       Pagar
                     </Button>
                   )}
@@ -201,11 +221,24 @@ export default function TablePagos({ pagos, estudiantes }: Props) {
             <FormPago
               estudiantes={estudiantes}
               pagoInicial={pagoAEditar}
-              onCreate={handleRecargar}
+              onCreate={handleActualizarYRecargar}
               onClose={handleCerrarForm}
             />
           )}
         </DialogContent>
+      </Dialog>
+
+      {/* Confirmación y descarga */}
+      <Dialog open={confirm.open} onClose={() => setConfirm({ open: false, pagoId: 0, total: 0 })} maxWidth="xs">
+        <DialogTitle>Confirmar pago</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">Concepto: {pagos.find(p => p.id === confirm.pagoId)?.concepto}</Typography>
+          <Typography variant="h6" sx={{ mt: 1 }}>Total: {confirm.total}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirm({ open: false, pagoId: 0, total: 0 })}>Cancelar</Button>
+          <Button variant="contained" onClick={handlePagar}>Pagar y descargar</Button>
+        </DialogActions>
       </Dialog>
     </>
   )

@@ -9,14 +9,18 @@ import {
   ParseIntPipe,
   HttpCode,
   HttpStatus,
-  UseGuards,
   Injectable,
   PipeTransform,
   BadRequestException,
   ForbiddenException,
+  Res,
+  UseGuards,
+  Query,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PagosService } from './pagos.service';
+import { PagosComprobanteService } from './pagos-comprobante.service';
 import { CreatePagoDto } from './dto/create-pago.dto';
 import { UpdatePagoDto } from './dto/update-pago.dto';
 import { PagoResponseDto } from './dto/response-pago.dto';
@@ -26,6 +30,7 @@ import { Repository } from 'typeorm';
 import { Usuarios } from 'src/usuarios/usuarios.entity';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Injectable()
 class SoloIdPersonalPipe implements PipeTransform {
   transform(value: any) {
@@ -57,12 +62,12 @@ async function esCajero(
   return usuario?.rol?.nombre === 'Cajero' && usuario.estado === 'activo';
 }
 
-@UseGuards(JwtAuthGuard)
 @ApiTags('Pagos')
 @Controller('pagos')
 export class PagosController {
   constructor(
     private readonly service: PagosService,
+    private readonly comprobanteService: PagosComprobanteService,
     private readonly usuariosService: UsuariosService,
     @InjectRepository(Usuarios)
     private readonly usuariosRepo: Repository<Usuarios>,
@@ -80,18 +85,12 @@ export class PagosController {
     return this.service.findAll();
   }
 
-  @Get(':idEstudiante')
-  @ApiOperation({ summary: 'Obtener la lista de pagos por estudiante' })
-  async obtenerPagosPorEstudiante(@Param('idEstudiante') idEstudiante: number) {
-    return this.service.obtenerPagosPorEstudiante(idEstudiante);
-  }
   @Get(':id')
   @ApiOperation({ summary: 'Obtener un pago en específico' })
   findOne(@Param('id', ParseIntPipe) id: number): Promise<PagoResponseDto> {
     return this.service.findOne(id);
   }
 
-  // Cambiado para aceptar múltiples IDs o uno solo
   @Patch('pagar/:id')
   @ApiOperation({ summary: 'Pagar (cancelar) uno o varios pagos' })
   @ApiBody({ schema: { example: { idpersonal: 123 } } })
@@ -102,50 +101,14 @@ export class PagosController {
     if (!(await esCajero(this.usuariosRepo, dto.idpersonal))) {
       throw new ForbiddenException('El personal no es cajero o no está activo');
     }
-
-    // Ahora pagar espera un array de IDs
     await this.service.pagar([id], dto.idpersonal);
-
     return { ok: true };
   }
 
-  @Patch(':id')
-  @ApiOperation({ summary: 'Actualizar datos de un pago' })
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdatePagoDto,
-  ): Promise<PagoResponseDto> {
-    return this.service.update(id, dto);
-  }
-
-  @Patch('estudiante/:idEstudiante/pagar_ultima_gestion')
-  @ApiOperation({
-    summary: 'Pagar toda la última gestión (año) pendiente de un estudiante',
-  })
-  @ApiBody({ schema: { example: { idpersonal: 123 } } })
-  @ApiResponse({
-    status: 200,
-    description: 'Cantidad de pagos actualizados',
-    schema: {
-      example: {
-        message:
-          'Se marcaron como cancelados 3 pagos pendientes del último año.',
-        updatedCount: 3,
-      },
-    },
-  })
-  // async pagarUltimaGestion(
-  //   @Param('idEstudiante', ParseIntPipe) idEstudiante: number,
-  //   @Body(SoloIdPersonalPipe) dto: SoloIdPersonalBody,
-  // ): Promise<{ message: string; updatedCount: number }> {
-  //   if (!(await esCajero(this.usuariosRepo, dto.idpersonal))) {
-  //     throw new ForbiddenException('El personal no es cajero o no está activo');
-  //   }
-
-  //   return this.service.pagarUltimaGestion(idEstudiante, dto.idpersonal);
-  // }
   @Patch('pagar-trimestre')
-  @ApiOperation({ summary: 'Pagar un trimestre completo (3 mensualidades)' })
+  @ApiOperation({
+    summary: 'Pagar un trimestre completo (3 mensualidades con 4% descuento)',
+  })
   @ApiBody({
     schema: {
       example: { ids: [4, 5, 6], idpersonal: 123 },
@@ -171,16 +134,11 @@ export class PagosController {
   ) {
     return this.service.pagarTrimestre(ids, idpersonal);
   }
-  @Delete(':id')
-  @ApiOperation({ summary: 'Eliminación lógica de un pago' })
-  @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    return this.service.remove(id);
-  }
 
-  @Patch('estudiante/:idEstudiante/pagar-anio')
+  @Patch('estudiante/:estudianteId/pagar-anio')
   @ApiOperation({
-    summary: 'Pagar las 10 mensualidades del año (descuento 10 %)',
+    summary:
+      'Pagar todas las mensualidades pendientes del estudiante (descuento 10% si son 10)',
   })
   @ApiBody({ schema: { example: { idpersonal: 123 } } })
   @ApiResponse({
@@ -188,15 +146,86 @@ export class PagosController {
     description: 'Resumen de la operación',
     schema: {
       example: {
-        message: 'Se marcaron como cancelados 10 pagos.',
+        message: 'Se marcaron como cancelados X pagos.',
         updatedCount: 10,
       },
     },
   })
   async pagarAnio(
-    @Param('idEstudiante', ParseIntPipe) idEstudiante: number,
+    @Param('estudianteId', ParseIntPipe) estudianteId: number,
     @Body('idpersonal') idpersonal: number,
   ) {
-    return this.service.pagarAnio(idEstudiante, idpersonal);
+    return this.service.pagarAnio(estudianteId, idpersonal);
+  }
+
+  @Get('comprobante/:id')
+  @ApiOperation({ summary: 'Descargar comprobante PDF de un pago' })
+  @ApiResponse({ status: 200, description: 'PDF del comprobante' })
+  async comprobante(
+    @Param('id', ParseIntPipe) id: number,
+    @Res() res: Response,
+  ) {
+    const pagoEntity = await this.service.findOneRaw(id);
+    if (pagoEntity.deuda !== 'cancelado') {
+      throw new BadRequestException('El pago no está cancelado');
+    }
+    const pdf = await this.comprobanteService.generar(pagoEntity);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="comprobante-${id}.pdf"`,
+      'Content-Length': pdf.length,
+    });
+    res.end(pdf);
+  }
+
+  @Get('comprobante-anio/:estudianteId')
+  @ApiOperation({
+    summary: 'Generar comprobante de pago anual (10 mensualidades)',
+  })
+  async generarComprobanteAnio(
+    @Param('estudianteId', ParseIntPipe) estudianteId: number,
+    @Res() res: Response,
+  ) {
+    const pdfBuffer = await this.service.generarComprobanteAnio(estudianteId);
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="comprobante-anual-${estudianteId}.pdf"`,
+    });
+    res.send(pdfBuffer);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Actualizar datos de un pago' })
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdatePagoDto,
+  ): Promise<PagoResponseDto> {
+    return this.service.update(id, dto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Eliminación lógica de un pago' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    return this.service.remove(id);
+  }
+
+  @Get('comprobante-trimestre/:estudianteId')
+  @ApiOperation({
+    summary: 'Generar comprobante de pago trimestral (3 mensualidades)',
+  })
+  async generarComprobanteTrimestre(
+    @Param('estudianteId', ParseIntPipe) estudianteId: number,
+    @Res() res: Response,
+  ) {
+    const pdfBuffer =
+      await this.service.generarComprobanteTrimestre(estudianteId);
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="comprobante-trimestre-${estudianteId}.pdf"`,
+    });
+    res.send(pdfBuffer);
   }
 }

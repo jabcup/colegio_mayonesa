@@ -62,7 +62,7 @@ export default function Navbar() {
             onClick={() => router.push("/reporte")}
           />
 
-          {rol !== "Secretaria-o" && rol !== "Docente" && (
+          {rol !== "Secretaria-o" && rol !== "Cajero" && (
             <Boton
               label="Asistencias"
               color="success"

@@ -10,15 +10,19 @@ import { CreatePagoDto } from './dto/create-pago.dto';
 import { UpdatePagoDto } from './dto/update-pago.dto';
 import { PagoResponseDto } from './dto/response-pago.dto';
 import { Personal } from 'src/personal/personal.entity';
+import { PagosComprobanteService } from './pagos-comprobante.service';
+import { Not, IsNull } from 'typeorm';
 
 @Injectable()
 export class PagosService {
   constructor(
     @InjectRepository(Pagos)
     private readonly repo: Repository<Pagos>,
+    @InjectRepository(Personal)
+    private readonly personalRepo: Repository<Personal>,
+    private readonly comprobanteService: PagosComprobanteService,
   ) {}
 
-  /*  ----  CRUD básico  ----  */
   async create(dto: CreatePagoDto): Promise<PagoResponseDto> {
     const p = this.repo.create({
       estudiante: { id: dto.idEstudiante },
@@ -73,7 +77,6 @@ export class PagosService {
     await this.repo.update(id, { estado: 'inactivo' });
   }
 
-  /*  ----  UTILS  ----  */
   private async primeraPendiente(estudianteId: number): Promise<Pagos | null> {
     return this.repo.findOne({
       where: {
@@ -85,7 +88,7 @@ export class PagosService {
     });
   }
 
-  async previewPago(ids: number[]) {
+  async previewPago(ids: number[], esTrimestre: boolean = false) {
     const pendientes = await this.repo.find({
       where: { id: In(ids), deuda: 'pendiente' },
     });
@@ -97,8 +100,14 @@ export class PagosService {
     const subTotal = pendientes.reduce((s, p) => s + Number(p.cantidad), 0);
     let descuento = 0;
     const esMensual = pendientes.every((p) => p.tipo === 'mensual');
-    if (esMensual && pendientes.length === 10)
-      descuento = Number((subTotal * 0.1).toFixed(2));
+
+    if (esMensual) {
+      if (esTrimestre && pendientes.length === 3) {
+        descuento = Number((subTotal * 0.04).toFixed(2));
+      } else if (!esTrimestre && pendientes.length === 10) {
+        descuento = Number((subTotal * 0.1).toFixed(2));
+      }
+    }
 
     return {
       subTotal,
@@ -107,8 +116,7 @@ export class PagosService {
     };
   }
 
-  /*  ----  NEGOCIO  ----  */
-  async pagar(ids: number[], idPersonal: number) {
+  async pagar(ids: number[], idPersonal: number, esTrimestre: boolean = false) {
     if (!ids.length) throw new BadRequestException('Faltan ids');
 
     const pendientes = await this.repo.find({
@@ -123,7 +131,6 @@ export class PagosService {
 
     const estudianteId = pendientes[0].estudiante.id;
 
-    // 1. La PRIMERA que se quiere pagar DEBE ser la más antigua
     const primera = await this.primeraPendiente(estudianteId);
     if (!primera)
       throw new BadRequestException('No hay mensualidades pendientes');
@@ -132,7 +139,6 @@ export class PagosService {
         'Debe empezar por la mensualidad pendiente más antigua',
       );
 
-    // 2. Validar que los meses A PAGAR sean consecutivos entre sí
     const meses = pendientes
       .map((p) => ({ anio: p.anio, mes: p.mes }))
       .sort((a, b) => {
@@ -150,8 +156,7 @@ export class PagosService {
         );
     }
 
-    // 3. Aplicar descuento y cancelar
-    const { descuento } = await this.previewPago(ids);
+    const { descuento } = await this.previewPago(ids, esTrimestre);
     const now = new Date();
 
     for (const p of pendientes) {
@@ -182,7 +187,6 @@ export class PagosService {
       })
     ).estudiante.id;
 
-    // Obtener las 3 mensualidades pendientes más antiguas
     const tres = await this.repo.find({
       where: {
         estudiante: { id: estudianteId },
@@ -197,7 +201,6 @@ export class PagosService {
         'No hay 3 mensualidades pendientes para formar un trimestre',
       );
 
-    // Verificar que los ids enviados sean ESAS 3
     const esperados = tres.map((p) => p.id).sort((a, b) => a - b);
     const recibidos = ids.sort((a, b) => a - b);
     if (esperados.join(',') !== recibidos.join(','))
@@ -205,7 +208,7 @@ export class PagosService {
         'Los ids deben ser las 3 mensualidades pendientes más antiguas y consecutivas',
       );
 
-    return this.pagar(ids, idPersonal);
+    return this.pagar(ids, idPersonal, true);
   }
 
   async pagarAnio(estudianteId: number, idPersonal: number) {
@@ -216,21 +219,18 @@ export class PagosService {
         tipo: 'mensual',
       },
       order: { anio: 'ASC', mes: 'ASC' },
-      take: 10,
     });
+
     if (pendientes.length === 0)
       throw new BadRequestException('No hay mensualidades pendientes');
-    if (pendientes.length < 10)
-      throw new BadRequestException(
-        'No hay 10 mensualidades pendientes para aplicar el descuento anual',
-      );
+
     return this.pagar(
       pendientes.map((p) => p.id),
       idPersonal,
+      false,
     );
   }
 
-  /*  ----  MAPPER  ----  */
   private toResponse(p: Pagos): PagoResponseDto {
     return {
       id: p.id,
@@ -250,10 +250,97 @@ export class PagosService {
     };
   }
 
-  async obtenerPagosPorEstudiante(idEstudiante: number): Promise<Pagos[]> {
-    return this.repo.find({
-      where: { estudiante: { id: idEstudiante }, estado: 'activo' },
+  async findOneRaw(id: number): Promise<Pagos> {
+    const p = await this.repo.findOne({
+      where: { id },
       relations: ['estudiante', 'personal'],
     });
+    if (!p) throw new NotFoundException('Pago no encontrado');
+    return p;
+  }
+
+  async generarComprobanteAnio(estudianteId: number, idPersonal?: number) {
+    // Buscamos la fecha de pago más reciente de pagos mensuales cancelados del estudiante
+    const ultimoPago = await this.repo.findOne({
+      where: {
+        estudiante: { id: estudianteId },
+        deuda: 'cancelado',
+        tipo: 'mensual',
+        fecha_pago: Not(IsNull()),
+      },
+      order: { fecha_pago: 'DESC' },
+    });
+
+    if (!ultimoPago || !ultimoPago.fecha_pago) {
+      throw new NotFoundException('No se encontraron pagos anuales recientes');
+    }
+
+    const fechaUltimoPago = ultimoPago.fecha_pago;
+
+    let pagosPagados = await this.repo.find({
+      where: {
+        estudiante: { id: estudianteId },
+        deuda: 'cancelado',
+        tipo: 'mensual',
+        fecha_pago: fechaUltimoPago,
+      },
+      relations: ['estudiante'],
+      order: { anio: 'ASC', mes: 'ASC' },
+    });
+
+    if (pagosPagados.length < 10) {
+      throw new NotFoundException(
+        'No se encontraron exactamente 10 mensualidades del último pago anual',
+      );
+    }
+
+    if (pagosPagados.length > 10) {
+      // En teoría no debería pasar, pero por seguridad tomamos los primeros 10 en orden
+      pagosPagados = pagosPagados.slice(0, 10);
+    }
+
+    return this.comprobanteService.generarAnual(pagosPagados, idPersonal);
+  }
+
+  async generarComprobanteTrimestre(estudianteId: number, idPersonal?: number) {
+    // Buscar el pago mensual cancelado más reciente del estudiante
+    const ultimoPago = await this.repo.findOne({
+      where: {
+        estudiante: { id: estudianteId },
+        deuda: 'cancelado',
+        tipo: 'mensual',
+        fecha_pago: Not(IsNull()),
+      },
+      order: { fecha_pago: 'DESC' },
+    });
+
+    if (!ultimoPago || !ultimoPago.fecha_pago) {
+      throw new NotFoundException(
+        'No se encontraron pagos trimestrales recientes',
+      );
+    }
+
+    const fechaUltimoPago = ultimoPago.fecha_pago;
+
+    // Buscar todos los pagos mensuales cancelados con esa misma fecha_pago
+    let pagosPagados = await this.repo.find({
+      where: {
+        estudiante: { id: estudianteId },
+        deuda: 'cancelado',
+        tipo: 'mensual',
+        fecha_pago: fechaUltimoPago,
+      },
+      relations: ['estudiante'],
+      order: { anio: 'ASC', mes: 'ASC' },
+    });
+
+    // Para trimestre esperamos exactamente 3
+    if (pagosPagados.length !== 3) {
+      throw new NotFoundException(
+        'No se encontraron exactamente 3 mensualidades del último pago trimestral',
+      );
+    }
+
+    return this.comprobanteService.generarTrimestre(pagosPagados, idPersonal);
   }
 }
