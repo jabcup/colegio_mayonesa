@@ -144,8 +144,8 @@ vite.config.ts.timestamp-*
 
 #para no sincronizar las configuraciones de la base de datos, cosa que chuma no hizo
 
-setup.ts
-app.module.ts
+# setup.ts
+# app.module.ts
 
 
 
