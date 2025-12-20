@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { PadreEstudianteService } from './padre-estudiante.service';
 import { CreatePadreEstudianteDto } from './dto/create-padre-estudiante.dto';
 import { EstudianteTutor } from './padreEstudiante.entity';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('padre-estudiante')
 export class PadreEstudianteController {
   constructor(
@@ -12,7 +14,7 @@ export class PadreEstudianteController {
   @Get('todos')
   @ApiOperation({ summary: 'Obtener todos los Padres-Estudiantes' })
   listarPadresEstudiantes() {
-    return this.padreEstudianteService.listarEstudiantesPadres();
+    return this.padreEstudianteService.listarEstudiantesConTodosLosTutores();
   }
 
   @Get('Activos')

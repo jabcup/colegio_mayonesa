@@ -3,16 +3,22 @@ import {
   Controller,
   Get,
   Post,
-  Put,
+  // Put,
   Delete,
   Param,
+  UseGuards,
+  Patch,
+  ParseIntPipe,
 } from '@nestjs/common';
 
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateCalificacionDto } from './dto/create-calificacion.dto';
-import { UpdateCalificacionDto } from './dto/update-calificacion.dto';
+// import { UpdateCalificacionDto } from './dto/update-calificacion.dto';
 import { CalificacionesService } from './calificaciones.service';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { UpdateCalificacionDto } from './dto/update-calificacion.dto';
 
+// @UseGuards(JwtAuthGuard)
 @Controller('calificaciones')
 export class CalificacionesController {
   constructor(private readonly calificacionesService: CalificacionesService) {}
@@ -65,6 +71,7 @@ export class CalificacionesController {
       calificaciones,
     };
   }
+
   @Get('GestionActual/:idEstudiante')
   @ApiOperation({ summary: 'Calificaciones del año actual' })
   async getCalificacionesAño(@Param('idEstudiante') id: number) {
@@ -78,7 +85,8 @@ export class CalificacionesController {
       calificaciones,
     };
   }
-  @Post()
+
+  @Post('/CrearCalificacion')
   @ApiOperation({ summary: 'Crear calificacion' })
   async createCalificacion(
     @Body() createCalificacionDto: CreateCalificacionDto,
@@ -92,19 +100,19 @@ export class CalificacionesController {
     };
   }
 
-  @Put('EditarCalificacion/:id')
-  @ApiOperation({ summary: 'Editar calificacion' })
+  @Patch('/ActualizarCalificacion/:id')
+  @ApiOperation({ summary: 'Actualizar una calificación existente (parcial)' })
   async updateCalificacion(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCalificacionDto,
   ) {
-    const calificacion = await this.calificacionesService.updateCalificacion(
+    const updated = await this.calificacionesService.updateCalificacion(
       id,
       dto,
     );
     return {
-      message: 'Calificacion actualizada correctamente',
-      calificacion,
+      message: 'Calificación actualizada correctamente',
+      calificacion: updated,
     };
   }
 

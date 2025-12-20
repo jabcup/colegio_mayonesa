@@ -1,22 +1,9 @@
 "use client";
 
-import {
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  TableContainer,
-  Paper,
-  Autocomplete,
-  TextField,
-  CircularProgress,
-  Typography,
-  Box,
-  Button,
-} from "@mui/material";
 import { useState, useEffect } from "react";
 import { api } from "@/app/lib/api";
+import { toast } from "sonner";
+import { Loader2, ArrowUpDown } from "lucide-react";
 
 interface Estudiante {
   id: number;
@@ -52,8 +39,8 @@ export default function TableNotificaciones() {
     try {
       const res = await api.get("/estudiante/MostrarEstudiantes");
       setEstudiantes(res.data);
-    } catch (err) {
-      alert("Error al cargar estudiantes");
+    } catch {
+      toast.error("Error al cargar estudiantes");
     } finally {
       setLoadingEst(false);
     }
@@ -61,23 +48,18 @@ export default function TableNotificaciones() {
 
   const cargarNotificaciones = async () => {
     if (!selectedEstudiante) return;
-
     setLoadingNotif(true);
     try {
       const res = await api.get(`/notificaciones/Estudiante/${selectedEstudiante.id}`);
       let data = res.data as Notificacion[];
-
-      // Ordenar por fecha (más reciente primero por defecto)
       data = data.sort((a, b) =>
         sortDesc
           ? new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime()
           : new Date(a.fecha_creacion).getTime() - new Date(b.fecha_creacion).getTime()
       );
-
       setNotificaciones(data);
-    } catch (err) {
-      console.error(err);
-      alert("Error al cargar notificaciones");
+    } catch {
+      toast.error("Error al cargar notificaciones");
       setNotificaciones([]);
     } finally {
       setLoadingNotif(false);
@@ -85,105 +67,102 @@ export default function TableNotificaciones() {
   };
 
   useEffect(() => {
-    cargarNotificaciones();
-  }, [selectedEstudiante]);
+    if (selectedEstudiante) cargarNotificaciones();
+    else setNotificaciones([]);
+  }, [selectedEstudiante, sortDesc]);
 
-  const toggleSort = () => {
-    setSortDesc(!sortDesc);
-    setNotificaciones((prev) =>
-      [...prev].sort((a, b) =>
-        !sortDesc
-          ? new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime()
-          : new Date(a.fecha_creacion).getTime() - new Date(b.fecha_creacion).getTime()
-      )
-    );
-  };
-
-  const formatoFecha = (fecha: string) => {
-    return new Date(fecha).toLocaleString("es-BO", {
+  const formatoFecha = (fecha: string) =>
+    new Date(fecha).toLocaleString("es-BO", {
       day: "2-digit",
-      month: "2-digit",
+      month: "long",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
 
   const getNombreCompleto = (est: Estudiante) =>
-    `${est.nombres} ${est.apellidoPat} ${est.apellidoMat}`;
-
-  const getOptionLabel = (option: Estudiante) =>
-    `${getNombreCompleto(option)} ${option.identificacion ? `- ${option.identificacion}` : ""}`;
+    `${est.nombres} ${est.apellidoPat} ${est.apellidoMat} ${est.identificacion ? ` - ${est.identificacion}` : ""}`.trim();
 
   return (
-    <Box sx={{ mt: 4 }}>
-      <Autocomplete
-        options={estudiantes}
-        getOptionLabel={getOptionLabel}
-        value={selectedEstudiante}
-        onChange={(_event, newValue) => setSelectedEstudiante(newValue)}
-        loading={loadingEst}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Buscar estudiante por nombre o identificación"
-            placeholder="Escribe para buscar..."
-            fullWidth
-            sx={{ maxWidth: 500 }}
-          />
-        )}
-        noOptionsText="No se encontraron estudiantes"
-      />
+    <div className="space-y-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Buscar estudiante
+        </label>
+        <select
+          value={selectedEstudiante?.id || ""}
+          onChange={(e) => {
+            const est = estudiantes.find((s) => s.id === Number(e.target.value));
+            setSelectedEstudiante(est || null);
+          }}
+          disabled={loadingEst}
+          className="w-full max-w-md px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+        >
+          <option value="">
+            {loadingEst ? "Cargando estudiantes..." : "Selecciona un estudiante..."}
+          </option>
+          {estudiantes.map((est) => (
+            <option key={est.id} value={est.id}>
+              {getNombreCompleto(est)}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {selectedEstudiante && (
         <>
-          <Box sx={{ mt: 3, mb: 2 }}>
-            <Typography variant="h6">
-              Notificaciones de: <strong>{getNombreCompleto(selectedEstudiante)}</strong>
-            </Typography>
-            <Button variant="outlined" onClick={toggleSort} sx={{ mt: 1 }}>
-              Ordenar por fecha: {sortDesc ? "Más reciente primero" : "Más antiguo primero"}
-            </Button>
-          </Box>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <h2 className="text-xl font-semibold">
+              Notificaciones de:{" "}
+              <span className="text-indigo-600">{getNombreCompleto(selectedEstudiante)}</span>
+            </h2>
+            <button
+              onClick={() => setSortDesc(!sortDesc)}
+              className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50 transition"
+            >
+              <ArrowUpDown className="h-4 w-4" />
+              {sortDesc ? "Más reciente primero" : "Más antiguo primero"}
+            </button>
+          </div>
 
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell><strong>Estudiante</strong></TableCell>
-                  <TableCell><strong>Asunto</strong></TableCell>
-                  <TableCell><strong>Mensaje</strong></TableCell>
-                  <TableCell><strong>Fecha Envío</strong></TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
+          <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm bg-white">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-6 py-4 font-medium text-gray-900">Estudiante</th>
+                  <th className="px-6 py-4 font-medium text-gray-900">Asunto</th>
+                  <th className="px-6 py-4 font-medium text-gray-900">Mensaje</th>
+                  <th className="px-6 py-4 font-medium text-gray-900">Fecha de Envío</th>
+                </tr>
+              </thead>
+              <tbody>
                 {loadingNotif ? (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center">
-                      <CircularProgress />
-                    </TableCell>
-                  </TableRow>
+                  <tr>
+                    <td colSpan={4} className="text-center py-12">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-indigo-600" />
+                    </td>
+                  </tr>
                 ) : notificaciones.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center">
-                      <Typography>No hay notificaciones para este estudiante.</Typography>
-                    </TableCell>
-                  </TableRow>
+                  <tr>
+                    <td colSpan={4} className="text-center py-12 text-gray-500">
+                      No hay notificaciones para este estudiante aún.
+                    </td>
+                  </tr>
                 ) : (
                   notificaciones.map((notif) => (
-                    <TableRow key={notif.id}>
-                      <TableCell>{getNombreCompleto(notif.Estudiante)}</TableCell>
-                      <TableCell>{notif.asunto}</TableCell>
-                      <TableCell>{notif.mensaje}</TableCell>
-                      <TableCell>{formatoFecha(notif.fecha_creacion)}</TableCell>
-                    </TableRow>
+                    <tr key={notif.id} className="border-b hover:bg-gray-50 transition">
+                      <td className="px-6 py-4">{getNombreCompleto(notif.Estudiante)}</td>
+                      <td className="px-6 py-4 font-medium">{notif.asunto}</td>
+                      <td className="px-6 py-4 max-w-md truncate">{notif.mensaje}</td>
+                      <td className="px-6 py-4 text-gray-600">{formatoFecha(notif.fecha_creacion)}</td>
+                    </tr>
                   ))
                 )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+              </tbody>
+            </table>
+          </div>
         </>
       )}
-    </Box>
+    </div>
   );
 }

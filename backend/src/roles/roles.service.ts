@@ -26,9 +26,9 @@ export class RolesService {
     return rol;
   }
   async update(id: number, dto: UpdateRolDto): Promise<Roles> {
-    await this.findOne(id); // Valida existencia
+    await this.findOne(id);
     await this.rolRepository.update(id, dto);
-    return this.findOne(id); // Devuelve rol actualizado
+    return this.findOne(id);
   }
 
   async deleteRol(id: number): Promise<Roles> {

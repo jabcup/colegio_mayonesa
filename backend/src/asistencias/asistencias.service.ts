@@ -19,12 +19,6 @@ export class AsistenciasService {
     private dataSource: DataSource,
   ) {}
 
-  async getAsistencias(): Promise<Asistencias[]> {
-    return this.asistenciaRepository.find({
-      relations: ['asignacionClase', 'estudiante'],
-    });
-  }
-
   async createAsistencia(dto: CreateAsistenciaDto) {
     return this.dataSource.transaction(async (manager) => {
       const fechaHoy = new Date().toISOString().split('T')[0];
@@ -107,22 +101,39 @@ export class AsistenciasService {
         });
 
         if (existente) {
-          throw new BadRequestException(`La asistencia de hoy ya fue registrada para el estudiante ${dto.idEstudiante}.`);
+          throw new BadRequestException(
+            `La asistencia de hoy ya fue registrada para el estudiante ${dto.idEstudiante}.`,
+          );
         }
 
-        const asignacion = await manager.findOne(AsignacionClase, { where: { id: dto.idAsignacion } });
-        if (!asignacion) throw new BadRequestException('Asignación no encontrada');
+        const asignacion = await manager.findOne(AsignacionClase, {
+          where: { id: dto.idAsignacion },
+        });
+        if (!asignacion)
+          throw new BadRequestException('Asignación no encontrada');
 
-        const estudiante = await manager.findOne(Estudiante, { where: { id: dto.idEstudiante } });
-        if (!estudiante) throw new BadRequestException('Estudiante no encontrado');
+        const estudiante = await manager.findOne(Estudiante, {
+          where: { id: dto.idEstudiante },
+        });
+        if (!estudiante)
+          throw new BadRequestException('Estudiante no encontrado');
 
-        const validAsistencias = ['presente', 'falta', 'ausente', 'justificativo'];
+        const validAsistencias = [
+          'presente',
+          'falta',
+          'ausente',
+          'justificativo',
+        ];
         if (!validAsistencias.includes(dto.asistencia)) {
           throw new BadRequestException('Valor de asistencia inválido');
         }
 
         const asistencia = manager.create(Asistencias, {
-          asistencia: dto.asistencia as 'presente' | 'falta' | 'ausente' | 'justificativo',
+          asistencia: dto.asistencia as
+            | 'presente'
+            | 'falta'
+            | 'ausente'
+            | 'justificativo',
           asignacionClase: asignacion,
           estudiante: estudiante,
         });
@@ -131,7 +142,10 @@ export class AsistenciasService {
         nuevas.push(nueva);
       }
 
-      return { message: 'Asistencias creadas exitosamente', asistencias: nuevas };
+      return {
+        message: 'Asistencias creadas exitosamente',
+        asistencias: nuevas,
+      };
     });
   }
 
@@ -212,7 +226,8 @@ export class AsistenciasService {
     fromDate?: string,
     toDate?: string,
   ) {
-    const asignacionQuery = this.asignacionRepository.createQueryBuilder('asignacion')
+    const asignacionQuery = this.asignacionRepository
+      .createQueryBuilder('asignacion')
       .innerJoin('asignacion.curso', 'curso')
       .innerJoin('asignacion.materia', 'materia')
       .where('curso.id = :idCurso', { idCurso })
@@ -226,7 +241,8 @@ export class AsistenciasService {
 
     const idAsignacion = asignaciones[0].id;
 
-    const query = this.asistenciaRepository.createQueryBuilder('asistencia')
+    const query = this.asistenciaRepository
+      .createQueryBuilder('asistencia')
       .innerJoinAndSelect('asistencia.estudiante', 'estudiante')
       .innerJoinAndSelect('asistencia.asignacionClase', 'asignacion')
       .innerJoinAndSelect('asignacion.materia', 'materia')
@@ -241,7 +257,10 @@ export class AsistenciasService {
       const start = new Date(fromDate);
       const end = new Date(toDate);
       end.setDate(end.getDate() + 1);
-      query.andWhere('asistencia.fecha_creacion BETWEEN :start AND :end', { start, end });
+      query.andWhere('asistencia.fecha_creacion BETWEEN :start AND :end', {
+        start,
+        end,
+      });
     }
 
     query.orderBy('asistencia.fecha_creacion', 'DESC');
@@ -269,19 +288,22 @@ export class AsistenciasService {
   ) {
     const fecha = new Date(fechaReferencia);
 
+    // setear hora por zona horaria
+    fecha.setHours(12, 0, 0, 0);
+
     const diaSemana = fecha.getDay();
-    const diffLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+
+    const diffLunes = diaSemana === 6 ? -6 : 1 - diaSemana;
 
     const lunes = new Date(fecha);
-
     lunes.setDate(fecha.getDate() + diffLunes);
     lunes.setHours(0, 0, 0, 0);
 
     const viernes = new Date(lunes);
-    viernes.setDate(lunes.getDate() + 5);
+    viernes.setDate(lunes.getDate() + 4);
     viernes.setHours(23, 59, 59, 999);
 
-    return await this.asistenciaRepository.find({
+    return this.asistenciaRepository.find({
       where: {
         estudiante: { id: idEstudiante },
         fecha_creacion: Between(lunes, viernes),

@@ -9,6 +9,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 @Module({
   imports: [TypeOrmModule.forFeature([Notificaciones, Estudiante, Personal])],
   controllers: [NotificacionesController],
-  providers: [NotificacionesService]
+  providers: [NotificacionesService],
 })
 export class NotificacionesModule {}

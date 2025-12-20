@@ -16,11 +16,11 @@ export class Usuarios {
   id: number;
 
   @OneToOne(() => Personal, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'idPersonal' }) // Esto crea la columna personal_id
+  @JoinColumn({ name: 'idPersonal' })
   personal: Personal;
 
   @ManyToOne(() => Roles, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'idRol' }) // Esto crea la columna rol_id
+  @JoinColumn({ name: 'idRol' })
   rol: Roles;
 
   @Column({ type: 'varchar', length: 150 })

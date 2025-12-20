@@ -31,7 +31,7 @@ export default function HorariosPage() {
   const cargarHorarios = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/horarios/MostrarHorarios"); // activas
+      const res = await api.get("/horarios/MostrarHorarios");
       setHorarios(res.data);
     } catch (err) {
       console.error(err);
@@ -43,7 +43,7 @@ export default function HorariosPage() {
 
   const cargarInactivas = async () => {
     try {
-      const res = await api.get("/horarios/mostrarHorariosInactivas"); // inactivas
+      const res = await api.get("/horarios/mostrarHorariosInactivas");
       setHorarios(res.data);
     } catch (err) {
       console.error(err);
@@ -86,14 +86,13 @@ export default function HorariosPage() {
           Horarios
         </Typography>
 
-        {/* Botón de crear */}
         <Boton
           label="Crear Horario"
+          color="success"
           onClick={() => setShowForm(true)}
           className="ml-2"
         />
 
-        {/* Formulario de creación */}
         {showForm && (
           <HorariosForm
             open={showForm}
@@ -102,7 +101,6 @@ export default function HorariosPage() {
           />
         )}
 
-        {/* Tabs */}
         <Tabs value={tab} onChange={handleChangeTab} sx={{ mb: 2 }}>
           <Tab label="Activas" value="activas" />
           <Tab label="Inactivas" value="inactivas" />

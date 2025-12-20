@@ -1,9 +1,23 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateEstudianteFullDto } from './dto/create-estudiante-full.dto';
 import { EstudianteService } from './estudiante.service';
 import { LoginEstudianteDto } from './dto/login-estudiante.dto';
+import { UpdateEstudianteDto } from './dto/update-estudiante.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+// Rutas Publicas
+import { Public } from 'src/auth/public.decorator';
 
+@UseGuards(JwtAuthGuard)
 @Controller('estudiante')
 export class EstudianteController {
   constructor(private readonly estudianteService: EstudianteService) {}
@@ -28,10 +42,23 @@ export class EstudianteController {
     return this.estudianteService.mostrarEstudiante(id);
   }
   @Post('login')
+  @Public()
   async login(@Body() loginDto: LoginEstudianteDto) {
     return this.estudianteService.login(
       loginDto.correo_institucional,
       loginDto.rude,
     );
+  }
+
+  @Put('editar/:id')
+  @ApiOperation({ summary: 'Editar estudiante' })
+  update(@Param('id') id: string, @Body() dto: UpdateEstudianteDto) {
+    return this.estudianteService.actualizar(+id, dto);
+  }
+
+  @Delete('eliminar/:id')
+  @ApiOperation({ summary: 'Eliminar estudiante (lógico)' })
+  remove(@Param('id') id: string) {
+    return this.estudianteService.eliminar(+id);
   }
 }

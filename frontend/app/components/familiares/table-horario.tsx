@@ -14,8 +14,7 @@ import {
 import { useEffect, useState } from "react";
 import { api } from "@/app/lib/api";
 
-//   Encabezados de Columnas y Filas
-const DIAS_SEMANA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
+const DIAS_SEMANA = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes"];
 
 
 interface Asignacion {
@@ -87,7 +86,7 @@ export default function TableHorario({ idEstudiante }: Props) {
   }, [idEstudiante]);
 
   return (
-    <TableContainer component={Paper} sx={{ mt: 4 }}>
+    <TableContainer component={Paper} sx={{ mt: 4, width: "95%", mx: "auto"}}>
       <Typography variant="h6" sx={{ p: 2 }}>
         Horario Académico
       </Typography>

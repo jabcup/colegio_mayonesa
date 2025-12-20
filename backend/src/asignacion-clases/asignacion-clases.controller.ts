@@ -7,12 +7,15 @@ import {
   Put,
   Param,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { AsignacionClasesService } from './asignacion-clases.service';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateAsignacionFulDto } from './dto/create-asignacion-full.dto';
 import { UpdateAsignacionFulDto } from './dto/update-asignacion-full.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('asignacion-clases')
 export class AsignacionClasesController {
   constructor(private readonly asignacionService: AsignacionClasesService) {}
@@ -30,6 +33,17 @@ export class AsignacionClasesController {
     return this.asignacionService.getMateriasPorDocenteYCurso(
       Number(idDocente),
       Number(idCurso),
+    );
+  }
+
+  @Get('materias-por-docente-curso-asignacion/:docenteId/:cursoId')
+  async materiasPorDocenteCursoAsignacion(
+    @Param('docenteId') docenteId: number,
+    @Param('cursoId') cursoId: number,
+  ) {
+    return await this.asignacionService.getMateriasPorDocenteYCursoAsignacion(
+      Number(docenteId),
+      Number(cursoId),
     );
   }
 
@@ -60,6 +74,12 @@ export class AsignacionClasesController {
     @Param('idPersonal', ParseIntPipe) idPersonal: number,
   ) {
     return this.asignacionService.getHorarioDocente(idPersonal);
+  }
+
+  @Get('curso/:idCurso')
+  @ApiOperation({ summary: 'Obtener horario de clases por curso' })
+  getAsignacionesPorCurso(@Param('idCurso') idCurso: number) {
+    return this.asignacionService.getAsignacionesPorCurso(Number(idCurso));
   }
 
   @Put('ActualizarAsignacion/:id')

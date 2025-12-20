@@ -6,12 +6,16 @@ import {
   Put,
   Delete,
   Param,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreatePersonalDto } from './dto/create-personal.dto';
 import { PersonalService } from './personal.service';
 import { CreatePersonalFullDto } from './dto/create-personal-full.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('personal')
 export class PersonalController {
   constructor(private readonly personalService: PersonalService) {}
@@ -43,6 +47,26 @@ export class PersonalController {
   @ApiOperation({ summary: 'Mostrar Personal Activo' })
   listarPersonalActivo() {
     return this.personalService.getPersonalActivo();
+  }
+
+  @Get('Docentes')
+  @ApiOperation({ summary: 'Obtener lista de docentes activos' })
+  getDocentes() {
+    return this.personalService.getDocentes();
+  }
+
+  @Get('DocentesDisponibles')
+  @ApiOperation({ summary: 'Docentes disponibles por día y horario' })
+  getDocentesDisponibles(
+    @Query('dia') dia: string,
+    @Query('idHorario') idHorario: number,
+    @Query('idAsignacionActual') idAsignacionActual?: number,
+  ) {
+    return this.personalService.getDocentesDisponibles(
+      dia,
+      Number(idHorario),
+      idAsignacionActual ? Number(idAsignacionActual) : undefined,
+    );
   }
 
   @Put('EditarPersonal/:id')

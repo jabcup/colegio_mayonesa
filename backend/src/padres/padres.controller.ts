@@ -6,12 +6,15 @@ import {
   Param,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreatePadreDto } from './dto/create-padre.dto';
 import { PadresService } from './padres.service';
 import { UpdatePadreDto } from './dto/update-padre.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('padres')
 export class PadresController {
   constructor(private readonly padresService: PadresService) {}
@@ -31,14 +34,14 @@ export class PadresController {
     return this.padresService.todos();
   }
 
-  @Put('editar:id')
+  @Put('editar/:id')
   @ApiOperation({ summary: 'Actualizar padre' })
   updatePadre(@Param('id') id: string, @Body() dto: UpdatePadreDto) {
     return this.padresService.actualizar(+id, dto);
   }
 
-  @Delete(':id')
-  @ApiOperation({ summary: 'Eliminar padre' })
+  @Delete('eliminar/:id')
+  @ApiOperation({ summary: 'Eliminar padre (lógico)' })
   eliminarPadre(@Param('id') id: string) {
     return this.padresService.eliminar(+id);
   }

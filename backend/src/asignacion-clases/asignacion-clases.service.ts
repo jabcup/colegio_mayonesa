@@ -1,3 +1,5 @@
+// src/asignacion-clases/asignacion-clases.service.ts
+
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Curso } from 'src/cursos/cursos.entity';
@@ -9,6 +11,9 @@ import { CreateAsignacionFulDto } from './dto/create-asignacion-full.dto';
 import { UpdateAsignacionFulDto } from './dto/update-asignacion-full.dto';
 import { Horarios } from 'src/horarios/horarios.entity';
 import { EstudianteCurso } from 'src/estudiante-curso/estudiante_curso.entity';
+
+// ← Importamos el service de notificaciones
+import { NotificacionesDocentesService } from 'src/notificaciones-docentes/notificaciones-docentes.service';
 
 @Injectable()
 export class AsignacionClasesService {
@@ -26,30 +31,83 @@ export class AsignacionClasesService {
     @InjectRepository(Horarios)
     private readonly horarioRepository: Repository<Horarios>,
     private dataSource: DataSource,
+
+    // ← Inyectamos el servicio de notificaciones
+    private readonly notiDocentesService: NotificacionesDocentesService,
   ) {}
+
   async createAsignacionFull(
     dtoAsignacion: CreateAsignacionFulDto,
   ): Promise<AsignacionClase> {
-    return this.asignacionRepository.save(
-      this.asignacionRepository.create({
-        dia: dtoAsignacion.dia,
-        personal: { id: dtoAsignacion.idPersonal },
-        curso: { id: dtoAsignacion.idCurso },
-        materia: { id: dtoAsignacion.idMateria },
-        horario: { id: dtoAsignacion.idHorario },
-      }),
+    // Validamos conflicto de horario
+    const conflicto = await this.existeConflictoDocente(
+      dtoAsignacion.idPersonal,
+      dtoAsignacion.dia,
+      dtoAsignacion.idHorario,
     );
+
+    if (conflicto > 0) {
+      throw new Error('El docente ya tiene una clase en ese horario');
+    }
+
+    // Creamos y guardamos la nueva asignación
+    const nuevaAsignacion = this.asignacionRepository.create({
+      dia: dtoAsignacion.dia,
+      personal: { id: dtoAsignacion.idPersonal },
+      curso: { id: dtoAsignacion.idCurso },
+      materia: { id: dtoAsignacion.idMateria },
+      horario: { id: dtoAsignacion.idHorario },
+    });
+
+    const asignacionGuardada = await this.asignacionRepository.save(nuevaAsignacion);
+
+    // === GENERAMOS NOTIFICACIÓN AUTOMÁTICA AL DOCENTE ===
+    try {
+      // Cargamos la asignación con todas las relaciones para tener los nombres
+      const asignacionCompleta = await this.asignacionRepository.findOne({
+        where: { id: asignacionGuardada.id },
+        relations: ['personal', 'curso', 'materia', 'horario'],
+      });
+
+      if (asignacionCompleta) {
+        const cursoNombre = `${asignacionCompleta.curso.nombre} ${asignacionCompleta.curso.paralelo || ''}`.trim();
+        const materiaNombre = asignacionCompleta.materia.nombre;
+        const horarioTexto = asignacionCompleta.horario.horario;
+        const dia = asignacionCompleta.dia;
+
+        const mensaje = `¡Nueva asignación de clase!\n\n` +
+          `• Curso: ${cursoNombre}\n` +
+          `• Materia: ${materiaNombre}\n` +
+          `• Día: ${dia}\n` +
+          `• Horario: ${horarioTexto}`;
+
+        // Enviamos la notificación al docente
+        await this.notiDocentesService.crearNotificacionAsignacion(
+          dtoAsignacion.idPersonal,
+          mensaje,
+          asignacionGuardada.id,
+        );
+      }
+    } catch (error) {
+      // Si falla la notificación, no rompemos la creación de la asignación
+      console.error('Error al crear notificación para docente:', error);
+      // Opcional: podrías lanzar un warning o loguearlo
+    }
+
+    return asignacionGuardada;
   }
+
   async getCursosPorDocente(idDocente: number) {
     return this.asignacionRepository
       .createQueryBuilder('asignacion')
       .leftJoin('asignacion.curso', 'curso')
       .leftJoin('asignacion.personal', 'personal')
+      .leftJoin('curso.paralelo', 'paralelo')
       .where('personal.id = :idDocente', { idDocente })
       .select([
         'curso.id AS id',
         'curso.nombre AS nombre',
-        'curso.paralelo AS paralelo',
+        'paralelo.nombre AS paralelo',
       ])
       .distinct(true)
       .getRawMany();
@@ -65,6 +123,25 @@ export class AsignacionClasesService {
       .andWhere('curso.id = :idCurso', { idCurso })
       .select(['materia.id AS id', 'materia.nombre AS nombre'])
       .distinct(true)
+      .getRawMany();
+  }
+
+  async getMateriasPorDocenteYCursoAsignacion(
+    idDocente: number,
+    idCurso: number,
+  ) {
+    return this.asignacionRepository
+      .createQueryBuilder('asignacion')
+      .leftJoin('asignacion.materia', 'materia')
+      .leftJoin('asignacion.personal', 'personal')
+      .leftJoin('asignacion.curso', 'curso')
+      .where('personal.id = :idDocente', { idDocente })
+      .andWhere('curso.id = :idCurso', { idCurso })
+      .select([
+        'asignacion.id AS idAsignacion',
+        'materia.id AS idMateria',
+        'materia.nombre AS nombre',
+      ])
       .getRawMany();
   }
 
@@ -93,7 +170,7 @@ export class AsignacionClasesService {
         horario: { horario: true },
       },
       where: { curso: { id: idCurso } },
-      relations: ['materia', 'horario', 'personal'], //Si se desea tener datos del docente se debe agregar personal al relation
+      relations: ['materia', 'horario', 'personal'],
     });
   }
 
@@ -117,52 +194,32 @@ export class AsignacionClasesService {
       const asignacion = await manager.findOne(AsignacionClase, {
         where: { id },
       });
+
       if (!asignacion) {
         throw new Error('Asignacion no encontrada');
       }
-      asignacion.dia = dto.dia || asignacion.dia;
+
+      asignacion.dia = dto.dia ?? asignacion.dia;
+
+      if (dto.idPersonal) {
+        asignacion.personal = { id: dto.idPersonal } as any;
+      }
+
+      if (dto.idCurso) {
+        asignacion.curso = { id: dto.idCurso } as any;
+      }
+
+      if (dto.idMateria) {
+        asignacion.materia = { id: dto.idMateria } as any;
+      }
+
+      if (dto.idHorario) {
+        asignacion.horario = { id: dto.idHorario } as any;
+      }
+
       return await manager.save(asignacion);
     });
   }
-
-  //     if (!docente) {
-  //       throw new Error('Docente no encontrado');
-  //     }
-
-  //     const curso = await manager.findOne(Curso, {
-  //       where: { id: dto.idCurso },
-  //     });
-
-  //     if (!curso) {
-  //       throw new Error('Curso no encontrado');
-  //     }
-
-  //     const materia = await manager.findOne(Materias, {
-  //       where: { id: dto.idMateria },
-  //     });
-
-  //     if (!materia) {
-  //       throw new Error('Materia no encontrado');
-  //     }
-
-  //     const horario = await manager.findOne(Horarios, {
-  //       where: { id: dto.idHorario },
-  //     });
-
-  //     if (!horario) {
-  //       throw new Error('Horario no encontrado');
-  //     }
-
-  //     return {
-  //       message: 'Asignacion de curso creado exitosamente',
-  //       asignacion: nuevaAsignacion,
-  //       docente: docente,
-  //       curso: curso,
-  //       materia: materia,
-  //       horario: horario,
-  //     };
-  //   });
-  // }
 
   async getHorarioDocente(idPersonal: number): Promise<AsignacionClase[]> {
     return this.asignacionRepository.find({
@@ -181,5 +238,45 @@ export class AsignacionClasesService {
     }
     asignacion.estado = 'inactivo';
     return await this.asignacionRepository.save(asignacion);
+  }
+
+  async getAsignacionesPorCurso(idCurso: number) {
+    return this.asignacionRepository
+      .createQueryBuilder('asignacion')
+      .leftJoin('asignacion.curso', 'curso')
+      .leftJoin('asignacion.personal', 'personal')
+      .leftJoin('asignacion.materia', 'materia')
+      .leftJoin('asignacion.horario', 'horario')
+      .where('curso.id = :idCurso', { idCurso })
+      .andWhere('asignacion.estado = :estado', { estado: 'activo' })
+      .select([
+        'asignacion.id AS idAsignacion',
+        'asignacion.dia AS dia',
+        'horario.id AS idHorario',
+        'horario.horario AS horario',
+        'personal.id AS idDocente',
+        "CONCAT(personal.nombres, ' ', personal.apellidoPat) AS docente",
+        'materia.id AS idMateria',
+        'materia.nombre AS materia',
+      ])
+      .orderBy('horario.id', 'ASC')
+      .addOrderBy('asignacion.dia', 'ASC')
+      .getRawMany();
+  }
+
+  async existeConflictoDocente(
+    idDocente: number,
+    dia: string,
+    idHorario: number,
+  ): Promise<number> {
+    return this.asignacionRepository
+      .createQueryBuilder('asignacion')
+      .innerJoin('asignacion.personal', 'personal')
+      .innerJoin('asignacion.horario', 'horario')
+      .where('personal.id = :idDocente', { idDocente })
+      .andWhere('asignacion.dia = :dia', { dia })
+      .andWhere('horario.id = :idHorario', { idHorario })
+      .andWhere('asignacion.estado = :estado', { estado: 'activo' })
+      .getCount();
   }
 }

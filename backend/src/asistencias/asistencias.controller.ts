@@ -7,11 +7,15 @@ import {
   Put,
   Delete,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { AsistenciasService } from './asistencias.service';
 import { CreateAsistenciaDto } from './dto/create-asistencia.dto';
 import { UpdateAsistenciaDto } from './dto/update-asistencia.dto';
+import { ApiOperation } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('asistencias')
 export class AsistenciasController {
   constructor(private readonly asistenciasService: AsistenciasService) {}
@@ -63,6 +67,20 @@ export class AsistenciasController {
       estudianteId ? +estudianteId : undefined,
       fromDate,
       toDate,
+    );
+  }
+
+  @Get('asistenciaSemanal/:idEstudiante/:fecha')
+  @ApiOperation({
+    summary: 'Obtener asistencia semanal de un estudiante',
+  })
+  async obtenerAsistenciaSemanal(
+    @Param('idEstudiante') idEstudiante: number,
+    @Param('fecha') fecha: Date,
+  ) {
+    return this.asistenciasService.obtenerAsistenciasSemanaLaboral(
+      idEstudiante,
+      fecha,
     );
   }
 }

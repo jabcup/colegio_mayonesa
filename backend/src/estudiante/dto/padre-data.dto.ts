@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class PadreDataDto {
   @ApiProperty({ example: 'Carlos', description: 'Nombres del padre' })
@@ -12,10 +12,14 @@ export class PadreDataDto {
   @IsNotEmpty()
   apellidoPat: string;
 
-  @ApiProperty({ example: 'López', description: 'Apellido materno del padre' })
+  @ApiProperty({
+    example: 'Gómez',
+    description: 'Apellido materno (opcional)',
+    required: false
+  })
+  @IsOptional() 
   @IsString()
-  @IsNotEmpty()
-  apellidoMat: string;
+  apellidoMat?: string;
 
   @ApiProperty({ example: '78965412', description: 'Teléfono del padre' })
   @IsString()

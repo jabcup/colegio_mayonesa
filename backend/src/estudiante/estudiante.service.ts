@@ -13,6 +13,7 @@ import { EstudianteTutor } from '../padre-estudiante/padreEstudiante.entity';
 import { Curso } from '../cursos/cursos.entity';
 import { EstudianteCurso } from 'src/estudiante-curso/estudiante_curso.entity';
 import { Pagos } from 'src/pagos/pagos.entity';
+import { UpdateEstudianteDto } from './dto/update-estudiante.dto';
 
 @Injectable()
 export class EstudianteService {
@@ -46,7 +47,9 @@ export class EstudianteService {
         }.${dto.apellidoPat.toLowerCase()}@mayonesa.estudiante.edu.bo`,
         rude: `R${dto.identificacion}${dto.nombres.charAt(0).toUpperCase()}${dto.apellidoPat.charAt(0).toUpperCase()}${(
           dto.apellidoMat || ''
-        ).charAt(0).toUpperCase()}`,
+        )
+          .charAt(0)
+          .toUpperCase()}`,
         direccion: dto.direccion,
         telefono_referencia: dto.telefono_referencia,
         fecha_nacimiento: dto.fecha_nacimiento,
@@ -83,7 +86,9 @@ export class EstudianteService {
       );
 
       // 4. ASIGNAR CURSO
-      const curso = await manager.findOne(Curso, { where: { id: dto.idCurso } });
+      const curso = await manager.findOne(Curso, {
+        where: { id: dto.idCurso },
+      });
       if (!curso) throw new NotFoundException('Curso no encontrado');
       await manager.save(
         manager.create(EstudianteCurso, {
@@ -132,7 +137,8 @@ export class EstudianteService {
     const estudiante = await this.estudianteRepository.findOne({
       where: { correo_institucional },
     });
-    if (!estudiante) throw new UnauthorizedException('Credenciales incorrectas');
+    if (!estudiante)
+      throw new UnauthorizedException('Credenciales incorrectas');
     if (estudiante.estado === 'inactivo')
       throw new UnauthorizedException('Cuenta inactiva');
     if (estudiante.rude !== rude)
@@ -144,5 +150,31 @@ export class EstudianteService {
         correo: estudiante.correo_institucional,
       },
     };
+  }
+
+  async actualizar(id: number, dto: UpdateEstudianteDto): Promise<Estudiante> {
+    const estudiante = await this.estudianteRepository.findOne({
+      where: { id },
+    });
+
+    if (!estudiante) {
+      throw new NotFoundException('Estudiante no encontrado');
+    }
+
+    Object.assign(estudiante, dto);
+    return this.estudianteRepository.save(estudiante);
+  }
+
+  async eliminar(id: number): Promise<void> {
+    const estudiante = await this.estudianteRepository.findOne({
+      where: { id },
+    });
+
+    if (!estudiante) {
+      throw new NotFoundException('Estudiante no encontrado');
+    }
+
+    estudiante.estado = 'inactivo';
+    await this.estudianteRepository.save(estudiante);
   }
 }

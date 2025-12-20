@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { CreatePersonalDto } from './dto/create-personal.dto';
 import { CreatePersonalFullDto } from './dto/create-personal-full.dto';
+import { UpdatePersonalDto } from './dto/update-personal.dto';
 import { Roles } from 'src/roles/roles.entity';
 import * as bcrypt from 'bcrypt';
 
@@ -34,9 +35,61 @@ export class PersonalService {
     return this.personalRepository.find({ where: { estado: 'activo' } });
   }
 
+  async getDocentes() {
+    return this.personalRepository
+      .createQueryBuilder('personal')
+      .innerJoin('usuarios', 'usuario', 'usuario.idPersonal = personal.id')
+      .innerJoin('roles', 'rol', 'rol.id = usuario.idRol')
+      .where('rol.nombre = :rol', { rol: 'Docente' })
+      .andWhere('personal.estado = :estado', { estado: 'activo' })
+      .andWhere('usuario.estado = :estadoUsuario', { estadoUsuario: 'activo' })
+      .select([
+        'personal.id AS id',
+        "CONCAT(personal.nombres, ' ', personal.apellidoPat) AS nombre",
+        'personal.correo AS correo',
+      ])
+      .orderBy('personal.apellidoPat', 'ASC')
+      .getRawMany();
+  }
+
+  async getDocentesDisponibles(
+    dia: string,
+    idHorario: number,
+    idAsignacionActual?: number,
+  ) {
+    const qb = this.personalRepository
+      .createQueryBuilder('personal')
+      .innerJoin('usuarios', 'usuario', 'usuario.idPersonal = personal.id')
+      .innerJoin('roles', 'rol', 'rol.id = usuario.idRol')
+      .where('rol.nombre = :rol', { rol: 'Docente' })
+      .andWhere('personal.estado = :estado', { estado: 'activo' })
+      .andWhere('usuario.estado = :estadoUsuario', { estadoUsuario: 'activo' });
+
+    qb.andWhere(`
+        personal.id NOT IN (
+        SELECT a.idPersonal
+        FROM asignacion_clases a
+        WHERE a.dia = :dia
+        AND a.idHorario = :idHorario
+        AND a.estado = 'activo'
+        ${idAsignacionActual ? 'AND a.id != :idAsignacionActual' : ''}
+      )
+      `);
+
+    qb.setParameters({ dia, idHorario, idAsignacionActual });
+    return qb
+
+      .select([
+        'personal.id AS id',
+        "CONCAT(personal.nombres,' ',personal.apellidoPat,' ',IFNULL(personal.apellidoMat,'')) AS nombre",
+      ])
+      .orderBy('personal.apellidoPat', 'ASC')
+      .getRawMany();
+  }
+
   async updatePersonal(
     id: number,
-    dtoPersonal: CreatePersonalDto,
+    dtoPersonal: UpdatePersonalDto,
   ): Promise<Personal> {
     const personal = await this.personalRepository.findOne({ where: { id } });
 
@@ -44,7 +97,6 @@ export class PersonalService {
       throw new Error('Personal no encontrado');
     }
 
-    // Mezcla los datos nuevos con los actuales
     Object.assign(personal, dtoPersonal);
 
     return this.personalRepository.save(personal);
@@ -61,8 +113,6 @@ export class PersonalService {
 
   async crearPersonalCompleto(dto: CreatePersonalFullDto) {
     return this.dataSource.transaction(async (manager) => {
-      // const personal = manager.create(Personal, dto);
-
       const personal = manager.create(Personal, {
         nombres: dto.nombres,
         apellidoPat: dto.apellidoPat,

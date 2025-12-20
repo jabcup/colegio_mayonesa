@@ -6,11 +6,14 @@ import {
   Param,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { CreateMateriaDto } from './dto/create-materia.dto';
 import { MateriasService } from './materias.service';
 import { ApiOperation } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('materias')
 export class MateriasController {
   constructor(private readonly materiaService: MateriasService) {}

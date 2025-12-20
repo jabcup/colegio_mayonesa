@@ -30,13 +30,22 @@ export default function LoginForm() {
         return;
       }
 
-      // ✅ COOKIES CON PATH CORRECTO
-      Cookies.set("usuario_id", usuario.id.toString(), { expires: 1, path: "/" });
-      Cookies.set("usuario_correo", usuario.correo ?? correo, { expires: 1, path: "/" });
+      Cookies.set("usuario_id", usuario.id.toString(), {
+        expires: 1,
+        path: "/",
+      });
+      Cookies.set("usuario_correo", usuario.correo ?? correo, {
+        expires: 1,
+        path: "/",
+      });
       Cookies.set("usuario_rol", usuario.rol, { expires: 1, path: "/" });
       Cookies.set("personal_id", usuario.idPersonal, { expires: 1, path: "/" });
 
-      // ✅ REDIRECCIÓN ABSOLUTA
+      Cookies.set("access_token", res.data.access_token, {
+        expires: 1,
+        path: "/",
+      });
+
       router.replace("/estudiante");
     } catch (err: any) {
       const serverMessage =
@@ -65,7 +74,9 @@ export default function LoginForm() {
         borderRadius: 2,
       }}
     >
-      <Typography variant="h5" align="center">Iniciar Sesión</Typography>
+      <Typography variant="h5" align="center">
+        Iniciar Sesión
+      </Typography>
 
       {error && <Alert severity="error">{error}</Alert>}
 

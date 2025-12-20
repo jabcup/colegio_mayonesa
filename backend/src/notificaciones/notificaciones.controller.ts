@@ -6,13 +6,16 @@ import {
   Param,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateNotificacionesDto } from './dto/create-notificaciones.dto';
 import { NotificacionesService } from './notificaciones.service';
 import { UpdateNotificacionesDto } from './dto/update-notificaciones.dto';
 import { Estudiante } from '../estudiante/estudiante.entity';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('notificaciones')
 export class NotificacionesController {
   constructor(private readonly notificacionesService: NotificacionesService) {}
