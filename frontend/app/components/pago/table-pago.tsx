@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState } from "react"
+import { useState } from "react";
 import {
   Button,
   Table,
@@ -15,89 +15,131 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogActions,
+  Typography,
   IconButton,
-} from "@mui/material"
-import CloseIcon from "@mui/icons-material/Close"
-import { api } from "@/app/lib/api"
-import DetallePago from "./detalle-pago"
-import FormPago from "./form-pago"
-import Cookies from "js-cookie"
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import { api } from "@/app/lib/api";
+import DetallePago from "./detalle-pago";
+import FormPago from "./form-pago";
+import Cookies from "js-cookie";
 
 interface Pago {
-  id: number
-  idEstudiante: number
-  nombreEstudiante: string
-  cantidad: number
-  descuento: number
-  total: number
-  deuda: "pendiente" | "cancelado"
-  concepto: string
-  fecha_creacion: string
-  estado: string
+  id: number;
+  idEstudiante: number;
+  nombreEstudiante: string;
+  cantidad: number;
+  descuento: number;
+  total: number;
+  deuda: "pendiente" | "cancelado";
+  concepto: string;
+  fecha_creacion: string;
+  estado: "activo" | "inactivo";
 }
 
 interface Props {
-  pagos: Pago[]
-  estudiantes: { id: number; nombres: string; apellidoPat: string }[]
+  pagos: Pago[];
+  estudiantes: { id: number; nombres: string; apellidoPat: string }[];
+  onUpdate?: () => void | Promise<void>; // ✅ Cambio: ya no recibe datos
 }
 
-export default function TablePagos({ pagos, estudiantes }: Props) {
-  const [pagoSeleccionado, setPagoSeleccionado] = useState<Pago | null>(null)
-  const [anioFiltro, setAnioFiltro] = useState("")
-  const [pagoAEditar, setPagoAEditar] = useState<Pago | undefined>()
+export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
+  const [pagoSeleccionado, setPagoSeleccionado] = useState<Pago | null>(null);
+  const [anioFiltro, setAnioFiltro] = useState("");
+  const [pagoAEditar, setPagoAEditar] = useState<Pago | undefined>();
 
-  const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(5)
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const personalId = Number(Cookies.get('personal_id') ?? 0)
+  const [confirm, setConfirm] = useState<{
+    open: boolean;
+    pagoId: number;
+    total: number;
+  }>({ open: false, pagoId: 0, total: 0 });
 
-  const visibles = pagos.filter(p => p.estado === 'activo')
+  const personalId = Number(Cookies.get("personal_id") ?? 0);
+
+  const visibles = pagos.filter((p) => p.estado === "activo");
   const filtered = anioFiltro
-    ? visibles.filter(p => new Date(p.fecha_creacion).getFullYear().toString() === anioFiltro)
-    : visibles
+    ? visibles.filter(
+        (p) =>
+          new Date(p.fecha_creacion).getFullYear().toString() === anioFiltro
+      )
+    : visibles;
 
-  const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+  const paginated = filtered.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
   const handleVer = async (pagoId: number) => {
     try {
-      const { data } = await api.get<Pago>(`/pagos/${pagoId}`)
-      setPagoSeleccionado(data)
+      const { data } = await api.get<Pago>(`/pagos/${pagoId}`);
+      setPagoSeleccionado(data);
     } catch {
-      alert("Error al cargar detalles")
+      alert("Error al cargar detalles");
     }
-  }
+  };
 
-  const handlePagar = async (pagoId: number) => {
+  const handlePagar = async () => {
+    const { pagoId } = confirm;
     try {
-      console.log(personalId)
-      console.log(pagoId)
-      await api.patch(`/pagos/pagar/${pagoId}`, { idpersonal: personalId })
-      alert("Pago realizado")
-      window.location.reload()
-    } catch {
-      alert("Error al pagar, debes ser un Cajero para poder realziar el pago")
-    }
-  }
+      console.log(personalId);
+      console.log(pagoId);
+      await api.patch(`/pagos/pagar/${pagoId}`, { idpersonal: personalId });
 
-  const handleActualizar = (p: Pago) => setPagoAEditar(p)
-  const handleCerrarForm = () => setPagoAEditar(undefined)
-  const handleRecargar = () => window.location.reload()
+      const pdfRes = await api.get(`/pagos/comprobante/${pagoId}`, {
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([pdfRes.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `comprobante-${pagoId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      setConfirm({ open: false, pagoId: 0, total: 0 });
+
+      await onUpdate?.();
+    } catch (e: any) {
+      alert(e.response?.data?.message || "Error al pagar");
+    }
+  };
+
+  const handleActualizar = (p: Pago) => setPagoAEditar(p);
+  const handleCerrarForm = () => setPagoAEditar(undefined);
 
   const handleEliminar = async (id: number) => {
-    if (!confirm("¿Confirma eliminar este pago?")) return
+    if (
+      typeof window === "undefined" ||
+      !window.confirm("¿Confirma eliminar este pago?")
+    )
+      return;
     try {
-      await api.delete(`/pagos/${id}`)
-      window.location.reload()
+      await api.delete(`/pagos/${id}`);
+      // ✅ Simplemente llamar a onUpdate para recargar
+      await onUpdate?.();
     } catch (e: any) {
-      alert(e.response?.data?.message || "Error al eliminar")
+      alert(e.response?.data?.message || "Error al eliminar");
     }
-  }
+  };
 
-  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage)
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10))
-    setPage(0)
-  }
+  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // ✅ Función para manejar la actualización y recargar datos
+  const handleActualizarYRecargar = async () => {
+    handleCerrarForm();
+    await onUpdate?.();
+  };
 
   return (
     <>
@@ -107,7 +149,7 @@ export default function TablePagos({ pagos, estudiantes }: Props) {
           type="number"
           placeholder="2025"
           value={anioFiltro}
-          onChange={e => setAnioFiltro(e.target.value)}
+          onChange={(e) => setAnioFiltro(e.target.value)}
           sx={{ width: 160 }}
         />
       </div>
@@ -131,22 +173,42 @@ export default function TablePagos({ pagos, estudiantes }: Props) {
               <TableRow key={p.id}>
                 <TableCell>{p.nombreEstudiante}</TableCell>
                 <TableCell>{p.concepto}</TableCell>
-                <TableCell>{new Date(p.fecha_creacion).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  {new Date(p.fecha_creacion).toLocaleDateString()}
+                </TableCell>
                 <TableCell>{p.cantidad}</TableCell>
                 <TableCell>{p.descuento}</TableCell>
                 <TableCell>{p.total}</TableCell>
                 <TableCell>{p.deuda}</TableCell>
                 <TableCell>
-                  <Button size="small" onClick={() => handleVer(p.id)}>Ver</Button>
+                  <Button size="small" onClick={() => handleVer(p.id)}>
+                    Ver
+                  </Button>
                   {p.deuda === "pendiente" && (
-                    <Button size="small" color="success" onClick={() => handlePagar(p.id)} sx={{ ml: 1 }}>
+                    <Button
+                      size="small"
+                      color="success"
+                      onClick={() =>
+                        setConfirm({ open: true, pagoId: p.id, total: p.total })
+                      }
+                      sx={{ ml: 1 }}
+                    >
                       Pagar
                     </Button>
                   )}
-                  <Button size="small" onClick={() => handleActualizar(p)} sx={{ ml: 1 }}>
+                  <Button
+                    size="small"
+                    onClick={() => handleActualizar(p)}
+                    sx={{ ml: 1 }}
+                  >
                     Actualizar
                   </Button>
-                  <Button size="small" color="error" onClick={() => handleEliminar(p.id)} sx={{ ml: 1 }}>
+                  <Button
+                    size="small"
+                    color="error"
+                    onClick={() => handleEliminar(p.id)}
+                    sx={{ ml: 1 }}
+                  >
                     Eliminar
                   </Button>
                 </TableCell>
@@ -168,7 +230,12 @@ export default function TablePagos({ pagos, estudiantes }: Props) {
       />
 
       {/* Modal para ver detalle */}
-      <Dialog open={!!pagoSeleccionado} onClose={() => setPagoSeleccionado(null)} maxWidth="md" fullWidth>
+      <Dialog
+        open={!!pagoSeleccionado}
+        onClose={() => setPagoSeleccionado(null)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>
           Detalle del pago
           <IconButton
@@ -180,12 +247,22 @@ export default function TablePagos({ pagos, estudiantes }: Props) {
           </IconButton>
         </DialogTitle>
         <DialogContent>
-          {pagoSeleccionado && <DetallePago pago={pagoSeleccionado} onClose={() => setPagoSeleccionado(null)} />}
+          {pagoSeleccionado && (
+            <DetallePago
+              pago={pagoSeleccionado}
+              onClose={() => setPagoSeleccionado(null)}
+            />
+          )}
         </DialogContent>
       </Dialog>
 
       {/* Modal para actualizar */}
-      <Dialog open={!!pagoAEditar} onClose={handleCerrarForm} maxWidth="md" fullWidth>
+      <Dialog
+        open={!!pagoAEditar}
+        onClose={handleCerrarForm}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>
           Actualizar pago
           <IconButton
@@ -201,12 +278,39 @@ export default function TablePagos({ pagos, estudiantes }: Props) {
             <FormPago
               estudiantes={estudiantes}
               pagoInicial={pagoAEditar}
-              onCreate={handleRecargar}
+              onCreate={handleActualizarYRecargar}
               onClose={handleCerrarForm}
             />
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Confirmación y descarga */}
+      <Dialog
+        open={confirm.open}
+        onClose={() => setConfirm({ open: false, pagoId: 0, total: 0 })}
+        maxWidth="xs"
+      >
+        <DialogTitle>Confirmar pago</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            Concepto: {pagos.find((p) => p.id === confirm.pagoId)?.concepto}
+          </Typography>
+          <Typography variant="h6" sx={{ mt: 1 }}>
+            Total: {confirm.total}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setConfirm({ open: false, pagoId: 0, total: 0 })}
+          >
+            Cancelar
+          </Button>
+          <Button variant="contained" onClick={handlePagar}>
+            Pagar y descargar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
-  )
+  );
 }

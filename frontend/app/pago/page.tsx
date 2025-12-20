@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button, TextField, Autocomplete } from "@mui/material"
+import { Button, TextField, Autocomplete, Dialog, DialogTitle, DialogContent, DialogActions, Typography } from "@mui/material"
 import TablePagos from "@/app/components/pago/table-pago"
 import FormPago from "@/app/components/pago/form-pago"
 import { api } from "@/app/lib/api"
@@ -24,37 +24,56 @@ export default function PagosPage() {
   })
   const [estudianteSel, setEstudianteSel] = useState<EstudianteOption | null>(null)
 
-  useEffect(() => {
-    Promise.all([
-      api.get("/pagos"),
-      api.get("/estudiante/MostrarEstudiantes"),
-    ]).then(([pagosRes, estRes]) => {
-      const estudiantes: EstudianteOption[] = estRes.data.map((e: any) => ({
-        id: e.id,
-        label: `${e.nombres} ${e.apellidoPat}`,
-        identificacion: e.identificacion,
-      }))
+  // Confirmaciones
+  const [confirmAnio, setConfirmAnio] = useState<{ open: boolean; ids: number[]; total: number }>({ open: false, ids: [], total: 0 })
+  const [confirmTrim, setConfirmTrim] = useState<{ open: boolean; ids: number[]; total: number }>({ open: false, ids: [], total: 0 })
+
+  const personalId = Number(Cookies.get("personal_id") ?? 0)
+
+  useEffect(() => { loadData() }, [])
+  
+  const loadData = async () => {
+    try {
+      const [pagosRes, estRes] = await Promise.all([
+        api.get("/pagos"),
+        api.get("/estudiante/MostrarEstudiantes"),
+      ])
+      const estudiantes: EstudianteOption[] = Array.isArray(estRes.data)
+        ? estRes.data.map((e: any) => ({
+            id: e.id,
+            label: `${e.nombres} ${e.apellidoPat}`,
+            identificacion: e.identificacion,
+          }))
+        : []
 
       const mapNombre = new Map(estudiantes.map(e => [e.id, e.label]))
       const mapId = new Map(estudiantes.map(e => [e.id, e.identificacion]))
 
-      setData({
-        estudiantes,
-        pagos: pagosRes.data.map((p: any) => ({
-          ...p,
-          nombreEstudiante: mapNombre.get(p.idEstudiante) || "Desconocido",
-          identificacion: mapId.get(p.idEstudiante),
-        })),
-      })
-    })
-  }, [])
+      const pagos = Array.isArray(pagosRes.data)
+        ? pagosRes.data.map((p: any) => ({
+            ...p,
+            nombreEstudiante: mapNombre.get(p.idEstudiante) || "Desconocido",
+            identificacion: mapId.get(p.idEstudiante),
+          }))
+        : []
+
+      setData({ estudiantes, pagos })
+    } catch {
+      setData({ estudiantes: [], pagos: [] })
+    }
+  }
+
+  // ✅ Función para manejar actualizaciones desde la tabla
+  const handleUpdate = async () => {
+    await loadData()
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => setBusqueda(busquedaTemp), 300)
     return () => clearTimeout(timer)
   }, [busquedaTemp])
 
-  const pagosFiltrados = data.pagos.filter(p => {
+  const pagosFiltrados = (data.pagos ?? []).filter(p => {
     if (busqueda === "") return true
     const q = busqueda.toLowerCase()
     return (
@@ -64,32 +83,87 @@ export default function PagosPage() {
     )
   })
 
-  const personalId = Number(Cookies.get("personal_id") ?? 0)
-
-  const handlePagarAnio = async () => {
+  /* ----------  PAGAR TRIMESTRE  ---------- */
+  const handlePagarTrimestre = async () => {
     if (!estudianteSel) return
+    const pendientes = data.pagos
+      .filter(p => p.idEstudiante === estudianteSel.id && p.deuda === 'pendiente' && p.tipo === 'mensual')
+      .sort((a, b) => a.anio - b.anio || a.mes - b.mes)
+      .slice(0, 3)
+
+    if (pendientes.length < 3) {
+      alert('No hay 3 mensualidades consecutivas pendientes')
+      return
+    }
+    const total = pendientes.reduce((s, p) => s + Number(p.cantidad), 0)
+    setConfirmTrim({ open: true, ids: pendientes.map(p => p.id), total })
+  }
+
+  const confirmarPagoTrimestre = async () => {
     try {
-      await api.patch(
-        `/pagos/estudiante/${estudianteSel.id}/pagar_ultima_gestion`,
-        { idpersonal: personalId }
-      )
-      alert("Año pagado")
-      window.location.reload()
-    } catch (error: any) {
-      alert(error.response?.data?.message || error.message)
+      await api.patch('/pagos/pagar-trimestre', { ids: confirmTrim.ids, idpersonal: personalId })
+
+      const pdfRes = await api.get(`/pagos/comprobante/${confirmTrim.ids[0]}`, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([pdfRes.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `comprobante-trimestre-${estudianteSel?.id}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+
+      setConfirmTrim({ open: false, ids: [], total: 0 })
+      setBusquedaTemp("")
+      setBusqueda("")
+      await loadData()
+    } catch (e: any) {
+      alert(e.response?.data?.message || 'Error al pagar trimestre')
     }
   }
 
+  /* ----------  PAGAR AÑO  ---------- */
+  const handlePagarAnio = async () => {
+    if (!estudianteSel) return
+    const pendientes = data.pagos
+      .filter(p => p.idEstudiante === estudianteSel.id && p.deuda === 'pendiente' && p.tipo === 'mensual')
+      .sort((a, b) => a.anio - b.anio || a.mes - b.mes)
+      .slice(0, 10)
+
+    if (pendientes.length < 10) {
+      alert('No hay 10 mensualidades pendientes para aplicar el descuento anual')
+      return
+    }
+    const total = pendientes.reduce((s, p) => s + Number(p.cantidad), 0)
+    setConfirmAnio({ open: true, ids: pendientes.map(p => p.id), total })
+  }
+
+  const confirmarPagoAnio = async () => {
+    try {
+      await api.patch('/pagos/pagar-anio', { ids: confirmAnio.ids, idpersonal: personalId })
+
+      const pdfRes = await api.get(`/pagos/comprobante/${confirmAnio.ids[0]}`, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([pdfRes.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `comprobante-anio-${estudianteSel?.id}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+
+      setConfirmAnio({ open: false, ids: [], total: 0 })
+      setBusquedaTemp("")
+      setBusqueda("")
+      await loadData()
+    } catch (e: any) {
+      alert(e.response?.data?.message || 'Error al pagar año')
+    }
+  }
+
+  /* ----------  CREAR PAGO  ---------- */
   const handleCreate = async () => {
-    const { data: pagos } = await api.get("/pagos")
-    const map = new Map(data.estudiantes.map(e => [e.id, e.label]))
-    setData(prev => ({
-      ...prev,
-      pagos: pagos.map((p: any) => ({
-        ...p,
-        nombreEstudiante: map.get(p.idEstudiante) || "Desconocido",
-      })),
-    }))
+    await loadData()
     setShowForm(false)
   }
 
@@ -117,9 +191,7 @@ export default function PagosPage() {
             options={data.estudiantes}
             value={estudianteSel}
             onChange={(e, v) => setEstudianteSel(v)}
-            getOptionLabel={(o) =>
-              `${o.label} | CI: ${o.identificacion}`
-            }
+            getOptionLabel={(o) => `${o.label} | CI: ${o.identificacion}`}
             filterOptions={(options, { inputValue }) => {
               const q = inputValue.toLowerCase()
               return options.filter(o =>
@@ -132,12 +204,11 @@ export default function PagosPage() {
               <TextField {...params} label="Estudiante (nombre o CI)" sx={{ width: 350 }} />
             )}
           />
-          <Button
-            variant="outlined"
-            onClick={handlePagarAnio}
-            disabled={!estudianteSel}
-          >
-            Pagar año actual
+          <Button variant="outlined" onClick={handlePagarTrimestre} disabled={!estudianteSel}>
+            Pagar trimestre
+          </Button>
+          <Button variant="outlined" onClick={handlePagarAnio} disabled={!estudianteSel}>
+            Pagar año
           </Button>
         </div>
 
@@ -149,9 +220,39 @@ export default function PagosPage() {
           />
         )}
 
-        <TablePagos pagos={pagosFiltrados} estudiantes={data.estudiantes} />
+        {/* ✅ Cambio: pasar handleUpdate en lugar de setData */}
+        <TablePagos 
+          pagos={pagosFiltrados} 
+          estudiantes={data.estudiantes} 
+          onUpdate={handleUpdate} 
+        />
+
+        {/* Confirmación pago trimestre */}
+        <Dialog open={confirmTrim.open} onClose={() => setConfirmTrim({ open: false, ids: [], total: 0 })} maxWidth="xs">
+          <DialogTitle>Confirmar pago trimestre</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2">Se cancelarán 3 mensualidades</Typography>
+            <Typography variant="h6" sx={{ mt: 1 }}>Total: {confirmTrim.total}</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmTrim({ open: false, ids: [], total: 0 })}>Cancelar</Button>
+            <Button variant="contained" onClick={confirmarPagoTrimestre}>Pagar y descargar</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Confirmación pago anual */}
+        <Dialog open={confirmAnio.open} onClose={() => setConfirmAnio({ open: false, ids: [], total: 0 })} maxWidth="xs">
+          <DialogTitle>Confirmar pago anual</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2">Se cancelarán 10 mensualidades</Typography>
+            <Typography variant="h6" sx={{ mt: 1 }}>Total: {confirmAnio.total}</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmAnio({ open: false, ids: [], total: 0 })}>Cancelar</Button>
+            <Button variant="contained" onClick={confirmarPagoAnio}>Pagar y descargar</Button>
+          </DialogActions>
+        </Dialog>
       </div>
     </>
   )
 }
-

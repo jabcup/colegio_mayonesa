@@ -10,22 +10,28 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  Injectable,
+  PipeTransform,
+  BadRequestException,
+  ForbiddenException,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PagosService } from './pagos.service';
+import { PagosComprobanteService } from './pagos-comprobante.service';
 import { CreatePagoDto } from './dto/create-pago.dto';
 import { UpdatePagoDto } from './dto/update-pago.dto';
 import { PagoResponseDto } from './dto/response-pago.dto';
-import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
-import { PersonalService } from 'src/personal/personal.service';
 import { UsuariosService } from 'src/usuarios/usuarios.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Usuarios } from 'src/usuarios/usuarios.entity';
-import { ForbiddenException } from '@nestjs/common';
+
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
-class SoloIdPersonal implements PipeTransform {
+@Injectable()
+class SoloIdPersonalPipe implements PipeTransform {
   transform(value: any) {
     const keys = Object.keys(value);
     if (keys.length !== 1 || keys[0] !== 'idpersonal')
@@ -51,6 +57,7 @@ async function esCajero(
     .leftJoinAndSelect('u.rol', 'r')
     .where('u.idPersonal = :id', { id: idPersonal })
     .getOne();
+
   return usuario?.rol?.nombre === 'Cajero' && usuario.estado === 'activo';
 }
 
@@ -60,6 +67,7 @@ async function esCajero(
 export class PagosController {
   constructor(
     private readonly service: PagosService,
+    private readonly comprobanteService: PagosComprobanteService,
     private readonly usuariosService: UsuariosService,
     @InjectRepository(Usuarios)
     private readonly usuariosRepo: Repository<Usuarios>,
@@ -89,18 +97,93 @@ export class PagosController {
   }
 
   @Patch('pagar/:id')
-  @ApiOperation({ summary: 'Pagar (cancelar) un pago' })
+  @ApiOperation({ summary: 'Pagar (cancelar) uno o varios pagos' })
   @ApiBody({ schema: { example: { idpersonal: 123 } } })
   async pagar(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: SoloIdPersonalBody,
+
+    @Body(SoloIdPersonalPipe) dto: SoloIdPersonalBody,
   ): Promise<{ ok: boolean }> {
     if (!(await esCajero(this.usuariosRepo, dto.idpersonal))) {
       throw new ForbiddenException('El personal no es cajero o no está activo');
     }
 
-    await this.service.pagar(id, dto);
+    await this.service.pagar([id], dto.idpersonal);
+
     return { ok: true };
+  }
+
+  @Patch('pagar-trimestre')
+  @ApiOperation({
+    summary: 'Pagar un trimestre completo (3 mensualidades con 4% descuento)',
+  })
+  @ApiBody({
+    schema: {
+      example: { ids: [4, 5, 6], idpersonal: 123 },
+      properties: {
+        ids: { type: 'array', items: { type: 'number' } },
+        idpersonal: { type: 'number' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Resumen de la operación',
+    schema: {
+      example: {
+        message: 'Se marcaron como cancelados 3 pagos.',
+        updatedCount: 3,
+      },
+    },
+  })
+  async pagarTrimestre(
+    @Body('ids') ids: number[],
+    @Body('idpersonal') idpersonal: number,
+  ) {
+    return this.service.pagarTrimestre(ids, idpersonal);
+  }
+
+  @Patch('estudiante/:estudianteId/pagar-anio')
+  @ApiOperation({
+    summary:
+      'Pagar todas las mensualidades pendientes del estudiante (descuento 10% si son 10)',
+  })
+  @ApiBody({ schema: { example: { idpersonal: 123 } } })
+  @ApiResponse({
+    status: 200,
+    description: 'Resumen de la operación',
+    schema: {
+      example: {
+        message: 'Se marcaron como cancelados X pagos.',
+        updatedCount: 10,
+      },
+    },
+  })
+  async pagarAnio(
+    @Param('estudianteId', ParseIntPipe) estudianteId: number,
+    @Body('idpersonal') idpersonal: number,
+  ) {
+    return this.service.pagarAnio(estudianteId, idpersonal);
+  }
+
+  @Get('comprobante/:id')
+  @ApiOperation({ summary: 'Descargar comprobante PDF de un pago' })
+  @ApiResponse({ status: 200, description: 'PDF del comprobante' })
+  async comprobante(
+    @Param('id', ParseIntPipe) id: number,
+    @Res() res: Response,
+  ) {
+    const pagoEntity = await this.service.findOneRaw(id);
+    if (pagoEntity.deuda !== 'cancelado') {
+      throw new BadRequestException('El pago no está cancelado');
+    }
+    const pdf = await this.comprobanteService.generar(pagoEntity);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="comprobante-${id}.pdf"`,
+      'Content-Length': pdf.length,
+    });
+    res.end(pdf);
   }
 
   @Patch(':id')
@@ -126,18 +209,8 @@ export class PagosController {
       },
     },
   })
-  async pagarUltimaGestion(
-    @Param('idEstudiante', ParseIntPipe) idEstudiante: number,
-    @Body(SoloIdPersonal) dto: SoloIdPersonalBody,
-  ): Promise<{ message: string; updatedCount: number }> {
-    if (!(await esCajero(this.usuariosRepo, dto.idpersonal))) {
-      throw new ForbiddenException('El personal no es cajero o no está activo');
-    }
-    return this.service.pagarUltimaGestion(idEstudiante, dto.idpersonal);
-  }
-
   @Delete(':id')
-  @ApiOperation({ summary: 'Eliminación de un pago de la base de datos' })
+  @ApiOperation({ summary: 'Eliminación lógica de un pago' })
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.service.remove(id);

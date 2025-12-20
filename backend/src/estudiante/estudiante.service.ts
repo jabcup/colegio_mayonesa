@@ -35,6 +35,7 @@ export class EstudianteService {
 
   async createEstudianteFull(dto: CreateEstudianteFullDto) {
     return this.dataSource.transaction(async (manager) => {
+
       if (dto.idPadre && dto.padreData) {
         throw new BadRequestException(
           'Envía solo idPadre o padreData, no ambos',
@@ -54,16 +55,23 @@ export class EstudianteService {
         );
       }
 
+
+      // 1. CREAR ESTUDIANTE
+
       const estudiante = manager.create(Estudiante, {
         nombres: dto.nombres,
         apellidoPat: dto.apellidoPat,
-        apellidoMat: dto.apellidoMat,
+        apellidoMat: dto.apellidoMat, // nullable
         identificacion: dto.identificacion,
         correo: dto.correo,
         correo_institucional: `${
           dto.nombres.toLowerCase().split(' ')[0]
         }.${dto.apellidoPat.toLowerCase()}@mayonesa.estudiante.edu.bo`,
-        rude: `R${dto.identificacion}${dto.nombres[0]}${dto.apellidoPat[0]}${dto.apellidoMat[0]}`,
+
+        rude: `R${dto.identificacion}${dto.nombres.charAt(0).toUpperCase()}${dto.apellidoPat.charAt(0).toUpperCase()}${(
+          dto.apellidoMat || ''
+        ).charAt(0).toUpperCase()}`,
+
         direccion: dto.direccion,
         telefono_referencia: dto.telefono_referencia,
         fecha_nacimiento: dto.fecha_nacimiento,
@@ -73,16 +81,12 @@ export class EstudianteService {
 
       const nuevoEstudiante = await manager.save(estudiante);
 
-      let padre: Padres;
 
+      // 2. OBTENER O CREAR PADRE
+      let padre;
       if (dto.idPadre) {
-        padre = await manager.findOne(Padres, {
-          where: { id: dto.idPadre },
-        });
-
-        if (!padre) {
-          throw new NotFoundException('Padre no encontrado');
-        }
+        padre = await manager.findOne(Padres, { where: { id: dto.idPadre } });
+        if (!padre) throw new NotFoundException('Padre no encontrado');
       } else {
         padre = await manager.save(manager.create(Padres, dto.padreData));
       }
@@ -95,36 +99,32 @@ export class EstudianteService {
         }),
       );
 
-      const curso = await manager.findOne(Curso, {
-        where: { id: dto.idCurso },
-      });
-
-      if (!curso) {
-        throw new NotFoundException('Curso no encontrado');
-      }
-
+      // 4. ASIGNAR CURSO
+      const curso = await manager.findOne(Curso, { where: { id: dto.idCurso } });
+      if (!curso) throw new NotFoundException('Curso no encontrado');
       await manager.save(
         manager.create(EstudianteCurso, {
           estudiante: nuevoEstudiante,
-          curso,
+          curso: curso,
         }),
       );
 
-      const pagos = [];
-
+      // 5. GENERAR PAGOS (10 mensualidades)
+      const pagosGenerados: Pagos[] = [];
+      const anioActual = new Date().getFullYear();
       for (let i = 1; i <= 10; i++) {
-        pagos.push(
-          await manager.save(
-            manager.create(Pagos, {
-              estudiante: nuevoEstudiante,
-              cantidad: 800,
-              descuento: 0,
-              concepto: 'Mensualidad',
-              total: 800,
-              numero_pago: i,
-            }),
-          ),
-        );
+        const pago = manager.create(Pagos, {
+          estudiante: nuevoEstudiante,
+          cantidad: 800,
+          descuento: 0,
+          total: 800,
+          concepto: `Mensualidad ${i}/10`,
+          deuda: 'pendiente',
+          anio: anioActual,
+          mes: i as any,
+          tipo: 'mensual',
+        });
+        pagosGenerados.push(await manager.save(pago));
       }
 
       return {
@@ -149,17 +149,13 @@ export class EstudianteService {
     const estudiante = await this.estudianteRepository.findOne({
       where: { correo_institucional },
     });
-    if (!estudiante) {
-      throw new UnauthorizedException('Credenciales incorrectas');
-    }
-    if (estudiante.estado === 'inactivo') {
+    if (!estudiante) throw new UnauthorizedException('Credenciales incorrectas');
+    if (estudiante.estado === 'inactivo')
       throw new UnauthorizedException('Cuenta inactiva');
-    }
-    if (estudiante.rude !== rude) {
+    if (estudiante.rude !== rude)
       throw new UnauthorizedException('Credenciales incorrectas');
-    }
     return {
-      message: 'Inicio de sesión exitoso',
+      message: 'Inicio de sesión exitoso',
       estudiante: {
         id: estudiante.id,
         correo: estudiante.correo_institucional,
