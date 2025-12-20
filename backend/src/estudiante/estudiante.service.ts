@@ -35,7 +35,6 @@ export class EstudianteService {
 
   async createEstudianteFull(dto: CreateEstudianteFullDto) {
     return this.dataSource.transaction(async (manager) => {
-      // 1. CREAR ESTUDIANTE
       const estudiante = manager.create(Estudiante, {
         nombres: dto.nombres,
         apellidoPat: dto.apellidoPat,
@@ -45,11 +44,13 @@ export class EstudianteService {
         correo_institucional: `${
           dto.nombres.toLowerCase().split(' ')[0]
         }.${dto.apellidoPat.toLowerCase()}@mayonesa.estudiante.edu.bo`,
+
         rude: `R${dto.identificacion}${dto.nombres.charAt(0).toUpperCase()}${dto.apellidoPat.charAt(0).toUpperCase()}${(
           dto.apellidoMat || ''
         )
           .charAt(0)
           .toUpperCase()}`,
+
         direccion: dto.direccion,
         telefono_referencia: dto.telefono_referencia,
         fecha_nacimiento: dto.fecha_nacimiento,
