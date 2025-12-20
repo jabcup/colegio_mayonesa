@@ -279,12 +279,13 @@ export class PagosService {
     });
     if (!p) throw new NotFoundException('Pago no encontrado');
     return p;
+    }
 // =======
-//   async obtenerPagosPorEstudiante(idEstudiante: number): Promise<Pagos[]> {
-//     return this.repo.find({
-//       where: { estudiante: { id: idEstudiante }, estado: 'activo' },
-//       relations: ['estudiante', 'personal'],
-//     });
+  async obtenerPagosPorEstudiante(idEstudiante: number): Promise<Pagos[]> {
+    return this.repo.find({
+      where: { estudiante: { id: idEstudiante }, estado: 'activo' },
+      relations: ['estudiante', 'personal'],
+    });
 // >>>>>>> charu
   }
 }

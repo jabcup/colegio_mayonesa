@@ -88,6 +88,7 @@ export class PagosController {
   @ApiOperation({ summary: 'Obtener la lista de pagos por estudiante' })
   async obtenerPagosPorEstudiante(@Param('idEstudiante') idEstudiante: number) {
     return this.service.obtenerPagosPorEstudiante(idEstudiante);
+    // return this.service.obtenerPagosPorEstudiante(idEstudiante);
   }
   @Get(':id')
   @ApiOperation({ summary: 'Obtener un pago en específico' })
