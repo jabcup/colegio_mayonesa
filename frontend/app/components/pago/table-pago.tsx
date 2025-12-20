@@ -41,7 +41,7 @@ interface Pago {
 interface Props {
   pagos: Pago[]
   estudiantes: { id: number; nombres: string; apellidoPat: string }[]
-  onUpdate?: () => void | Promise<void>  // ✅ Cambio: ya no recibe datos
+  onUpdate?: () => void | Promise<void> 
 }
 
 export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
@@ -89,7 +89,6 @@ export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
 
       setConfirm({ open: false, pagoId: 0, total: 0 })
       
-      // ✅ Recargar datos
       await onUpdate?.()
     } catch (e: any) {
       alert(e.response?.data?.message || 'Error al pagar')
@@ -103,7 +102,6 @@ export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
     if (typeof window === 'undefined' || !window.confirm('¿Confirma eliminar este pago?')) return
     try {
       await api.delete(`/pagos/${id}`)
-      // ✅ Simplemente llamar a onUpdate para recargar
       await onUpdate?.()
     } catch (e: any) {
       alert(e.response?.data?.message || 'Error al eliminar')
@@ -116,7 +114,6 @@ export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
     setPage(0)
   }
 
-  // ✅ Función para manejar la actualización y recargar datos
   const handleActualizarYRecargar = async () => {
     handleCerrarForm()
     await onUpdate?.()

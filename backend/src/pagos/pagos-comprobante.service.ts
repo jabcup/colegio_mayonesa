@@ -2,10 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Pagos } from './pagos.entity';
 import * as PdfMake from 'pdfmake/build/pdfmake';
 
-// ✅ Importar correctamente - el VFS está directamente en el módulo
 const pdfFonts = require('pdfmake/build/vfs_fonts');
 
-// ✅ Asignar directamente el vfs (no pdfMake.vfs)
 (PdfMake as any).vfs = pdfFonts.vfs || pdfFonts;
 
 @Injectable()

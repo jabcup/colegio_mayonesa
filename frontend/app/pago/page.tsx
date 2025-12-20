@@ -24,7 +24,6 @@ export default function PagosPage() {
   })
   const [estudianteSel, setEstudianteSel] = useState<EstudianteOption | null>(null)
 
-  // Confirmaciones
   const [confirmAnio, setConfirmAnio] = useState<{ open: boolean; ids: number[]; total: number }>({ open: false, ids: [], total: 0 })
   const [confirmTrim, setConfirmTrim] = useState<{ open: boolean; ids: number[]; total: number }>({ open: false, ids: [], total: 0 })
 
@@ -63,7 +62,6 @@ export default function PagosPage() {
     }
   }
 
-  // ✅ Función para manejar actualizaciones desde la tabla
   const handleUpdate = async () => {
     await loadData()
   }
@@ -83,7 +81,6 @@ export default function PagosPage() {
     )
   })
 
-  /* ----------  PAGAR TRIMESTRE  ---------- */
   const handlePagarTrimestre = async () => {
     if (!estudianteSel) return
     const pendientes = data.pagos
@@ -122,7 +119,6 @@ export default function PagosPage() {
     }
   }
 
-  /* ----------  PAGAR AÑO  ---------- */
   const handlePagarAnio = async () => {
     if (!estudianteSel) return
     const pendientes = data.pagos
@@ -161,7 +157,6 @@ export default function PagosPage() {
     }
   }
 
-  /* ----------  CREAR PAGO  ---------- */
   const handleCreate = async () => {
     await loadData()
     setShowForm(false)
@@ -220,14 +215,12 @@ export default function PagosPage() {
           />
         )}
 
-        {/* ✅ Cambio: pasar handleUpdate en lugar de setData */}
         <TablePagos 
           pagos={pagosFiltrados} 
           estudiantes={data.estudiantes} 
           onUpdate={handleUpdate} 
         />
 
-        {/* Confirmación pago trimestre */}
         <Dialog open={confirmTrim.open} onClose={() => setConfirmTrim({ open: false, ids: [], total: 0 })} maxWidth="xs">
           <DialogTitle>Confirmar pago trimestre</DialogTitle>
           <DialogContent>
@@ -240,7 +233,6 @@ export default function PagosPage() {
           </DialogActions>
         </Dialog>
 
-        {/* Confirmación pago anual */}
         <Dialog open={confirmAnio.open} onClose={() => setConfirmAnio({ open: false, ids: [], total: 0 })} maxWidth="xs">
           <DialogTitle>Confirmar pago anual</DialogTitle>
           <DialogContent>

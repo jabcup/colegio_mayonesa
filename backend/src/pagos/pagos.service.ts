@@ -14,7 +14,6 @@ export class PagosService {
     private readonly repo: Repository<Pagos>,
   ) {}
 
-  /*  ----  CRUD básico  ----  */
   async create(dto: CreatePagoDto): Promise<PagoResponseDto> {
     const p = this.repo.create({
       estudiante: { id: dto.idEstudiante },
@@ -64,7 +63,6 @@ export class PagosService {
     await this.repo.update(id, { estado: 'inactivo' });
   }
 
-  /*  ----  UTILS  ----  */
   private async primeraPendiente(estudianteId: number): Promise<Pagos | null> {
     return this.repo.findOne({
       where: { estudiante: { id: estudianteId }, deuda: 'pendiente', tipo: 'mensual' },
@@ -82,21 +80,17 @@ export class PagosService {
     const esMensual = pendientes.every((p) => p.tipo === 'mensual');
     
     if (esMensual) {
-      // ✅ Descuento trimestral: 4%
       if (esTrimestre && pendientes.length === 3) {
         descuento = Number((subTotal * 0.04).toFixed(2));
       }
-      // ✅ Descuento anual: 10% solo si son exactamente 10 mensualidades
       else if (!esTrimestre && pendientes.length === 10) {
         descuento = Number((subTotal * 0.1).toFixed(2));
       }
-      // Si son menos de 10 en pago anual: descuento = 0
     }
 
     return { subTotal, descuento, total: Number((subTotal - descuento).toFixed(2)) };
   }
 
-  /*  ----  NEGOCIO  ----  */
   async pagar(ids: number[], idPersonal: number, esTrimestre: boolean = false) {
     if (!ids.length) throw new BadRequestException('Faltan ids');
 
@@ -110,13 +104,11 @@ export class PagosService {
 
     const estudianteId = pendientes[0].estudiante.id;
 
-    // 1. La PRIMERA que se quiere pagar DEBE ser la más antigua
     const primera = await this.primeraPendiente(estudianteId);
     if (!primera) throw new BadRequestException('No hay mensualidades pendientes');
     if (primera.id !== pendientes[0].id)
       throw new BadRequestException('Debe empezar por la mensualidad pendiente más antigua');
 
-    // 2. Validar que los meses A PAGAR sean consecutivos entre sí
     const meses = pendientes.map(p => ({ anio: p.anio, mes: p.mes })).sort((a, b) => {
       if (a.anio !== b.anio) return a.anio - b.anio;
       return a.mes - b.mes;
@@ -130,7 +122,6 @@ export class PagosService {
         throw new BadRequestException('Los meses a pagar deben ser consecutivos entre sí');
     }
 
-    // 3. Aplicar descuento y cancelar
     const { descuento } = await this.previewPago(ids, esTrimestre);
     const now = new Date();
 
@@ -156,7 +147,6 @@ export class PagosService {
       await this.repo.findOneOrFail({ where: { id: ids[0] }, relations: ['estudiante'] })
     ).estudiante.id;
 
-    // Obtener las 3 mensualidades pendientes más antiguas
     const tres = await this.repo.find({
       where: { estudiante: { id: estudianteId }, deuda: 'pendiente', tipo: 'mensual' },
       order: { anio: 'ASC', mes: 'ASC' },
@@ -165,7 +155,6 @@ export class PagosService {
     if (tres.length < 3)
       throw new BadRequestException('No hay 3 mensualidades pendientes para formar un trimestre');
 
-    // Verificar que los ids enviados sean ESAS 3
     const esperados = tres.map((p) => p.id).sort((a, b) => a - b);
     const recibidos = ids.sort((a, b) => a - b);
     if (esperados.join(',') !== recibidos.join(','))
@@ -173,12 +162,10 @@ export class PagosService {
         'Los ids deben ser las 3 mensualidades pendientes más antiguas y consecutivas',
       );
 
-    // ✅ Pasar true para indicar que es trimestre
     return this.pagar(ids, idPersonal, true);
   }
 
   async pagarAnio(estudianteId: number, idPersonal: number) {
-    // ✅ Obtener TODAS las mensualidades pendientes (sin límite)
     const pendientes = await this.repo.find({
       where: { estudiante: { id: estudianteId }, deuda: 'pendiente', tipo: 'mensual' },
       order: { anio: 'ASC', mes: 'ASC' },
@@ -187,12 +174,9 @@ export class PagosService {
     if (pendientes.length === 0)
       throw new BadRequestException('No hay mensualidades pendientes');
     
-    // ✅ Permitir pagar todas las pendientes, sin importar si son menos de 10
-    // El descuento del 10% solo se aplica si son exactamente 10
     return this.pagar(pendientes.map(p => p.id), idPersonal, false);
   }
 
-  /*  ----  MAPPER  ----  */
   private toResponse(p: Pagos): PagoResponseDto {
     return {
       id: p.id,
