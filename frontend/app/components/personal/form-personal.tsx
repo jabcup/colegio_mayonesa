@@ -26,6 +26,7 @@ interface Personal {
   direccion: string;
   correo: string;
   fecha_nacimiento: string;
+  idRol: number;
 }
 
 const defaultValues: Personal = {
@@ -38,6 +39,7 @@ const defaultValues: Personal = {
   direccion: "",
   correo: "",
   fecha_nacimiento: "",
+  idRol: 1,
 };
 
 export default function PersonalForm({
@@ -97,10 +99,7 @@ export default function PersonalForm({
       const { id, fecha_creacion, estado, ...payload } = form;
       isEdit
         ? await api.put(`/personal/EditarPersonal/${form.id}`, payload)
-        : await api.post("/personal/CrearPersonalCompleto", {
-            ...payload,
-            idRol: roles[0]?.id || 1,
-          });
+        : await api.post("/personal/CrearPersonalCompleto", payload);
       alert(isEdit ? "Personal actualizado" : "Personal creado");
       onClose ? onClose() : router.back();
     } catch (e: any) {

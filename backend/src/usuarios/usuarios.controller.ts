@@ -37,6 +37,7 @@ export class UsuariosController {
     return this.usuariosService.updateCorreoUsuario(id, updateCorreoUsuarioDto);
   }
 
+  @Public()
   @Put('actualizarContrasena/:id')
   @ApiOperation({ summary: 'Actualizar la clave de un usuario' })
   updateContrasenaUsuario(
