@@ -9,8 +9,12 @@ import {
   TableContainer,
   Paper,
   Typography,
+  FormControl,
+  Select,
+  MenuItem,
+  Box,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "@/app/lib/api";
 
 interface Pago {
@@ -19,6 +23,7 @@ interface Pago {
   total: string;
   deuda: "pendiente" | "realizado";
   concepto: string;
+  fecha_pago: string;
 }
 
 interface Props {
@@ -30,8 +35,11 @@ const COLORES_PAGO: Record<string, string> = {
   realizado: "#C8E6C9",
 };
 
+type FiltroConcepto = "todos" | "mensualidad" | "otros";
+
 export default function TablePagosEstudiante({ idEstudiante }: Props) {
   const [pagos, setPagos] = useState<Pago[]>([]);
+  const [filtro, setFiltro] = useState<FiltroConcepto>("todos");
 
   useEffect(() => {
     if (!idEstudiante) return;
@@ -48,11 +56,42 @@ export default function TablePagosEstudiante({ idEstudiante }: Props) {
     fetchPagos();
   }, [idEstudiante]);
 
+  // 🔍 Filtrado por concepto
+  const pagosFiltrados = useMemo(() => {
+    if (filtro === "mensualidad") {
+      return pagos.filter((p) =>
+        p.concepto.toLowerCase().includes("mensualidad")
+      );
+    }
+
+    if (filtro === "otros") {
+      return pagos.filter(
+        (p) => !p.concepto.toLowerCase().includes("mensualidad")
+      );
+    }
+
+    return pagos;
+  }, [pagos, filtro]);
+
+  const formatearFecha = (fecha: string) =>
+    new Date(fecha).toLocaleDateString("es-BO");
+
   return (
     <TableContainer component={Paper} sx={{ width: "95%", mx: "auto" }}>
-      <Typography variant="h6" sx={{ p: 2 }}>
-        Pagos del Estudiante
-      </Typography>
+      <Box sx={{ p: 2, display: "flex", justifyContent: "space-between" }}>
+        <Typography variant="h6">Pagos del Estudiante</Typography>
+
+        <FormControl size="small">
+          <Select
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value as FiltroConcepto)}
+          >
+            <MenuItem value="todos">Todos</MenuItem>
+            <MenuItem value="mensualidad">Mensualidades</MenuItem>
+            <MenuItem value="otros">Otros</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
 
       <Table>
         <TableHead>
@@ -75,16 +114,17 @@ export default function TablePagosEstudiante({ idEstudiante }: Props) {
             <TableCell>
               <strong>Concepto</strong>
             </TableCell>
+            <TableCell>
+              <strong>Fecha de pago</strong>
+            </TableCell>
           </TableRow>
         </TableHead>
 
         <TableBody>
-          {pagos.map((pago, index) => (
+          {pagosFiltrados.map((pago, index) => (
             <TableRow
               key={index}
-              sx={{
-                backgroundColor: COLORES_PAGO[pago.deuda],
-              }}
+              sx={{ backgroundColor: COLORES_PAGO[pago.deuda] }}
             >
               <TableCell>{index + 1}</TableCell>
               <TableCell>{pago.cantidad}</TableCell>
@@ -94,12 +134,17 @@ export default function TablePagosEstudiante({ idEstudiante }: Props) {
                 {pago.deuda.charAt(0).toUpperCase() + pago.deuda.slice(1)}
               </TableCell>
               <TableCell>{pago.concepto}</TableCell>
+              <TableCell>
+                {pago.deuda !== "pendiente"
+                  ? formatearFecha(pago.fecha_pago)
+                  : "—"}
+              </TableCell>
             </TableRow>
           ))}
 
-          {pagos.length === 0 && (
+          {pagosFiltrados.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6} align="center">
+              <TableCell colSpan={7} align="center">
                 No hay pagos registrados
               </TableCell>
             </TableRow>

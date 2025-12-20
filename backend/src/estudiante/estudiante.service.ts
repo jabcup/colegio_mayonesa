@@ -35,7 +35,6 @@ export class EstudianteService {
 
   async createEstudianteFull(dto: CreateEstudianteFullDto) {
     return this.dataSource.transaction(async (manager) => {
-
       if (dto.idPadre && dto.padreData) {
         throw new BadRequestException(
           'Envía solo idPadre o padreData, no ambos',
@@ -55,7 +54,6 @@ export class EstudianteService {
         );
       }
 
-
       // 1. CREAR ESTUDIANTE
 
       const estudiante = manager.create(Estudiante, {
@@ -70,7 +68,9 @@ export class EstudianteService {
 
         rude: `R${dto.identificacion}${dto.nombres.charAt(0).toUpperCase()}${dto.apellidoPat.charAt(0).toUpperCase()}${(
           dto.apellidoMat || ''
-        ).charAt(0).toUpperCase()}`,
+        )
+          .charAt(0)
+          .toUpperCase()}`,
 
         direccion: dto.direccion,
         telefono_referencia: dto.telefono_referencia,
@@ -80,7 +80,6 @@ export class EstudianteService {
       });
 
       const nuevoEstudiante = await manager.save(estudiante);
-
 
       // 2. OBTENER O CREAR PADRE
       let padre;
@@ -100,7 +99,9 @@ export class EstudianteService {
       );
 
       // 4. ASIGNAR CURSO
-      const curso = await manager.findOne(Curso, { where: { id: dto.idCurso } });
+      const curso = await manager.findOne(Curso, {
+        where: { id: dto.idCurso },
+      });
       if (!curso) throw new NotFoundException('Curso no encontrado');
       await manager.save(
         manager.create(EstudianteCurso, {
@@ -132,7 +133,7 @@ export class EstudianteService {
         estudiante: nuevoEstudiante,
         padre,
         curso,
-        pagos,
+        pagos: pagosGenerados,
       };
     });
   }
@@ -149,7 +150,8 @@ export class EstudianteService {
     const estudiante = await this.estudianteRepository.findOne({
       where: { correo_institucional },
     });
-    if (!estudiante) throw new UnauthorizedException('Credenciales incorrectas');
+    if (!estudiante)
+      throw new UnauthorizedException('Credenciales incorrectas');
     if (estudiante.estado === 'inactivo')
       throw new UnauthorizedException('Cuenta inactiva');
     if (estudiante.rude !== rude)
