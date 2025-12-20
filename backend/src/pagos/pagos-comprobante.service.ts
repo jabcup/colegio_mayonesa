@@ -1,9 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { Pagos } from './pagos.entity';
 import * as PdfMake from 'pdfmake/build/pdfmake';
-
 const pdfFonts = require('pdfmake/build/vfs_fonts');
-
 (PdfMake as any).vfs = pdfFonts.vfs || pdfFonts;
 
 @Injectable()
@@ -65,7 +63,6 @@ export class PagosComprobanteService {
         },
       ],
     };
-
     return new Promise<Buffer>((resolve, reject) => {
       try {
         const pdfDoc = (PdfMake as any).createPdf(docDefinition);
@@ -76,364 +73,112 @@ export class PagosComprobanteService {
     });
   }
 
-  async generarAnual(pagos: Pagos[], idPersonal?: number): Promise<Buffer> {
+  async generarMultiple(pagos: Pagos[]): Promise<Buffer> {
     if (pagos.length === 0) {
-      throw new Error('No hay pagos para generar el comprobante anual');
+      throw new BadRequestException('No hay pagos para generar el comprobante');
     }
 
+    const primerPago = pagos[0];
+    const estudiante = primerPago.estudiante;
     const fechaEmision = new Date().toLocaleString('es-BO');
-    const fechaPago =
-      pagos[0].fecha_pago?.toLocaleString('es-BO') || fechaEmision;
 
-    const estudiante = pagos[0].estudiante;
-    const cantidadBase = Number(pagos[0].cantidad);
-    const descuentoPorMes = Number(pagos[0].descuento);
-    const totalPagado = pagos.reduce((sum, p) => sum + Number(p.total), 0);
+    const subtotal = pagos.reduce((sum, p) => sum + Number(p.cantidad), 0);
+    const descuentoTotal = pagos.reduce(
+      (sum, p) => sum + Number(p.descuento),
+      0,
+    );
+    const total = pagos.reduce((sum, p) => sum + Number(p.total), 0);
 
-    const mesesNombre = [
-      '',
-      'Enero',
-      'Febrero',
-      'Marzo',
-      'Abril',
-      'Mayo',
-      'Junio',
-      'Julio',
-      'Agosto',
-      'Septiembre',
-      'Octubre',
-      'Noviembre',
-      'Diciembre',
-    ];
+    const tipoPago =
+      pagos.length === 3
+        ? 'TRIMESTRAL'
+        : pagos.length === 10
+          ? 'ANUAL'
+          : 'MÚLTIPLE';
 
-    // Construcción correcta de la tabla
-    const tableBody: any[][] = [
-      // Header
-      [
-        { text: 'N°', bold: true, alignment: 'center', fillColor: '#eeeeee' },
-        { text: 'Mes / Año', bold: true, fillColor: '#eeeeee' },
-        { text: 'Concepto', bold: true, fillColor: '#eeeeee' },
-        {
-          text: 'Cantidad',
-          bold: true,
-          alignment: 'right',
-          fillColor: '#eeeeee',
-        },
-        {
-          text: 'Descuento',
-          bold: true,
-          alignment: 'right',
-          fillColor: '#eeeeee',
-        },
-        { text: 'Total', bold: true, alignment: 'right', fillColor: '#eeeeee' },
+    const detallesPagos = pagos.map((pago, index) => ({
+      text: [
+        { text: `${index + 1}. `, bold: true },
+        `${pago.concepto} (${pago.mes ?? '-'}/${pago.anio}) - Bs. ${Number(pago.cantidad).toFixed(2)}\n`,
       ],
-    ];
-
-    // Filas de detalle
-    pagos.forEach((pago, index) => {
-      const mesNombre = mesesNombre[pago.mes as number] || String(pago.mes);
-      tableBody.push([
-        { text: String(index + 1), alignment: 'center' },
-        { text: `${mesNombre} ${pago.anio}`, alignment: 'left' },
-        { text: pago.concepto, alignment: 'left' },
-        { text: Number(pago.cantidad).toFixed(2), alignment: 'right' },
-        { text: Number(pago.descuento).toFixed(2), alignment: 'right' },
-        { text: Number(pago.total).toFixed(2), alignment: 'right', bold: true },
-      ]);
-    });
-
-    // Fila de total (usamos un truco: texto vacío con colSpan en la primera celda)
-    tableBody.push([
-      {
-        text: 'TOTAL PAGADO',
-        colSpan: 5,
-        bold: true,
-        alignment: 'right',
-        fillColor: '#dddddd',
-      },
-      {},
-      {},
-      {},
-      {},
-      {
-        text: totalPagado.toFixed(2),
-        bold: true,
-        fontSize: 14,
-        alignment: 'right',
-        fillColor: '#dddddd',
-      },
-    ]);
+      margin: [0, 2, 0, 2],
+    }));
 
     const docDefinition: any = {
       pageSize: 'A4',
-      pageMargins: [50, 50, 50, 80],
+      pageMargins: [50, 50, 50, 50],
       content: [
         {
-          text: 'COMPROBANTE DE PAGO ANUAL',
-          fontSize: 20,
+          text: 'COMPROBANTE DE PAGO',
+          fontSize: 18,
           bold: true,
           alignment: 'center',
-          margin: [0, 0, 0, 30],
-        },
-        {
-          columns: [
-            {
-              width: '60%',
-              text: [
-                { text: 'Estudiante: ', bold: true },
-                `${estudiante.nombres} ${estudiante.apellidoPat} ${estudiante.apellidoMat || ''}\n`,
-                { text: 'Cantidad base por mensualidad: ', bold: true },
-                `${cantidadBase.toFixed(2)}\n`,
-                { text: 'Descuento anual aplicado: ', bold: true },
-                `10% (${descuentoPorMes.toFixed(2)} por mes)\n`,
-                { text: 'Mensualidades pagadas: ', bold: true },
-                `${pagos.length}\n`,
-                { text: 'Fecha de pago: ', bold: true },
-                `${fechaPago}\n`,
-              ],
-            },
-            {
-              width: '40%',
-              text: [
-                { text: 'Total pagado: ', bold: true, fontSize: 16 },
-                `${totalPagado.toFixed(2)}\n\n`,
-                { text: 'Comprobante generado: ', italics: true },
-                `${fechaEmision}`,
-              ],
-              alignment: 'right',
-            },
-          ],
-          margin: [0, 0, 0, 30],
-        },
-        {
-          text: 'Detalle de mensualidades pagadas',
-          fontSize: 14,
-          bold: true,
           margin: [0, 0, 0, 10],
         },
         {
-          table: {
-            headerRows: 1,
-            widths: ['6%', '20%', '34%', '12%', '12%', '16%'],
-            body: tableBody,
-          },
-          layout: {
-            hLineWidth: () => 0.5,
-            vLineWidth: () => 0.5,
-            paddingLeft: () => 6,
-            paddingRight: () => 6,
-            paddingTop: () => 4,
-            paddingBottom: () => 4,
-          },
+          text: `Tipo: ${tipoPago}`,
+          fontSize: 12,
+          alignment: 'center',
+          margin: [0, 0, 0, 20],
+        },
+        {
+          text: [
+            { text: 'Estudiante: ', bold: true },
+            `${estudiante.nombres} ${estudiante.apellidoPat} ${estudiante.apellidoMat}\n`,
+            { text: 'CI: ', bold: true },
+            `${estudiante.identificacion}\n`,
+            { text: 'Fecha de pago: ', bold: true },
+            `${primerPago.fecha_pago?.toLocaleString('es-BO') ?? fechaEmision}\n`,
+          ],
+          margin: [0, 0, 0, 15],
+        },
+        {
+          text: 'Detalle de Pagos:',
+          bold: true,
+          fontSize: 12,
+          margin: [0, 10, 0, 10],
+        },
+        ...detallesPagos,
+        {
+          canvas: [
+            { type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1 },
+          ],
+          margin: [0, 15, 0, 15],
+        },
+        {
+          columns: [
+            { width: '*', text: '' },
+            {
+              width: 'auto',
+              text: [
+                { text: 'Subtotal: ', bold: true },
+                `Bs. ${subtotal.toFixed(2)}\n`,
+                { text: 'Descuento: ', bold: true },
+                `Bs. ${descuentoTotal.toFixed(2)}\n`,
+                { text: 'TOTAL: ', bold: true, fontSize: 14 },
+                { text: `Bs. ${total.toFixed(2)}`, bold: true, fontSize: 14 },
+              ],
+            },
+          ],
+        },
+        {
+          text: `\nComprobante generado: ${fechaEmision}`,
+          alignment: 'right',
+          italics: true,
+          margin: [0, 20, 0, 0],
         },
         {
           text: 'Gracias por su pago.',
-          fontSize: 14,
-          bold: true,
           alignment: 'center',
-          margin: [0, 50, 0, 0],
+          margin: [0, 30, 0, 0],
         },
       ],
-      footer: {
-        columns: [
-          {
-            text: 'Sistema de Gestión Escolar - Comprobante oficial',
-            alignment: 'center',
-            italics: true,
-            fontSize: 10,
-            margin: [0, 20, 0, 0],
-          },
-        ],
-      },
     };
 
     return new Promise<Buffer>((resolve, reject) => {
       try {
         const pdfDoc = (PdfMake as any).createPdf(docDefinition);
-        pdfDoc.getBuffer((buffer: Buffer) => {
-          resolve(Buffer.from(buffer));
-        });
-      } catch (err) {
-        reject(err);
-      }
-    });
-  }
-
-  async generarTrimestre(pagos: Pagos[], idPersonal?: number): Promise<Buffer> {
-    if (pagos.length !== 3) {
-      throw new Error(
-        'Se esperaban exactamente 3 pagos para el comprobante trimestral',
-      );
-    }
-
-    const fechaEmision = new Date().toLocaleString('es-BO');
-    const fechaPago =
-      pagos[0].fecha_pago?.toLocaleString('es-BO') || fechaEmision;
-
-    const estudiante = pagos[0].estudiante;
-    const cantidadBase = Number(pagos[0].cantidad);
-    const descuentoPorMes = Number(pagos[0].descuento); // ya calculado (4% / 3)
-    const totalPagado = pagos.reduce((sum, p) => sum + Number(p.total), 0);
-
-    const mesesNombre = [
-      '',
-      'Enero',
-      'Febrero',
-      'Marzo',
-      'Abril',
-      'Mayo',
-      'Junio',
-      'Julio',
-      'Agosto',
-      'Septiembre',
-      'Octubre',
-      'Noviembre',
-      'Diciembre',
-    ];
-
-    const tableBody: any[][] = [
-      [
-        { text: 'N°', bold: true, alignment: 'center', fillColor: '#eeeeee' },
-        { text: 'Mes / Año', bold: true, fillColor: '#eeeeee' },
-        { text: 'Concepto', bold: true, fillColor: '#eeeeee' },
-        {
-          text: 'Cantidad',
-          bold: true,
-          alignment: 'right',
-          fillColor: '#eeeeee',
-        },
-        {
-          text: 'Descuento',
-          bold: true,
-          alignment: 'right',
-          fillColor: '#eeeeee',
-        },
-        { text: 'Total', bold: true, alignment: 'right', fillColor: '#eeeeee' },
-      ],
-    ];
-
-    pagos.forEach((pago, index) => {
-      const mesNombre = mesesNombre[pago.mes as number] || String(pago.mes);
-      tableBody.push([
-        { text: String(index + 1), alignment: 'center' },
-        { text: `${mesNombre} ${pago.anio}`, alignment: 'left' },
-        { text: pago.concepto, alignment: 'left' },
-        { text: Number(pago.cantidad).toFixed(2), alignment: 'right' },
-        { text: Number(pago.descuento).toFixed(2), alignment: 'right' },
-        { text: Number(pago.total).toFixed(2), alignment: 'right', bold: true },
-      ]);
-    });
-
-    tableBody.push([
-      {
-        text: 'TOTAL PAGADO',
-        colSpan: 5,
-        bold: true,
-        alignment: 'right',
-        fillColor: '#dddddd',
-      },
-      {},
-      {},
-      {},
-      {},
-      {
-        text: totalPagado.toFixed(2),
-        bold: true,
-        fontSize: 14,
-        alignment: 'right',
-        fillColor: '#dddddd',
-      },
-    ]);
-
-    const docDefinition: any = {
-      pageSize: 'A4',
-      pageMargins: [50, 50, 50, 80],
-      content: [
-        {
-          text: 'COMPROBANTE DE PAGO TRIMESTRAL',
-          fontSize: 20,
-          bold: true,
-          alignment: 'center',
-          margin: [0, 0, 0, 30],
-        },
-        {
-          columns: [
-            {
-              width: '60%',
-              text: [
-                { text: 'Estudiante: ', bold: true },
-                `${estudiante.nombres} ${estudiante.apellidoPat} ${estudiante.apellidoMat || ''}\n`,
-                { text: 'Cantidad base por mensualidad: ', bold: true },
-                `${cantidadBase.toFixed(2)}\n`,
-                { text: 'Descuento trimestral aplicado: ', bold: true },
-                `4% (${descuentoPorMes.toFixed(2)} por mes)\n`,
-                { text: 'Mensualidades pagadas: ', bold: true },
-                '3\n',
-                { text: 'Fecha de pago: ', bold: true },
-                `${fechaPago}\n`,
-              ],
-            },
-            {
-              width: '40%',
-              text: [
-                { text: 'Total pagado: ', bold: true, fontSize: 16 },
-                `${totalPagado.toFixed(2)}\n\n`,
-                { text: 'Comprobante generado: ', italics: true },
-                `${fechaEmision}`,
-              ],
-              alignment: 'right',
-            },
-          ],
-          margin: [0, 0, 0, 30],
-        },
-        {
-          text: 'Detalle de mensualidades pagadas',
-          fontSize: 14,
-          bold: true,
-          margin: [0, 0, 0, 10],
-        },
-        {
-          table: {
-            headerRows: 1,
-            widths: ['8%', '25%', '30%', '12%', '12%', '13%'],
-            body: tableBody,
-          },
-          layout: {
-            hLineWidth: () => 0.5,
-            vLineWidth: () => 0.5,
-            paddingLeft: () => 6,
-            paddingRight: () => 6,
-            paddingTop: () => 4,
-            paddingBottom: () => 4,
-          },
-        },
-        {
-          text: 'Gracias por su pago.',
-          fontSize: 14,
-          bold: true,
-          alignment: 'center',
-          margin: [0, 50, 0, 0],
-        },
-      ],
-      footer: {
-        columns: [
-          {
-            text: 'Sistema de Gestión Escolar - Comprobante oficial',
-            alignment: 'center',
-            italics: true,
-            fontSize: 10,
-            margin: [0, 20, 0, 0],
-          },
-        ],
-      },
-    };
-
-    return new Promise<Buffer>((resolve, reject) => {
-      try {
-        const pdfDoc = (PdfMake as any).createPdf(docDefinition);
-        pdfDoc.getBuffer((buffer: Buffer) => {
-          resolve(Buffer.from(buffer));
-        });
+        pdfDoc.getBuffer((buf: Buffer) => resolve(Buffer.from(buf)));
       } catch (err) {
         reject(err);
       }

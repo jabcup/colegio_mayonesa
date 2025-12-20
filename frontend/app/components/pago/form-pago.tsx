@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button, TextField, MenuItem } from "@mui/material"
+import { Button, TextField, MenuItem, Autocomplete } from "@mui/material"
 import { api } from "@/app/lib/api"
 import Cookies from "js-cookie"
 
 interface Estudiante {
   id: number
   label: string
+  identificacion?: string
 }
 
 interface Pago {
@@ -35,12 +36,16 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
     concepto: "",
     deuda: "pendiente" as "pendiente" | "cancelado"
   })
+  const [estudianteSel, setEstudianteSel] = useState<Estudiante | null>(null)
 
   const esEdicion = !!pagoInicial
   const personalId = Number(Cookies.get('personal_id') ?? 0)
 
   useEffect(() => {
     if (esEdicion) {
+      const est = estudiantes.find(e => e.id === pagoInicial.idEstudiante)
+      if (est) setEstudianteSel(est)
+      
       setForm({
         idEstudiante: pagoInicial.idEstudiante.toString(),
         cantidad: pagoInicial.cantidad.toString(),
@@ -49,7 +54,13 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
         deuda: pagoInicial.deuda
       })
     }
-  }, [esEdicion, pagoInicial])
+  }, [esEdicion, pagoInicial, estudiantes])
+
+  useEffect(() => {
+    if (estudianteSel) {
+      setForm(prev => ({ ...prev, idEstudiante: estudianteSel.id.toString() }))
+    }
+  }, [estudianteSel])
 
   const total = Number(form.cantidad) - Number(form.descuento)
 
@@ -86,22 +97,29 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
       {estudiantes.length === 0 ? (
         <TextField fullWidth disabled label="Cargando estudiantes..." />
       ) : (
-        <TextField
-          select
-          fullWidth
-          label="Estudiante"
-          value={form.idEstudiante}
-          onChange={(e) => setForm({ ...form, idEstudiante: e.target.value })}
-          required
+        <Autocomplete
+          options={estudiantes}
+          value={estudianteSel}
+          onChange={(e, v) => setEstudianteSel(v)}
+          getOptionLabel={(o) => {
+            if (o.identificacion) {
+              return `${o.label} | CI: ${o.identificacion}`
+            }
+            return o.label
+          }}
+          filterOptions={(options, { inputValue }) => {
+            const q = inputValue.toLowerCase()
+            return options.filter(o =>
+              o.label.toLowerCase().includes(q) ||
+              o.identificacion?.toLowerCase().includes(q) ||
+              String(o.id).includes(q)
+            )
+          }}
           disabled={esEdicion}
-          SelectProps={{ MenuProps: { sx: { maxHeight: 300 } } }}
-        >
-          {estudiantes.map((est) => (
-            <MenuItem key={est.id} value={est.id} sx={{ minHeight: 36 }}>
-              {est.label}
-            </MenuItem>
-          ))}
-        </TextField>
+          renderInput={(params) => (
+            <TextField {...params} label="Estudiante (nombre o CI)" required />
+          )}
+        />
       )}
 
       <TextField
