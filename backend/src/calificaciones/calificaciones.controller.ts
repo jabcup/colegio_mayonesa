@@ -71,6 +71,7 @@ export class CalificacionesController {
       calificaciones,
     };
   }
+
   @Get('GestionActual/:idEstudiante')
   @ApiOperation({ summary: 'Calificaciones del año actual' })
   async getCalificacionesAño(@Param('idEstudiante') id: number) {
@@ -84,6 +85,7 @@ export class CalificacionesController {
       calificaciones,
     };
   }
+
   @Post('/CrearCalificacion')
   @ApiOperation({ summary: 'Crear calificacion' })
   async createCalificacion(
@@ -113,22 +115,6 @@ export class CalificacionesController {
       calificacion: updated,
     };
   }
-
-  // @Put('EditarCalificacion/:id')
-  // @ApiOperation({ summary: 'Editar calificacion' })
-  // async updateCalificacion(
-  //   @Param('id') id: number,
-  //   @Body() dto: UpdateCalificacionDto,
-  // ) {
-  //   const calificacion = await this.calificacionesService.updateCalificacion(
-  //     id,
-  //     dto,
-  //   );
-  //   return {
-  //     message: 'Calificacion actualizada correctamente',
-  //     calificacion,
-  //   };
-  // }
 
   @Delete('EliminarCalificacion/:id')
   @ApiOperation({ summary: 'Eliminar calificacion' })

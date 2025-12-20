@@ -1,11 +1,12 @@
 "use client";
 
-import { AppBar, Toolbar, Typography } from "@mui/material";
+import { AppBar, Toolbar, Typography, Box } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { Boton } from "../botones/botonNav";
 import LogoutButton from "../botones/logout";
 import { getAuthData } from "@/app/lib/auth";
 import { useEffect, useState } from "react";
+import BadgeNotificaciones from "../notificaciones-docente/BadgeNotificaciones";
 
 export default function Navbar() {
   const router = useRouter();
@@ -21,10 +22,12 @@ export default function Navbar() {
 
   const auth = getAuthData();
   const rol = auth?.rol;
+  const usuarioId = auth?.usuarioId ? Number(auth.usuarioId) : null;
 
   if (!rol) {
     return null;
   }
+
   return (
     <>
       <AppBar position="static">
@@ -32,6 +35,7 @@ export default function Navbar() {
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             Colegio Mayo - Sección Administrativa
           </Typography>
+
           <Boton
             label="Estudiantes"
             color="success"
@@ -39,6 +43,7 @@ export default function Navbar() {
             className="ml-2"
             onClick={() => router.push("/estudiante")}
           />
+
           {rol !== "Secretaria-o" && rol !== "Cajero" && (
             <Boton
               label="Calificaciones"
@@ -48,6 +53,7 @@ export default function Navbar() {
               onClick={() => router.push("/calificacion")}
             />
           )}
+
           <Boton
             label="Reportes"
             color="success"
@@ -55,7 +61,8 @@ export default function Navbar() {
             className="ml-2"
             onClick={() => router.push("/reporte")}
           />
-          {rol !== "Secretaria-o" && rol !== "Cajero" && (
+
+          {rol !== "Secretaria-o" && rol !== "Docente" && (
             <Boton
               label="Asistencias"
               color="success"
@@ -64,6 +71,7 @@ export default function Navbar() {
               onClick={() => router.push("/asistencias")}
             />
           )}
+
           {rol !== "Cajero" && rol !== "Docente" && (
             <Boton
               label="Personal"
@@ -73,6 +81,7 @@ export default function Navbar() {
               onClick={() => router.push("/personal")}
             />
           )}
+
           {rol !== "Cajero" && rol !== "Docente" && (
             <Boton
               label="Materias"
@@ -82,6 +91,7 @@ export default function Navbar() {
               onClick={() => router.push("/materias")}
             />
           )}
+
           {rol !== "Cajero" && rol !== "Docente" && (
             <Boton
               label="Horarios"
@@ -91,6 +101,7 @@ export default function Navbar() {
               onClick={() => router.push("/horarios")}
             />
           )}
+
           {rol !== "Secretaria-o" && rol !== "Docente" && (
             <Boton
               label="Pagos"
@@ -100,6 +111,7 @@ export default function Navbar() {
               onClick={() => router.push("/pago")}
             />
           )}
+
           {rol !== "Docente" && (
             <Boton
               label="Notificaciones"
@@ -109,6 +121,7 @@ export default function Navbar() {
               onClick={() => router.push("/notificaciones")}
             />
           )}
+
           {rol !== "Docente" && (
             <Boton
               label="Avisos"
@@ -118,6 +131,7 @@ export default function Navbar() {
               onClick={() => router.push("/avisos")}
             />
           )}
+
           {rol !== "Cajero" && rol !== "Docente" && (
             <Boton
               label="Roles"
@@ -127,6 +141,7 @@ export default function Navbar() {
               onClick={() => router.push("/rol")}
             />
           )}
+
           {rol !== "Cajero" && (
             <Boton
               label="Asignaciones"
@@ -136,6 +151,7 @@ export default function Navbar() {
               onClick={() => router.push("/asignacion")}
             />
           )}
+
           {rol !== "Cajero" && rol !== "Docente" && (
             <Boton
               label="Cursos"
@@ -145,6 +161,7 @@ export default function Navbar() {
               onClick={() => router.push("/cursos")}
             />
           )}
+
           {rol === "Administrador" && (
             <Boton
               label="Auditoria"
@@ -154,6 +171,7 @@ export default function Navbar() {
               onClick={() => router.push("/auditoria")}
             />
           )}
+
           {rol !== "Cajero" && rol !== "Docente" && (
             <Boton
               label="Tutores"
@@ -163,6 +181,13 @@ export default function Navbar() {
               onClick={() => router.push("/tutor")}
             />
           )}
+
+          {rol === "Docente" && usuarioId && (
+            <Box sx={{ ml: 2 }}>
+              <BadgeNotificaciones docenteId={usuarioId} />
+            </Box>
+          )}
+
           <LogoutButton />
         </Toolbar>
       </AppBar>

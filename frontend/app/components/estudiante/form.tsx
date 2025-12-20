@@ -46,6 +46,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [crearNuevoPadre, setCrearNuevoPadre] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [padreErrors, setPadreErrors] = useState<FormErrors>({});
 
   const [form, setForm] = useState({
     nombres: "",
@@ -66,12 +67,10 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
   const [nuevoPadre, setNuevoPadre] = useState({
     nombres: "",
     apellidoPat: "",
-    apellidoMat: "",
+    apellidoMat: "", // Opcional
     telefono: "",
     correo: "",
   });
-
-  const [padreErrors, setPadreErrors] = useState<FormErrors>({});
 
   useEffect(() => {
     if (open) {
@@ -113,30 +112,46 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
   };
 
   // const validateRequired = (value: string, fieldName: string): string => {
-  //   console.log(value);
   //   if (!value.trim()) return `${fieldName} es requerido`;
   //   return "";
   // };
+
   const validateRequired = (value: any, fieldName: string): string => {
-    if (value === null || value === undefined) {
+  // Caso 1: valor nulo o indefinido
+  if (value === null || value === undefined) {
+    return `${fieldName} es requerido`;
+  }
+  
+  // Caso 2: string vacío o solo espacios
+  if (typeof value === "string") {
+    if (!value.trim()) {
       return `${fieldName} es requerido`;
     }
-
-    // Si es string
-    if (typeof value === "string") {
-      if (!value.trim()) return `${fieldName} es requerido`;
-    }
-    // Si es number
-    else if (typeof value === "number") {
-      if (isNaN(value) || value <= 0) return `${fieldName} es requerido`;
-    }
-    // Otros tipos (select, etc.)
-    else {
-      if (!value) return `${fieldName} es requerido`;
-    }
-
     return "";
-  };
+  }
+  
+  // Caso 3: número (0 es válido)
+  if (typeof value === "number") {
+    return "";
+  }
+  
+  // Caso 4: boolean (siempre válido)
+  if (typeof value === "boolean") {
+    return "";
+  }
+  
+  // Caso 5: array vacío
+  if (Array.isArray(value) && value.length === 0) {
+    return `${fieldName} es requerido`;
+  }
+  
+  // Caso 6: objeto vacío
+  if (typeof value === "object" && Object.keys(value).length === 0) {
+    return `${fieldName} es requerido`;
+  }
+  
+  return "";
+};
 
   const validateLength = (
     value: string,
@@ -173,27 +188,20 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
 
     switch (name) {
       case "nombres":
+        error = validateRequired(value, "Nombres");
+        if (!error) error = validateLength(value, 2, 50, "Nombres");
+        break;
+      
       case "apellidoPat":
+        error = validateRequired(value, "Apellido Paterno");
+        if (!error) error = validateLength(value, 2, 50, "Apellido Paterno");
+        break;
+      
       case "apellidoMat":
-        error = validateRequired(
-          value,
-          name === "nombres"
-            ? "Nombres"
-            : name === "apellidoPat"
-            ? "Apellido Paterno"
-            : "Apellido Materno"
-        );
-        if (!error)
-          error = validateLength(
-            value,
-            2,
-            50,
-            name === "nombres"
-              ? "Nombres"
-              : name === "apellidoPat"
-              ? "Apellido Paterno"
-              : "Apellido Materno"
-          );
+        // Solo validar longitud si se ingresa algo, no requerido
+        if (value && value.trim() !== "") {
+          error = validateLength(value, 2, 50, "Apellido Materno");
+        }
         break;
 
       case "identificacion":
@@ -208,19 +216,16 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
           error = "Formato de correo inválido";
         }
         break;
-
+      
+      case "direccion":
+        error = validateRequired(value, "Dirección");
+        if (!error) error = validateLength(value, 5, 200, "Dirección");
+        break;
+      
       case "telefono_referencia":
         if (value && !validatePhone(value)) {
           error = "Teléfono inválido (7-15 dígitos)";
         }
-        if (!error && crearNuevoPadre) {
-          error = validateRequired(value, "Teléfono de referencia");
-        }
-        break;
-
-      case "direccion":
-        error = validateLength(value, 5, 200, "Dirección");
-        if (!error) error = validateRequired(value, "Dirección");
         break;
 
       case "fecha_nacimiento":
@@ -228,16 +233,15 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
         break;
 
       case "sexo":
+        error = validateRequired(value, "Sexo");
+        break;
+      
       case "nacionalidad":
+        error = validateRequired(value, "Nacionalidad");
+        break;
+      
       case "relacion":
-        error = validateRequired(
-          value,
-          name === "sexo"
-            ? "Sexo"
-            : name === "nacionalidad"
-            ? "Nacionalidad"
-            : "Relación"
-        );
+        error = validateRequired(value, "Relación");
         break;
 
       case "idCurso":
@@ -266,34 +270,27 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
 
     switch (name) {
       case "nombres":
+        error = validateRequired(value, "Nombre del padre");
+        if (!error) error = validateLength(value, 2, 50, "Nombre del padre");
+        break;
+      
       case "apellidoPat":
+        error = validateRequired(value, "Apellido Paterno");
+        if (!error) error = validateLength(value, 2, 50, "Apellido Paterno");
+        break;
+      
       case "apellidoMat":
-        error = validateRequired(
-          value,
-          name === "nombres"
-            ? "Nombre del padre"
-            : name === "apellidoPat"
-            ? "Apellido Paterno"
-            : "Apellido Materno"
-        );
-        if (!error)
-          error = validateLength(
-            value,
-            2,
-            50,
-            name === "nombres"
-              ? "Nombre del padre"
-              : name === "apellidoPat"
-              ? "Apellido Paterno"
-              : "Apellido Materno"
-          );
+        // Solo validar longitud si se ingresa algo, no requerido
+        if (value && value.trim() !== "") {
+          error = validateLength(value, 2, 50, "Apellido Materno");
+        }
         break;
 
       case "telefono":
         if (value && !validatePhone(value)) {
           error = "Teléfono inválido (7-15 dígitos)";
         }
-        error = validateRequired(value, "Teléfono");
+        if (!error) error = validateRequired(value, "Teléfono");
         break;
 
       case "correo":
@@ -312,36 +309,19 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
     const newPadreErrors: FormErrors = {};
-
-    // Validar campos principales
+    
+    // Validar campos principales del estudiante
     newErrors.nombres = validateRequired(form.nombres, "Nombres");
-    if (!newErrors.nombres)
-      newErrors.nombres = validateLength(form.nombres, 2, 50, "Nombres");
-
-    newErrors.apellidoPat = validateRequired(
-      form.apellidoPat,
-      "Apellido Paterno"
-    );
-    if (!newErrors.apellidoPat)
-      newErrors.apellidoPat = validateLength(
-        form.apellidoPat,
-        2,
-        50,
-        "Apellido Paterno"
-      );
-
-    newErrors.apellidoMat = validateRequired(
-      form.apellidoMat,
-      "Apellido Materno"
-    );
-    if (!newErrors.apellidoMat)
-      newErrors.apellidoMat = validateLength(
-        form.apellidoMat,
-        2,
-        50,
-        "Apellido Materno"
-      );
-
+    if (!newErrors.nombres) newErrors.nombres = validateLength(form.nombres, 2, 50, "Nombres");
+    
+    newErrors.apellidoPat = validateRequired(form.apellidoPat, "Apellido Paterno");
+    if (!newErrors.apellidoPat) newErrors.apellidoPat = validateLength(form.apellidoPat, 2, 50, "Apellido Paterno");
+    
+    // Apellido materno es opcional, solo validar longitud si se ingresa
+    if (form.apellidoMat && form.apellidoMat.trim() !== "") {
+      newErrors.apellidoMat = validateLength(form.apellidoMat, 2, 50, "Apellido Materno");
+    }
+    
     newErrors.identificacion = validateRequired(form.identificacion, "CI");
     if (!newErrors.identificacion && !validateCI(form.identificacion)) {
       newErrors.identificacion =
@@ -375,46 +355,18 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
 
     // Validar nuevo padre si es necesario
     if (crearNuevoPadre) {
-      newPadreErrors.nombres = validateRequired(
-        nuevoPadre.nombres,
-        "Nombre del padre"
-      );
-      if (!newPadreErrors.nombres)
-        newPadreErrors.nombres = validateLength(
-          nuevoPadre.nombres,
-          2,
-          50,
-          "Nombre del padre"
-        );
-
-      newPadreErrors.apellidoPat = validateRequired(
-        nuevoPadre.apellidoPat,
-        "Apellido Paterno"
-      );
-      if (!newPadreErrors.apellidoPat)
-        newPadreErrors.apellidoPat = validateLength(
-          nuevoPadre.apellidoPat,
-          2,
-          50,
-          "Apellido Paterno"
-        );
-
-      newPadreErrors.apellidoMat = validateRequired(
-        nuevoPadre.apellidoMat,
-        "Apellido Materno"
-      );
-      if (!newPadreErrors.apellidoMat)
-        newPadreErrors.apellidoMat = validateLength(
-          nuevoPadre.apellidoMat,
-          2,
-          50,
-          "Apellido Materno"
-        );
-
-      newPadreErrors.telefono = validateRequired(
-        nuevoPadre.telefono,
-        "Teléfono"
-      );
+      newPadreErrors.nombres = validateRequired(nuevoPadre.nombres, "Nombre del padre");
+      if (!newPadreErrors.nombres) newPadreErrors.nombres = validateLength(nuevoPadre.nombres, 2, 50, "Nombre del padre");
+      
+      newPadreErrors.apellidoPat = validateRequired(nuevoPadre.apellidoPat, "Apellido Paterno");
+      if (!newPadreErrors.apellidoPat) newPadreErrors.apellidoPat = validateLength(nuevoPadre.apellidoPat, 2, 50, "Apellido Paterno");
+      
+      // Apellido materno del padre es opcional
+      if (nuevoPadre.apellidoMat && nuevoPadre.apellidoMat.trim() !== "") {
+        newPadreErrors.apellidoMat = validateLength(nuevoPadre.apellidoMat, 2, 50, "Apellido Materno");
+      }
+      
+      newPadreErrors.telefono = validateRequired(nuevoPadre.telefono, "Teléfono");
       if (!newPadreErrors.telefono && !validatePhone(nuevoPadre.telefono)) {
         newPadreErrors.telefono = "Teléfono inválido (7-15 dígitos)";
       }
@@ -446,6 +398,12 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
       idCurso: Number(form.idCurso),
     };
 
+    // Remover apellidoMat si está vacío para enviarlo como undefined
+    if (!payload.apellidoMat || payload.apellidoMat.trim() === "") {
+      delete payload.apellidoMat;
+    }
+
+    // Remover idPadre temporalmente
     delete payload.idPadre;
 
     if (crearNuevoPadre) {
@@ -453,6 +411,10 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
         ...nuevoPadre,
         correo: nuevoPadre.correo || undefined,
       };
+      // También para el padre, apellidoMat es opcional
+      if (!payload.padreData.apellidoMat || payload.padreData.apellidoMat.trim() === "") {
+        delete payload.padreData.apellidoMat;
+      }
     } else {
       payload.idPadre = Number(form.idPadre);
     }
@@ -466,7 +428,9 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
 
       <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         {loading ? (
-          <CircularProgress />
+          <div style={{ display: "flex", justifyContent: "center", padding: "20px" }}>
+            <CircularProgress />
+          </div>
         ) : (
           <>
             <TextField
@@ -477,26 +441,29 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               error={!!errors.nombres}
               helperText={errors.nombres}
               fullWidth
+              margin="normal"
             />
-
-            <TextField
-              label="Apellido Paterno *"
-              name="apellidoPat"
+            
+            <TextField 
+              label="Primer Apellido *" 
+              name="apellidoPat" 
               value={form.apellidoPat}
               onChange={handleChange}
               error={!!errors.apellidoPat}
               helperText={errors.apellidoPat}
               fullWidth
+              margin="normal"
             />
-
-            <TextField
-              label="Apellido Materno *"
-              name="apellidoMat"
+            
+            <TextField 
+              label="Segundo Apellido" 
+              name="apellidoMat" 
               value={form.apellidoMat}
               onChange={handleChange}
               error={!!errors.apellidoMat}
-              helperText={errors.apellidoMat}
+              helperText={errors.apellidoMat || "Opcional"}
               fullWidth
+              margin="normal"
             />
 
             <TextField
@@ -508,6 +475,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               helperText={errors.identificacion || "Solo números, 5-15 dígitos"}
               inputProps={{ maxLength: 15 }}
               fullWidth
+              margin="normal"
             />
 
             <TextField
@@ -519,6 +487,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               error={!!errors.correo}
               helperText={errors.correo}
               fullWidth
+              margin="normal"
             />
 
             <TextField
@@ -531,6 +500,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               multiline
               rows={2}
               fullWidth
+              margin="normal"
             />
 
             <TextField
@@ -542,6 +512,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               helperText={errors.telefono_referencia || "7-15 dígitos"}
               inputProps={{ maxLength: 15 }}
               fullWidth
+              margin="normal"
             />
 
             <TextField
@@ -554,6 +525,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               helperText={errors.fecha_nacimiento}
               InputLabelProps={{ shrink: true }}
               fullWidth
+              margin="normal"
             />
 
             <TextField
@@ -565,10 +537,11 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               error={!!errors.sexo}
               helperText={errors.sexo}
               fullWidth
+              margin="normal"
             >
               <MenuItem value="">Seleccione...</MenuItem>
-              <MenuItem value="M">Masculino</MenuItem>
-              <MenuItem value="F">Femenino</MenuItem>
+              <MenuItem value="masculino">Masculino</MenuItem>
+              <MenuItem value="femenino">Femenino</MenuItem>
             </TextField>
 
             <TextField
@@ -579,6 +552,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               error={!!errors.nacionalidad}
               helperText={errors.nacionalidad}
               fullWidth
+              margin="normal"
             />
 
             <TextField
@@ -590,6 +564,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               error={!!errors.relacion}
               helperText={errors.relacion}
               fullWidth
+              margin="normal"
             >
               <MenuItem value="">Seleccione...</MenuItem>
               <MenuItem value="Padre">Padre</MenuItem>
@@ -619,6 +594,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
                 error={!!errors.idPadre}
                 helperText={errors.idPadre}
                 fullWidth
+                margin="normal"
               >
                 <MenuItem value="">Seleccione un padre...</MenuItem>
                 {padres.map((p) => (
@@ -639,24 +615,27 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
                   error={!!padreErrors.nombres}
                   helperText={padreErrors.nombres}
                   fullWidth
+                  margin="normal"
                 />
-                <TextField
-                  label="Apellido Paterno *"
-                  name="apellidoPat"
+                <TextField 
+                  label="Primer Apellido *" 
+                  name="apellidoPat" 
                   value={nuevoPadre.apellidoPat}
                   onChange={handleNuevoPadreChange}
                   error={!!padreErrors.apellidoPat}
                   helperText={padreErrors.apellidoPat}
                   fullWidth
+                  margin="normal"
                 />
-                <TextField
-                  label="Apellido Materno *"
-                  name="apellidoMat"
+                <TextField 
+                  label="Segundo Apellido" 
+                  name="apellidoMat" 
                   value={nuevoPadre.apellidoMat}
                   onChange={handleNuevoPadreChange}
                   error={!!padreErrors.apellidoMat}
-                  helperText={padreErrors.apellidoMat}
+                  helperText={padreErrors.apellidoMat || "Opcional"}
                   fullWidth
+                  margin="normal"
                 />
                 <TextField
                   label="Teléfono *"
@@ -667,6 +646,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
                   helperText={padreErrors.telefono || "7-15 dígitos"}
                   inputProps={{ maxLength: 15 }}
                   fullWidth
+                  margin="normal"
                 />
                 <TextField
                   label="Correo"
@@ -677,6 +657,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
                   error={!!padreErrors.correo}
                   helperText={padreErrors.correo}
                   fullWidth
+                  margin="normal"
                 />
               </>
             )}
@@ -690,6 +671,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               error={!!errors.idCurso}
               helperText={errors.idCurso}
               fullWidth
+              margin="normal"
             >
               <MenuItem value="">Seleccione un curso...</MenuItem>
               {cursos.map((c) => (

@@ -23,7 +23,6 @@ interface EstudianteCalificacion {
   trim1: number | null;
   trim2: number | null;
   trim3: number | null;
-  calificacionFinal: number | null;
   aprobacion: boolean;
   registroId: number | null;
 }
@@ -37,13 +36,17 @@ export default function TableCalificacionTrimestral({
   data,
   onEditarNota,
 }: TableCalificacionTrimestralProps) {
+
   const calcularPromedio = (
     trim1: number | null,
     trim2: number | null,
     trim3: number | null
   ): string | null => {
     const notas = [trim1, trim2, trim3].filter((n): n is number => n !== null);
-    if (notas.length === 0) return null;
+    if (notas.length !== 3){
+      return null
+    } 
+
     return (notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(1); // 1 decimal es suficiente
   };
 
@@ -178,7 +181,7 @@ export default function TableCalificacionTrimestral({
                     {promedio !== null ? (
                       <Chip
                         label={promedio}
-                        color={Number(promedio) >= 61 ? "success" : "error"}
+                        color={Number(promedio) >= 51 ? "success" : "error"}
                         size="medium"
                         sx={{ fontWeight: "bold", minWidth: 70 }}
                       />

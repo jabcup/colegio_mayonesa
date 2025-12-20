@@ -176,52 +176,6 @@ export default function AsignacionPage() {
       await api.post("/asignacion-clases/CrearAsignacion", payload);
     }
 
-    // === SIMULACIÓN DE NOTIFICACIÓN AL DOCENTE ===
-    // Buscamos los datos necesarios para armar el mensaje
-    // === SIMULACIÓN DE NOTIFICACIÓN CON NOMBRES REALES ===
-    const horarioSeleccionado = horarios.find(
-      (h) => h.id === contextoAsignacion.idHorario
-    );
-
-    const accion = modoEdicion ? "actualizado" : "asignado";
-
-    const mensajeNotificacion = `
-📢 ¡${modoEdicion ? "Actualización" : "Nueva"} Asignación de Clase! 📢
-
-Estimado/a ${nombreDocente},
-
-Se le ha ${accion} la siguiente clase:
-
-• Materia: ${nombreMateria}
-• Curso: ${selectedCurso.nombre} - ${selectedCurso.paralelo.nombre} (${selectedCurso.gestion})
-• Día: ${contextoAsignacion.dia}
-• Horario: ${horarioSeleccionado?.horario || "No definido"}
-
-Por favor, ingrese al sistema para revisar su horario completo.
-
-¡Gracias por su dedicación con los estudiantes!
-    `.trim();
-
-    console.log("🔔 NOTIFICACIÓN SIMULADA (se guardaría en tabla 'notificaciones'):");
-    console.log({
-      tipo: "asignacion_clase",
-      idDocente,
-      titulo: modoEdicion ? "Actualización de Asignación" : "Nueva Asignación de Clase",
-      mensaje: mensajeNotificacion,
-      fecha: new Date().toISOString(),
-      leida: false,
-      estado: "pendiente",
-      datos: {
-        idCurso: selectedCurso.id,
-        curso: `${selectedCurso.nombre} - ${selectedCurso.paralelo.nombre} (${selectedCurso.gestion})`,
-        materia: nombreMateria,
-        docente: nombreDocente,
-        dia: contextoAsignacion.dia,
-        horario: horarioSeleccionado?.horario || "No definido",
-        accion,
-      },
-    });
-
     setShowForm(false);
     setContextoAsignacion(null);
     setModoEdicion(false);

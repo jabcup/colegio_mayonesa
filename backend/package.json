@@ -42,7 +42,7 @@
     "pdfmake-unicode": "^0.0.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "swagger": "^0.7.5",
+    "swagger": "^0.0.1",
     "typeorm": "^0.3.28"
   },
   "devDependencies": {

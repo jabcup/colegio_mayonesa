@@ -37,10 +37,6 @@ export class Calificaciones {
   @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
   trim3: number;
 
-  // Opcional: guardar la final calculada
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
-  calificacionFinal?: number;
-
   @Column({ type: 'bool', default: true })
   aprobacion: boolean;
 

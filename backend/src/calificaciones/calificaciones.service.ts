@@ -18,9 +18,6 @@ export class CalificacionesService {
     @InjectRepository(Calificaciones)
     private readonly calificacionesRepository: Repository<Calificaciones>,
 
-    // @InjectRepository(AsignacionClase)
-    // private readonly asignacionClaseRepository: Repository<AsignacionClase>,
-
     @InjectRepository(Materias)
     private readonly materiasRepository: Repository<Materias>,
 
@@ -28,11 +25,23 @@ export class CalificacionesService {
     private readonly estudianteRepository: Repository<Estudiante>,
   ) {}
 
+  // Función auxiliar para convertir a número de forma segura
+  private getNotasValidas(trim1: any, trim2: any, trim3: any): number[] {
+    return [trim1, trim2, trim3]
+      .map((n) => {
+        if (n === null || n === undefined || n === '') return null;
+        const num = Number(n);
+        return isNaN(num) ? null : num;
+      })
+      .filter((n): n is number => n !== null);
+  }
+
   async getCalificaciones(): Promise<Calificaciones[]> {
     return this.calificacionesRepository.find({
       relations: ['materia', 'estudiante'],
     });
   }
+
   async getCalificacionesPorAsignacion(
     idMateria: number,
   ): Promise<Calificaciones[]> {
@@ -47,7 +56,7 @@ export class CalificacionesService {
   async getCalificacionesPorCursoYMateria(idCurso: number, idMateria: number) {
     const anioEscolar = new Date().getFullYear(); // 2025
 
-    return await this.estudianteRepository
+    const rows = await this.estudianteRepository
       .createQueryBuilder('e')
       // Join directo con la tabla pivote estudiante_curso
       .innerJoin(
@@ -63,7 +72,7 @@ export class CalificacionesService {
         'c.id = ec.idCurso AND c.estado = :estadoCurso',
         { estadoCurso: 'activo' },
       )
-      // Left join con calificaciones (puede no existir)
+      // Left join con calificaciones
       .leftJoin(
         'calificaciones',
         'cal',
@@ -85,32 +94,48 @@ export class CalificacionesService {
         'cal.trim1 AS trim1',
         'cal.trim2 AS trim2',
         'cal.trim3 AS trim3',
-        'cal.calificacionFinal AS calificacion_final',
+        //'cal.calificacionFinal AS calificacion_final',
         'cal.aprobacion AS aprobacion',
       ])
       // Parámetros
       .setParameter('idMateria', idMateria)
       .setParameter('anioEscolar', anioEscolar)
       .setParameter('idCurso', idCurso)
-      .getRawMany()
-      .then((rows) =>
-        rows.map((row) => ({
-          calificacion_id: row.calificacion_id || null,
-          trim1: row.trim1 ? Number(row.trim1) : null,
-          trim2: row.trim2 ? Number(row.trim2) : null,
-          trim3: row.trim3 ? Number(row.trim3) : null,
-          calificacion_final: row.calificacion_final
-            ? Number(row.calificacion_final)
-            : null,
-          aprobacion: Boolean(row.aprobacion),
-          estudiante: {
-            id: row.estudiante_id,
-            nombres: row.estudiante_nombres,
-            apellidoPat: row.estudiante_apellido_pat,
-            apellidoMat: row.estudiante_apellido_mat,
-          },
-        })),
-      );
+      .getRawMany();
+
+    return rows.map((row) => ({
+      calificacion_id: row.calificacion_id || null,
+      trim1: row.trim1 !== null ? Number(row.trim1) : null,
+      trim2: row.trim2 !== null ? Number(row.trim2) : null,
+      trim3: row.trim3 !== null ? Number(row.trim3) : null,
+      aprobacion: row.aprobacion !== null ? Boolean(row.aprobacion) : null, // null si no hay calificación
+      estudiante: {
+        id: row.estudiante_id,
+        nombres: row.estudiante_nombres,
+        apellidoPat: row.estudiante_apellido_pat,
+        apellidoMat: row.estudiante_apellido_mat,
+      },
+    }));
+    // .then((rows) =>
+    //   rows.map((row) => ({
+    //     calificacion_id: row.calificacion_id || null,
+    //     trim1: row.trim1 ? Number(row.trim1) : null,
+    //     trim2: row.trim2 ? Number(row.trim2) : null,
+    //     trim3: row.trim3
+    //       ? Number(row.trim3)
+    //       : null
+    //         ? //calificacion_final: row.calificacion_final
+    //           Number(row.calificacion_final)
+    //         : null,
+    //     aprobacion: Boolean(row.aprobacion),
+    //     estudiante: {
+    //       id: row.estudiante_id,
+    //       nombres: row.estudiante_nombres,
+    //       apellidoPat: row.estudiante_apellido_pat,
+    //       apellidoMat: row.estudiante_apellido_mat,
+    //     },
+    //   })),
+    // );
   }
 
   async getCalificacionesPorEstudiante(
@@ -132,8 +157,8 @@ export class CalificacionesService {
       where: {
         estudiante: { id: idEstudiante },
         fecha_creacion: Between(
-          new Date(gestionActual, 0, 1), // 1 enero del año actual
-          new Date(gestionActual, 11, 31, 23, 59, 59, 999), // 31 diciembre 23:59:59
+          new Date(gestionActual, 0, 1),
+          new Date(gestionActual, 11, 31, 23, 59, 59, 999),
         ),
         estado: 'activo',
       },
@@ -179,16 +204,25 @@ export class CalificacionesService {
     }
 
     // Calcular promedio solo con los trimestres que tengan nota
-    const notas = [dto.trim1, dto.trim2, dto.trim3].filter(
-      (n) => n !== undefined && n !== null,
-    );
-    const calificacionFinal =
-      notas.length > 0
-        ? Number((notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(2))
-        : null;
+    // const notas = [dto.trim1, dto.trim2, dto.trim3].filter(
+    //   (n) => n !== undefined && n !== null,
+    // );
+    // const calificacionFinal =
+    //   notas.length > 0
+    //     ? Number((notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(2))
+    //     : null;
+
+    const notas = this.getNotasValidas(dto.trim1, dto.trim2, dto.trim3);
+
+    console.log('notas create:', notas);
+
+    const promedioTemporal =
+      notas.length > 0 ? notas.reduce((a, b) => a + b, 0) / notas.length : null;
+
+    console.log('Promedio: ' + promedioTemporal);
 
     // Determinar aprobación (ajusta el 61 según tu regla: 61, 70, etc.)
-    const aprobacion = calificacionFinal !== null && calificacionFinal >= 51;
+    const aprobacion = promedioTemporal !== null && promedioTemporal >= 51;
 
     // Crear nueva calificación
     const nuevaCalificacion = this.calificacionesRepository.create({
@@ -198,7 +232,6 @@ export class CalificacionesService {
       trim1: dto.trim1 ?? null,
       trim2: dto.trim2 ?? null,
       trim3: dto.trim3 ?? null,
-      calificacionFinal,
       aprobacion,
       estado: 'activo',
     });
@@ -225,29 +258,22 @@ export class CalificacionesService {
     if (dto.trim2 !== undefined) calificacion.trim2 = dto.trim2;
     if (dto.trim3 !== undefined) calificacion.trim3 = dto.trim3;
 
-    // Obtener solo valores numéricos válidos
-    const notas = [
+    const notas = this.getNotasValidas(
       calificacion.trim1,
       calificacion.trim2,
       calificacion.trim3,
-    ].filter((n): n is number => typeof n === 'number' && !isNaN(n));
+    );
 
-    console.log('notas', notas);
+    console.log('notas update:', notas);
 
-    // Calcular promedio de forma segura
-    if (notas.length > 0) {
-      const promedio = notas.reduce((a, b) => a + b, 0) / notas.length;
-      // Redondear a 2 decimales de forma segura
-      calificacion.calificacionFinal = Math.round(promedio * 100) / 100;
-    } else {
-      calificacion.calificacionFinal = null;
-    }
+    const promedioTemporal =
+      notas.length > 0 ? notas.reduce((a, b) => a + b, 0) / notas.length : null;
 
-    console.log('Calificacion Final', calificacion.calificacionFinal);
-    // Aprobación
+    console.log('Promedio: ' + promedioTemporal);
+
+    // Actualizar aprobación
     calificacion.aprobacion =
-      calificacion.calificacionFinal !== null &&
-      calificacion.calificacionFinal >= 51;
+      promedioTemporal !== null && promedioTemporal >= 51;
 
     return await this.calificacionesRepository.save(calificacion);
   }

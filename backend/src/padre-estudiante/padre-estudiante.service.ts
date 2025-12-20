@@ -11,11 +11,38 @@ export class PadreEstudianteService {
     private estudianteTutorRepository: Repository<EstudianteTutor>,
   ) {}
 
-  async listarEstudiantesPadres() {
-    return await this.estudianteTutorRepository.find({
-      relations: ['tutor', 'estudiante'],
+async listarEstudiantesConTodosLosTutores() {
+  const relaciones = await this.estudianteTutorRepository.find({
+    relations: ['tutor', 'estudiante'],
+    where: { estado: 'activo' },
+    order: { 
+      estudiante: { id: 'ASC' },
+      fecha_creacion: 'DESC'
+    }
+  });
+
+  const estudiantesMap = new Map<number, any>();
+  
+  for (const relacion of relaciones) {
+    const estudianteId = relacion.estudiante.id;
+    
+    if (!estudiantesMap.has(estudianteId)) {
+      estudiantesMap.set(estudianteId, {
+        estudiante: relacion.estudiante,
+        tutores: [],
+        relaciones: []
+      });
+    }
+    
+    estudiantesMap.get(estudianteId).tutores.push({
+      ...relacion.tutor,
+      relacion: relacion.relacion,
+      fechaAsignacion: relacion.fecha_creacion
     });
   }
+  
+  return Array.from(estudiantesMap.values());
+}
 
   async listarEstudiantePadresActivos() {
     return await this.estudianteTutorRepository.find({

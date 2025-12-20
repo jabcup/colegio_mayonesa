@@ -132,6 +132,7 @@ export class PagosService {
   }
 
   async previewPago(ids: number[], esTrimestre: boolean = false) {
+
     const pendientes = await this.repo.find({
       where: { id: In(ids), deuda: 'pendiente' },
     });
@@ -278,8 +279,7 @@ export class PagosService {
 
     if (pendientes.length === 0)
       throw new BadRequestException('No hay mensualidades pendientes');
-
-    // ✅ Permitir pagar todas las pendientes, sin importar si son menos de 10
+    // Permitir pagar todas las pendientes, sin importar si son menos de 10
     // El descuento del 10% solo se aplica si son exactamente 10
     return this.pagar(
       pendientes.map((p) => p.id),

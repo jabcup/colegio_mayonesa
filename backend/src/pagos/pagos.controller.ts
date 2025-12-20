@@ -27,7 +27,10 @@ import { UsuariosService } from 'src/usuarios/usuarios.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Usuarios } from 'src/usuarios/usuarios.entity';
+<<<<<<< HEAD
 
+=======
+>>>>>>> charu
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Injectable()
@@ -101,7 +104,7 @@ export class PagosController {
   @ApiBody({ schema: { example: { idpersonal: 123 } } })
   async pagar(
     @Param('id', ParseIntPipe) id: number,
-
+haru
     @Body(SoloIdPersonalPipe) dto: SoloIdPersonalBody,
   ): Promise<{ ok: boolean }> {
     if (!(await esCajero(this.usuariosRepo, dto.idpersonal))) {
@@ -196,7 +199,10 @@ export class PagosController {
   }
 
   @Patch('estudiante/:idEstudiante/pagar_ultima_gestion')
-  @ApiOperation({ summary: 'Pagar todo un año de un estudiante' })
+
+  @ApiOperation({
+    summary: 'Pagar toda la última gestión (año) pendiente de un estudiante',
+  })
   @ApiBody({ schema: { example: { idpersonal: 123 } } })
   @ApiResponse({
     status: 200,
@@ -209,10 +215,49 @@ export class PagosController {
       },
     },
   })
+
+  // async pagarUltimaGestion(
+  //   @Param('idEstudiante', ParseIntPipe) idEstudiante: number,
+  //   @Body(SoloIdPersonalPipe) dto: SoloIdPersonalBody,
+  // ): Promise<{ message: string; updatedCount: number }> {
+  //   if (!(await esCajero(this.usuariosRepo, dto.idpersonal))) {
+  //     throw new ForbiddenException('El personal no es cajero o no está activo');
+  //   }
+
+  //   return this.service.pagarUltimaGestion(idEstudiante, dto.idpersonal);
+  // }
+  @Patch('pagar-trimestre')
+  @ApiOperation({ summary: 'Pagar un trimestre completo (3 mensualidades)' })
+  @ApiBody({
+    schema: {
+      example: { ids: [4, 5, 6], idpersonal: 123 },
+      properties: {
+        ids: { type: 'array', items: { type: 'number' } },
+        idpersonal: { type: 'number' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Resumen de la operación',
+    schema: {
+      example: {
+        message: 'Se marcaron como cancelados 3 pagos.',
+        updatedCount: 3,
+      },
+    },
+  })
+  async pagarTrimestre(
+    @Body('ids') ids: number[],
+    @Body('idpersonal') idpersonal: number,
+  ) {
+    return this.service.pagarTrimestre(ids, idpersonal);
+  }
   @Delete(':id')
   @ApiOperation({ summary: 'Eliminación lógica de un pago' })
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.service.remove(id);
   }
+
 }
