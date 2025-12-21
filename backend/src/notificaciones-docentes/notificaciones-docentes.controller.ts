@@ -9,6 +9,7 @@ import {
   Body,
   Param,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -22,9 +23,11 @@ import { NotificacionesDocentesService } from './notificaciones-docentes.service
 import { CreateNotificacionesDocentesDto } from './dto/create-notificaciones-docente.dto';
 import { UpdateNotificacionesDocentesDto } from './dto/update-notificaciones-docente.dto';
 import { NotificacionesDocentes } from './notificaciones-docente.entity';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Public } from 'src/auth/public.decorator';
 
 @ApiTags('notificaciones-docentes')
-// ← Quitamos @UseGuards(JwtAuthGuard) y @ApiBearerAuth() para probar en Swagger fácilmente
+@UseGuards(JwtAuthGuard)
 @Controller('notificaciones-docentes')
 export class NotificacionesDocentesController {
   constructor(
@@ -50,6 +53,7 @@ export class NotificacionesDocentesController {
 
   // Obtener notificaciones de un docente específico (simulando "mis notificaciones")
   @Get('docente/:docenteId')
+  @Public()
   @ApiOperation({ summary: 'Obtener notificaciones de un docente específico' })
   @ApiOkResponse({ description: 'Notificaciones del docente', type: [NotificacionesDocentes] })
   @ApiNotFoundResponse({ description: 'Docente sin notificaciones o inválido' })
@@ -59,6 +63,7 @@ export class NotificacionesDocentesController {
 
   // Contar notificaciones no leídas de un docente
   @Get('no-leidas/:docenteId')
+  @Public()
   @ApiOperation({ summary: 'Contar notificaciones no leídas de un docente' })
   @ApiOkResponse({ description: 'Cantidad de notificaciones pendientes', example: { count: 5 } })
   async countNoLeidas(@Param('docenteId') docenteId: number) {
@@ -76,6 +81,7 @@ export class NotificacionesDocentesController {
 
   // Marcar como leída (endpoint específico, más limpio que update general)
   @Patch(':id/leida')
+  @Public()
   @ApiOperation({ summary: 'Marcar una notificación como leída' })
   @ApiOkResponse({ description: 'Notificación marcada como leída', type: NotificacionesDocentes })
   async markAsRead(@Param('id') id: number) {

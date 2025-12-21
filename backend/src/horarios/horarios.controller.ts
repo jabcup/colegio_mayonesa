@@ -14,7 +14,7 @@ import { HorariosService } from './horarios.service';
 import { UpdateHorarioDto } from './dto/update-horario.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 @Controller('horarios')
 export class HorariosController {
   constructor(private readonly horariosService: HorariosService) {}

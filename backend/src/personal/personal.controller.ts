@@ -15,7 +15,7 @@ import { PersonalService } from './personal.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Public } from 'src/auth/public.decorator';
 
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 @Controller('personal')
 export class PersonalController {
   constructor(private readonly personalService: PersonalService) {}

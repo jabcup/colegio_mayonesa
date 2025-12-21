@@ -288,12 +288,41 @@ export class AsistenciasService {
   ) {
     const fecha = new Date(fechaReferencia);
 
-    // setear hora por zona horaria
-    fecha.setHours(12, 0, 0, 0);
+    // Normalizar a medianoche
+    fecha.setHours(0, 0, 0, 0);
 
-    const diaSemana = fecha.getDay();
+    const diaSemana = fecha.getDay(); // 0 (dom) - 6 (sab)
 
-    const diffLunes = diaSemana === 6 ? -6 : 1 - diaSemana;
+    // Calcular lunes correctamente
+    const diffLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+
+    const lunes = new Date(fecha);
+    lunes.setDate(fecha.getDate() + diffLunes);
+    lunes.setHours(0, 0, 0, 0);
+
+    const viernes = new Date(lunes);
+    viernes.setDate(lunes.getDate() + 4);
+    viernes.setHours(23, 59, 59, 999);
+
+    return this.asistenciaRepository.find({
+      where: {
+        estudiante: { id: idEstudiante },
+        fecha_creacion: Between(lunes, viernes),
+        estado: 'activo',
+      },
+      relations: ['asignacionClase'],
+      order: {
+        fecha_creacion: 'ASC',
+      },
+    });
+  }
+
+  async obtener(idEstudiante: number, fechaReferencia: Date) {
+    const fecha = new Date(fechaReferencia);
+    fecha.setHours(0, 0, 0, 0);
+
+    const diaSemana = fecha.getDay(); // 0 dom - 6 sab
+    const diffLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
 
     const lunes = new Date(fecha);
     lunes.setDate(fecha.getDate() + diffLunes);

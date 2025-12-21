@@ -139,27 +139,6 @@ export default function ReportePage() {
                   <Stack spacing={2} alignItems="center">
                     <PaymentsIcon color="success" fontSize="large" />
                     <Typography fontWeight="bold">
-                      Pagos por Curso
-                    </Typography>
-                    <Boton
-                      label="Descargar"
-                      color="success"
-                      size="small"
-                      onClick={() => handleOpenFiltro("pagosCurso")}
-                    />
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-
-          {rol !== "Docente" && (
-            <Grid item xs={12} md={6} lg={4}>
-              <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
-                <CardContent>
-                  <Stack spacing={2} alignItems="center">
-                    <PaymentsIcon color="success" fontSize="large" />
-                    <Typography fontWeight="bold">
                       Pagos por Estudiante
                     </Typography>
                     <Boton

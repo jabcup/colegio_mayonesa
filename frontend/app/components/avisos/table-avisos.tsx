@@ -35,7 +35,7 @@ export default function TableAvisos({ onEdit }: { onEdit?: (aviso: Aviso) => voi
   useEffect(() => {
     const cargarCursos = async () => {
       try {
-        const res = await api.get("/cursos/MostrarCursos");
+        const res = await api.get("/cursos/cursosActivos");
         setCursos(res.data);
       } catch {
         toast.error("Error al cargar cursos");

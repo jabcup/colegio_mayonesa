@@ -75,10 +75,7 @@ export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
   const handlePagar = async () => {
     const { pagoId } = confirm
     try {
-      console.log(personalId)
-      console.log(pagoId)
       await api.patch(`/pagos/pagar/${pagoId}`, { idpersonal: personalId })
-// <<<<<<< HEAD
 
       const pdfRes = await api.get(`/pagos/comprobante/${pagoId}`, { responseType: 'blob' })
       const url = window.URL.createObjectURL(new Blob([pdfRes.data]))
@@ -95,12 +92,7 @@ export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
       await onUpdate?.()
     } catch (e: any) {
       alert(e.response?.data?.message || 'Error al pagar')
-// =======
-      // alert("Pago realizado")
-      // window.location.reload()
-    // } catch {
-      // alert("Error al pagar, debes ser un Cajero para poder realziar el pago")
-// >>>>>>> charu
+
     }
   }
 

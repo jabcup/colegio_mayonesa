@@ -13,6 +13,7 @@ import { ApiOperation } from '@nestjs/swagger';
 import { UpdateEstudianteFullDto } from './dto/update-estudiante-full.dto';
 import { EstudianteCursoService } from './estudiante-curso.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Public } from 'src/auth/public.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('estudiante-curso')
@@ -27,6 +28,7 @@ export class EstudianteCursoController {
   }
 
   @Get('/cursoEstudiante/:idEstudiante')
+  @Public()
   async cursoEstudiante(@Param('idEstudiante') idEstudiante: number) {
     return this.estudianteCursoService.getCursoEstudiante(idEstudiante);
   }

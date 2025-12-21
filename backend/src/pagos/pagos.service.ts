@@ -85,7 +85,9 @@ export class PagosService {
   }
 
   async previewPago(ids: number[], esTrimestre: boolean = false) {
-    const pendientes = await this.repo.find({ where: { id: In(ids), deuda: 'pendiente' } });
+    const pendientes = await this.repo.find({
+      where: { id: In(ids), deuda: 'pendiente' },
+    });
     if (pendientes.length !== ids.length)
       throw new BadRequestException(
         'Algunas mensualidades no están pendientes',
@@ -94,12 +96,11 @@ export class PagosService {
     const subTotal = pendientes.reduce((s, p) => s + Number(p.cantidad), 0);
     let descuento = 0;
     const esMensual = pendientes.every((p) => p.tipo === 'mensual');
-    
+
     if (esMensual) {
       if (esTrimestre && pendientes.length === 3) {
         descuento = Number((subTotal * 0.04).toFixed(2));
-      }
-      else if (!esTrimestre && pendientes.length === 10) {
+      } else if (!esTrimestre && pendientes.length === 10) {
         descuento = Number((subTotal * 0.1).toFixed(2));
       }
     }
@@ -134,10 +135,12 @@ export class PagosService {
         'Debe empezar por la mensualidad pendiente más antigua',
       );
 
-    const meses = pendientes.map(p => ({ anio: p.anio, mes: p.mes })).sort((a, b) => {
-      if (a.anio !== b.anio) return a.anio - b.anio;
-      return a.mes - b.mes;
-    });
+    const meses = pendientes
+      .map((p) => ({ anio: p.anio, mes: p.mes }))
+      .sort((a, b) => {
+        if (a.anio !== b.anio) return a.anio - b.anio;
+        return a.mes - b.mes;
+      });
     for (let i = 1; i < meses.length; i++) {
       const { anio: aAnio, mes: aMes } = meses[i - 1];
       const { anio: bAnio, mes: bMes } = meses[i];
@@ -205,63 +208,64 @@ export class PagosService {
     return this.pagar(ids, idPersonal, true);
   }
 
-async pagarAnio(estudianteId: number, idpersonal: number) {
-  const pendientes = await this.repo
-    .createQueryBuilder('p')
-    .where('p.idEstudiante = :estudianteId', { estudianteId })
-    .andWhere('p.deuda = :deuda', { deuda: 'pendiente' })
-    .andWhere('p.tipo = :tipo', { tipo: 'mensual' })
-    .andWhere('p.estado = :estado', { estado: 'activo' })
-    .andWhere('p.mes IS NOT NULL')
-    .orderBy('p.anio', 'ASC')
-    .addOrderBy('p.mes', 'ASC')
-    .take(10)
-    .getMany();
+  async pagarAnio(estudianteId: number, idpersonal: number) {
+    const pendientes = await this.repo
+      .createQueryBuilder('p')
+      .where('p.idEstudiante = :estudianteId', { estudianteId })
+      .andWhere('p.deuda = :deuda', { deuda: 'pendiente' })
+      .andWhere('p.tipo = :tipo', { tipo: 'mensual' })
+      .andWhere('p.estado = :estado', { estado: 'activo' })
+      .andWhere('p.mes IS NOT NULL')
+      .orderBy('p.anio', 'ASC')
+      .addOrderBy('p.mes', 'ASC')
+      .take(10)
+      .getMany();
 
-  if (pendientes.length < 10) {
-    throw new BadRequestException(
-      `Se necesitan al menos 10 mensualidades pendientes. Solo hay ${pendientes.length} disponibles.`
-    );
-  }
-
-  for (let i = 1; i < pendientes.length; i++) {
-    const anterior = pendientes[i - 1];
-    const actual = pendientes[i];
-    
-    const mesEsperado = anterior.mes === 12 ? 1 : anterior.mes + 1;
-    const anioEsperado = anterior.mes === 12 ? anterior.anio + 1 : anterior.anio;
-    
-    if (actual.mes !== mesEsperado || actual.anio !== anioEsperado) {
+    if (pendientes.length < 10) {
       throw new BadRequestException(
-        'Las 10 mensualidades deben ser consecutivas'
+        `Se necesitan al menos 10 mensualidades pendientes. Solo hay ${pendientes.length} disponibles.`,
       );
     }
+
+    for (let i = 1; i < pendientes.length; i++) {
+      const anterior = pendientes[i - 1];
+      const actual = pendientes[i];
+
+      const mesEsperado = anterior.mes === 12 ? 1 : anterior.mes + 1;
+      const anioEsperado =
+        anterior.mes === 12 ? anterior.anio + 1 : anterior.anio;
+
+      if (actual.mes !== mesEsperado || actual.anio !== anioEsperado) {
+        throw new BadRequestException(
+          'Las 10 mensualidades deben ser consecutivas',
+        );
+      }
+    }
+
+    const ids = pendientes.map((p) => p.id);
+
+    const subtotal = pendientes.reduce((sum, p) => sum + Number(p.cantidad), 0);
+    const descuentoTotal = subtotal * 0.1;
+    const descuentoPorPago = descuentoTotal / 10;
+
+    await this.repo
+      .createQueryBuilder()
+      .update()
+      .set({
+        deuda: 'cancelado',
+        fecha_pago: new Date(),
+        personal: { id: idpersonal } as any,
+        descuento: () => `descuento + ${descuentoPorPago}`,
+        total: () => `cantidad - (${descuentoPorPago})`,
+      })
+      .where('id IN (:...ids)', { ids })
+      .execute();
+
+    return {
+      message: `Se marcaron como cancelados 10 pagos con 10% de descuento.`,
+      updatedCount: 10,
+    };
   }
-
-  const ids = pendientes.map(p => p.id);
-  
-  const subtotal = pendientes.reduce((sum, p) => sum + Number(p.cantidad), 0);
-  const descuentoTotal = subtotal * 0.10;
-  const descuentoPorPago = descuentoTotal / 10;
-
-  await this.repo
-    .createQueryBuilder()
-    .update()
-    .set({
-      deuda: 'cancelado',
-      fecha_pago: new Date(),
-      personal: { id: idpersonal } as any,
-      descuento: () => `descuento + ${descuentoPorPago}`,
-      total: () => `cantidad - (${descuentoPorPago})`,
-    })
-    .where('id IN (:...ids)', { ids })
-    .execute();
-
-  return {
-    message: `Se marcaron como cancelados 10 pagos con 10% de descuento.`,
-    updatedCount: 10,
-  };
-}
   private toResponse(p: Pagos): PagoResponseDto {
     return {
       id: p.id,
@@ -288,7 +292,7 @@ async pagarAnio(estudianteId: number, idpersonal: number) {
     });
     if (!p) throw new NotFoundException('Pago no encontrado');
     return p;
-    }
+  }
   async obtenerPagosPorEstudiante(idEstudiante: number): Promise<Pagos[]> {
     return this.repo.find({
       where: { estudiante: { id: idEstudiante }, estado: 'activo' },

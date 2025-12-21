@@ -7,6 +7,7 @@ import FormPago from "@/app/components/pago/form-pago"
 import { api } from "@/app/lib/api"
 import Cookies from "js-cookie"
 import Navbar from "../components/Navbar/navbar"
+import { getAuthData } from "../lib/auth"
 
 type EstudianteOption = {
   id: number
@@ -26,7 +27,13 @@ export default function PagosPage() {
 
   const [confirmAnio, setConfirmAnio] = useState<{ open: boolean; ids: number[]; total: number }>({ open: false, ids: [], total: 0 })
   const [confirmTrim, setConfirmTrim] = useState<{ open: boolean; ids: number[]; total: number }>({ open: false, ids: [], total: 0 })
+    const auth = getAuthData();
+  const rol = auth?.rol;
+    const usuarioId = auth?.usuarioId ? Number(auth.usuarioId) : null;
 
+  if (!rol) {
+    return null;
+  }
   const personalId = Number(Cookies.get("personal_id") ?? 0)
 
   useEffect(() => { loadData() }, [])
@@ -265,12 +272,18 @@ const confirmarPagoAnio = async () => {
               <TextField {...params} label="Estudiante (nombre o CI)" sx={{ width: 350 }} />
             )}
           />
+
+          {rol === "Cajero" && usuarioId && (
+            <div>
           <Button variant="outlined" onClick={handlePagarTrimestre} disabled={!estudianteSel}>
             Pagar trimestre
           </Button>
           <Button variant="outlined" onClick={handlePagarAnio} disabled={!estudianteSel}>
             Pagar año
           </Button>
+          </div>
+          )}
+
         </div>
 
         {showForm && (

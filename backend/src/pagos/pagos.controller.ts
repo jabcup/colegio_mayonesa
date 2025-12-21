@@ -28,7 +28,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Usuarios } from 'src/usuarios/usuarios.entity';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Public } from 'src/auth/public.decorator';
 
+@UseGuards(JwtAuthGuard)
 @Injectable()
 class SoloIdPersonalPipe implements PipeTransform {
   transform(value: any) {
@@ -60,7 +62,6 @@ async function esCajero(
   return usuario?.rol?.nombre === 'Cajero' && usuario.estado === 'activo';
 }
 
-@UseGuards(JwtAuthGuard)
 @ApiTags('Pagos')
 @Controller('pagos')
 export class PagosController {
@@ -85,8 +86,11 @@ export class PagosController {
   }
 
   @Get('estudiante/:idEstudiante')
+  @Public()
   @ApiOperation({ summary: 'Obtener la lista de pagos por estudiante' })
-  async obtenerPagosPorEstudiante(@Param('idEstudiante', ParseIntPipe) idEstudiante: number) {
+  async obtenerPagosPorEstudiante(
+    @Param('idEstudiante', ParseIntPipe) idEstudiante: number,
+  ) {
     return this.service.obtenerPagosPorEstudiante(idEstudiante);
   }
 
@@ -111,7 +115,9 @@ export class PagosController {
   }
 
   @Post('comprobante-multiple')
-  @ApiOperation({ summary: 'Generar comprobante consolidado para múltiples pagos' })
+  @ApiOperation({
+    summary: 'Generar comprobante consolidado para múltiples pagos',
+  })
   @ApiBody({
     schema: {
       example: { ids: [1, 2, 3] },
@@ -121,19 +127,16 @@ export class PagosController {
     },
   })
   @ApiResponse({ status: 200, description: 'PDF del comprobante consolidado' })
-  async comprobanteMultiple(
-    @Body('ids') ids: number[],
-    @Res() res: Response,
-  ) {
+  async comprobanteMultiple(@Body('ids') ids: number[], @Res() res: Response) {
     if (!ids || ids.length === 0) {
       throw new BadRequestException('Debe proporcionar al menos un ID de pago');
     }
 
     const pagos = await Promise.all(
-      ids.map(id => this.service.findOneRaw(id))
+      ids.map((id) => this.service.findOneRaw(id)),
     );
 
-    const pagosPendientes = pagos.filter(p => p.deuda !== 'cancelado');
+    const pagosPendientes = pagos.filter((p) => p.deuda !== 'cancelado');
     if (pagosPendientes.length > 0) {
       throw new BadRequestException('Todos los pagos deben estar cancelados');
     }
@@ -168,7 +171,9 @@ export class PagosController {
   }
 
   @Patch('pagar-trimestre')
-  @ApiOperation({ summary: 'Pagar un trimestre completo (3 mensualidades con 4% descuento)' })
+  @ApiOperation({
+    summary: 'Pagar un trimestre completo (3 mensualidades con 4% descuento)',
+  })
   @ApiBody({
     schema: {
       example: { ids: [4, 5, 6], idpersonal: 123 },
@@ -182,7 +187,10 @@ export class PagosController {
     status: 200,
     description: 'Resumen de la operación',
     schema: {
-      example: { message: 'Se marcaron como cancelados 3 pagos.', updatedCount: 3 },
+      example: {
+        message: 'Se marcaron como cancelados 3 pagos.',
+        updatedCount: 3,
+      },
     },
   })
   async pagarTrimestre(
@@ -193,12 +201,20 @@ export class PagosController {
   }
 
   @Patch('estudiante/:estudianteId/pagar-anio')
-  @ApiOperation({ summary: 'Pagar todas las mensualidades pendientes del estudiante (descuento 10% si son 10)' })
+  @ApiOperation({
+    summary:
+      'Pagar todas las mensualidades pendientes del estudiante (descuento 10% si son 10)',
+  })
   @ApiBody({ schema: { example: { idpersonal: 123 } } })
   @ApiResponse({
     status: 200,
     description: 'Resumen de la operación',
-    schema: { example: { message: 'Se marcaron como cancelados X pagos.', updatedCount: 10 } },
+    schema: {
+      example: {
+        message: 'Se marcaron como cancelados X pagos.',
+        updatedCount: 10,
+      },
+    },
   })
   async pagarAnio(
     @Param('estudianteId', ParseIntPipe) estudianteId: number,
