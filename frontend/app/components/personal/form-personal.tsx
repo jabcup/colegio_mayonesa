@@ -54,6 +54,10 @@ const calcularEdad = (fechaNacimiento: string): number => {
   return edad;
 };
 
+const validarSoloLetras = (texto: string): boolean => {
+  return /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(texto.trim());
+};
+
 export default function PersonalForm({
   personalToEdit,
   onClose,
@@ -84,6 +88,14 @@ export default function PersonalForm({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    
+    if (name === "nombres" || name === "apellidoPat" || name === "apellidoMat") {
+      const soloLetras = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]*$/;
+      if (!soloLetras.test(value)) {
+        return;
+      }
+    }
+    
     setForm({ ...form, [name]: value });
     if (errors[name]) {
       setErrors({ ...errors, [name]: "" });
@@ -93,16 +105,31 @@ export default function PersonalForm({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!form.nombres.trim()) newErrors.nombres = "Nombres es requerido";
-    if (!form.apellidoPat.trim()) newErrors.apellidoPat = "Apellido paterno es requerido";
-    if (!form.identificacion.trim()) newErrors.identificacion = "Identificación es requerida";
-    if (!form.correo.trim()) newErrors.correo = "Correo es requerido";
+    if (!form.nombres.trim()) {
+      newErrors.nombres = "Nombres es requerido";
+    } else if (!validarSoloLetras(form.nombres)) {
+      newErrors.nombres = "Los nombres solo deben contener letras y espacios";
+    }
 
-    if (form.identificacion && !/^\d+$/.test(form.identificacion)) {
+    if (!form.apellidoPat.trim()) {
+      newErrors.apellidoPat = "Apellido paterno es requerido";
+    } else if (!validarSoloLetras(form.apellidoPat)) {
+      newErrors.apellidoPat = "El apellido paterno solo debe contener letras y espacios";
+    }
+
+    if (form.apellidoMat && form.apellidoMat.trim() !== "" && !validarSoloLetras(form.apellidoMat)) {
+      newErrors.apellidoMat = "El apellido materno solo debe contener letras y espacios";
+    }
+
+    if (!form.identificacion.trim()) {
+      newErrors.identificacion = "Identificación es requerida";
+    } else if (!/^\d+$/.test(form.identificacion)) {
       newErrors.identificacion = "La identificación debe contener solo números";
     }
 
-    if (form.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo)) {
+    if (!form.correo.trim()) {
+      newErrors.correo = "Correo es requerido";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo)) {
       newErrors.correo = "Correo electrónico inválido";
     }
 
@@ -219,6 +246,8 @@ export default function PersonalForm({
           name="apellidoMat"
           value={form.apellidoMat}
           onChange={handleChange}
+          error={!!errors.apellidoMat}
+          helperText={errors.apellidoMat}
           inputProps={{ maxLength: 50 }}
         />
         
