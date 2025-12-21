@@ -20,12 +20,12 @@ interface Personal {
   id: number;
   nombres: string;
   apellidoPat: string;
-  apellidoMat: string;
-  telefono: string;
+  apellidoMat?: string;
+  telefono?: string;
   identificacion: string;
-  direccion: string;
+  direccion?: string;
   correo: string;
-  fecha_nacimiento: string;
+  fecha_nacimiento?: string;
   idRol: number;
 }
 
@@ -96,14 +96,28 @@ export default function PersonalForm({
       return;
     }
     try {
-      const { id, fecha_creacion, estado, ...payload } = form;
+      const { id, fecha_creacion, estado, ...rest } = form;
+
+      const payload: any = {
+        nombres: rest.nombres.trim(),
+        apellidoPat: rest.apellidoPat.trim(),
+        identificacion: rest.identificacion.trim(),
+        correo: rest.correo.trim(),
+        idRol: rest.idRol,
+      };
+
+      if (rest.apellidoMat?.trim()) payload.apellidoMat = rest.apellidoMat.trim();
+      if (rest.telefono?.trim()) payload.telefono = rest.telefono.trim();
+      if (rest.direccion?.trim()) payload.direccion = rest.direccion.trim();
+      if (rest.fecha_nacimiento?.trim()) payload.fecha_nacimiento = rest.fecha_nacimiento.trim();
+
       isEdit
         ? await api.put(`/personal/EditarPersonal/${form.id}`, payload)
-        : await api.post("/personal/CrearPersonalCompleto", payload);
-      alert(isEdit ? "Personal actualizado" : "Personal creado");
+        : await api.post('/personal/CrearPersonalCompleto', payload);
+      alert(isEdit ? 'Personal actualizado' : 'Personal creado');
       onClose ? onClose() : router.back();
     } catch (e: any) {
-      alert(e.response?.data?.message || "Error al guardar");
+      alert(e.response?.data?.message || 'Error al guardar');
     }
   };
 
@@ -156,7 +170,6 @@ export default function PersonalForm({
           name="apellidoMat"
           value={form.apellidoMat}
           onChange={handleChange}
-          required
           inputProps={{ maxLength: 50 }}
         />
         <TextField
@@ -164,7 +177,6 @@ export default function PersonalForm({
           name="telefono"
           value={form.telefono}
           onChange={handleChange}
-          required
           inputProps={{ maxLength: 20 }}
         />
         <TextField
@@ -180,7 +192,6 @@ export default function PersonalForm({
           name="direccion"
           value={form.direccion}
           onChange={handleChange}
-          required
           inputProps={{ maxLength: 200 }}
         />
         <TextField
@@ -198,7 +209,6 @@ export default function PersonalForm({
           type="date"
           value={form.fecha_nacimiento}
           onChange={handleChange}
-          required
           InputLabelProps={{ shrink: true }}
         />
         <Box display="flex" gap={2} justifyContent="flex-end">

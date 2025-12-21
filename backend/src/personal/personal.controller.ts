@@ -12,14 +12,15 @@ import {
 import { ApiOperation } from '@nestjs/swagger';
 import { CreatePersonalDto } from './dto/create-personal.dto';
 import { PersonalService } from './personal.service';
-import { CreatePersonalFullDto } from './dto/create-personal-full.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Public } from 'src/auth/public.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('personal')
 export class PersonalController {
   constructor(private readonly personalService: PersonalService) {}
 
+  @Public()
   @Post('CrearPersonal')
   @ApiOperation({ summary: 'Crear Personal' })
   async createPersonal(@Body() createPersonalDto: CreatePersonalDto) {
@@ -33,7 +34,7 @@ export class PersonalController {
 
   @Post('CrearPersonalCompleto')
   @ApiOperation({ summary: 'Crear Personal Completo' })
-  async createPersonalCompleto(@Body() dto: CreatePersonalFullDto) {
+  async createPersonalCompleto(@Body() dto: CreatePersonalDto) {
     return this.personalService.crearPersonalCompleto(dto);
   }
 
@@ -71,7 +72,7 @@ export class PersonalController {
 
   @Put('EditarPersonal/:id')
   @ApiOperation({ summary: 'Editar Personal' })
-  updatePersonal(@Param('id') id: number, @Body() dto: CreatePersonalDto) {
+  updatePersonal(@Param('id') id: number, @Body() dto: Partial<CreatePersonalDto>) {
     return this.personalService.updatePersonal(id, dto);
   }
 
