@@ -59,7 +59,7 @@ export default function FormAviso({ open, onClose, onSuccess, avisoToEdit }: Pro
   const cargarCursos = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/cursos/MostrarCursos");
+      const res = await api.get("/cursos/cursosActivos");
       setCursos(res.data);
     } catch {
       toast.error("Error al cargar los cursos");

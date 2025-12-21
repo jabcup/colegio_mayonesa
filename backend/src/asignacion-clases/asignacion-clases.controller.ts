@@ -14,6 +14,7 @@ import { ApiOperation } from '@nestjs/swagger';
 import { CreateAsignacionFulDto } from './dto/create-asignacion-full.dto';
 import { UpdateAsignacionFulDto } from './dto/update-asignacion-full.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Public } from 'src/auth/public.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('asignacion-clases')
@@ -48,6 +49,7 @@ export class AsignacionClasesController {
   }
 
   @Get('estudiante/:id')
+  @Public()
   @ApiOperation({
     summary: 'Obtener asignaciones de clase por ID de estudiante',
   })

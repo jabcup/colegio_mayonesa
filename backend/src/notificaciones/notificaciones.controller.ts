@@ -14,6 +14,7 @@ import { NotificacionesService } from './notificaciones.service';
 import { UpdateNotificacionesDto } from './dto/update-notificaciones.dto';
 import { Estudiante } from '../estudiante/estudiante.entity';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Public } from 'src/auth/public.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('notificaciones')
@@ -35,6 +36,7 @@ export class NotificacionesController {
   }
 
   @Get('Estudiante/:estudianteId')
+  @Public()
   @ApiOperation({ summary: 'Obtener Notificaciones por Estudiante' })
   async obtenerNotificacionesPorEstudiante(
     @Param('estudianteId') estudianteId: number,

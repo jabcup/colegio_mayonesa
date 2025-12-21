@@ -31,8 +31,9 @@ interface Props {
 }
 
 const COLORES_PAGO: Record<string, string> = {
-  pendiente: "#FFF9C4",
-  realizado: "#C8E6C9",
+  pendiente: "#f0e583ff",
+  realizado: "#9ce29eff",
+  cancelado: "#9ce29eff",
 };
 
 type FiltroConcepto = "todos" | "mensualidad" | "otros";
@@ -46,8 +47,9 @@ export default function TablePagosEstudiante({ idEstudiante }: Props) {
 
     const fetchPagos = async () => {
       try {
-        const res = await api.get(`/pagos/${idEstudiante}`);
-        setPagos(res.data);
+        const res = await api.get(`/pagos/estudiante/${idEstudiante}`);
+        setPagos(Array.isArray(res.data) ? res.data : res.data.pagos ?? []);
+
       } catch (error) {
         console.error("Error al obtener pagos", error);
       }

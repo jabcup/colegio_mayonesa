@@ -737,7 +737,8 @@ export class ReportesService {
     const query = this.asistenciasCursoRepo.createQueryBuilder('v');
 
     if (params.idCurso) {
-      query.andWhere('v.idCurso = :idCurso', { idCurso: params.idCurso });
+      query.where('v.idCurso = :idCurso', { idCurso: params.idCurso });
+      query.andWhere('v.mes = :mes', { mes: params.mes });
     }
 
     const resultados = await query.getMany();

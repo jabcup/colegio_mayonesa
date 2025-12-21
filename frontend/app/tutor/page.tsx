@@ -115,21 +115,6 @@ export default function TutoresPage() {
         size="small"
       />
 
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <Box
-          sx={{
-            width: 22,
-            height: 14,
-            backgroundColor: "#FFC107",
-            borderRadius: 0.5,
-            border: "1px solid #ccc",
-          }}
-        />
-        <Typography variant="body2">
-          Tutor asignado al mismo o a dos cursos
-        </Typography>
-      </Box>
-
       <TablaTutores
         tutores={tutoresFiltrados}
         onEdit={editarTutor}

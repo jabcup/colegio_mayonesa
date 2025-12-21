@@ -1,24 +1,16 @@
 "use client";
 
-import { AppBar, Toolbar, Typography, Box } from "@mui/material";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Boton } from "../botones/botonNav";
 import LogoutButton from "../botones/logout";
 import { getAuthData } from "@/app/lib/auth";
-import { useEffect, useState } from "react";
 import BadgeNotificaciones from "../notificaciones-docente/BadgeNotificaciones";
+import styles from "./Navbar.module.css"; // ¡Importa desde el mismo directorio!
 
 export default function Navbar() {
   const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) {
-    return null;
-  }
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [hoverMenu, setHoverMenu] = useState<string | null>(null);
 
   const auth = getAuthData();
   const rol = auth?.rol;
@@ -28,169 +20,159 @@ export default function Navbar() {
     return null;
   }
 
+  // Definir las secciones del menú según el rol
+  const getMenuSections = () => {
+    const baseSections = {
+      gestionAcademica: {
+        label: "Gestión Académica",
+        icon: "📚",
+        submenus: [
+          { label: "Estudiantes", path: "/estudiante", roles: ["all"] },
+          { label: "Calificaciones", path: "/calificacion", roles: ["Administrador", "Docente", "Secretaria-o"] },
+          { label: "Asistencias", path: "/asistencias", roles: ["Administrador", "Docente", "Secretaria-o"] },
+          { label: "Materias", path: "/materias", roles: ["Administrador"] },
+          { label: "Cursos", path: "/cursos", roles: ["Administrador"] },
+          { label: "Horarios", path: "/horarios", roles: ["Administrador"] },
+        ]
+      },
+      gestionPersonal: {
+        label: "Gestión de Personal",
+        icon: "👥",
+        submenus: [
+          { label: "Personal", path: "/personal", roles: ["Administrador", "Director"] },
+          { label: "Asignaciones", path: "/asignacion", roles: ["Administrador", "Docente", "Secretaria-o"] },
+          { label: "Tutores", path: "/tutor", roles: ["Administrador"] },
+        ]
+      },
+      gestionFinanciera: {
+        label: "Gestión Financiera",
+        icon: "💰",
+        submenus: [
+          { label: "Pagos", path: "/pago", roles: ["Administrador", "Director", "Cajero"] },
+          { label: "Reportes", path: "/reporte", roles: ["all"] },
+        ]
+      },
+      comunicaciones: {
+        label: "Comunicaciones",
+        icon: "📢",
+        submenus: [
+          { label: "Notificaciones", path: "/notificaciones", roles: ["Administrador", "Director", "Secretaria-o"] },
+          { label: "Avisos", path: "/avisos", roles: ["Administrador", "Director", "Secretaria-o"] },
+        ]
+      },
+      sistema: {
+        label: "Sistema",
+        icon: "⚙️",
+        submenus: [
+          { label: "Roles", path: "/rol", roles: ["Administrador", "Director"] },
+          { label: "Auditoría", path: "/auditoria", roles: ["Administrador"] },
+        ]
+      }
+    };
+
+    // Filtrar submenús según el rol
+    Object.keys(baseSections).forEach(key => {
+      baseSections[key].submenus = baseSections[key].submenus.filter(item => 
+        item.roles.includes("all") || item.roles.includes(rol)
+      );
+    });
+
+    // Eliminar secciones vacías
+    return Object.keys(baseSections)
+      .filter(key => baseSections[key].submenus.length > 0)
+      .reduce((obj, key) => {
+        obj[key] = baseSections[key];
+        return obj;
+      }, {});
+  };
+
+  const menuSections = getMenuSections();
+
+  const handleMenuClick = (menu: string) => {
+    setOpenMenu(openMenu === menu ? null : menu);
+  };
+
+  const handleSubmenuClick = (path: string) => {
+    router.push(path);
+    setOpenMenu(null);
+    setHoverMenu(null);
+  };
+
   return (
-    <>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Colegio Mayo - Sección Administrativa
-          </Typography>
+    <nav className={styles.navbar}>
+      <div className={styles.navbarContainer}>
+        {/* Logo y título */}
+        <div className={styles.navbarBrand}>
+          <div className={styles.logo}>
+            <span className={styles.logoIcon}>🏫</span>
+          </div>
+          <div className={styles.brandText}>
+            <h1 className={styles.brandTitle}>Colegio Mayo</h1>
+            <p className={styles.brandSubtitle}>Sección Administrativa</p>
+          </div>
+        </div>
 
-          <Boton
-            label="Estudiantes"
-            color="success"
-            size="small"
-            className="ml-2"
-            onClick={() => router.push("/estudiante")}
-          />
+        {/* Menús principales */}
+        <div className={styles.navbarMenus}>
+          {Object.entries(menuSections).map(([key, section]) => (
+            <div 
+              key={key}
+              className={`${styles.menuSection} ${openMenu === key ? styles.active : ''} ${hoverMenu === key ? styles.hover : ''}`}
+              onMouseEnter={() => setHoverMenu(key)}
+              onMouseLeave={() => setHoverMenu(null)}
+            >
+              <button
+                className={styles.menuButton}
+                onClick={() => handleMenuClick(key)}
+              >
+                <span className={styles.menuIcon}>{section.icon}</span>
+                <span className={styles.menuLabel}>{section.label}</span>
+                <span className={styles.menuArrow}>▼</span>
+              </button>
 
-          {rol !== "Secretaria-o" && rol !== "Cajero" && (
-            <Boton
-              label="Calificaciones"
-              color="success"
-              size="small"
-              className="ml-2"
-              onClick={() => router.push("/calificacion")}
-            />
-          )}
+              {/* Submenú desplegable */}
+              {(openMenu === key || hoverMenu === key) && (
+                <div className={styles.submenu}>
+                  <div className={styles.submenuContent}>
+                    {section.submenus.map((item, index) => (
+                      <button
+                        key={index}
+                        className={styles.submenuItem}
+                        onClick={() => handleSubmenuClick(item.path)}
+                      >
+                        <span className={styles.submenuLabel}>{item.label}</span>
+                        <span className={styles.submenuArrow}>→</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
 
-          <Boton
-            label="Reportes"
-            color="success"
-            size="small"
-            className="ml-2"
-            onClick={() => router.push("/reporte")}
-          />
-
-          {rol !== "Secretaria-o" && rol !== "Cajero" && (
-            <Boton
-              label="Asistencias"
-              color="success"
-              size="small"
-              className="ml-2"
-              onClick={() => router.push("/asistencias")}
-            />
-          )}
-
-          {rol !== "Cajero" && rol !== "Docente" && (
-            <Boton
-              label="Personal"
-              color="success"
-              size="small"
-              className="ml-2"
-              onClick={() => router.push("/personal")}
-            />
-          )}
-
-          {rol !== "Cajero" && rol !== "Docente" && (
-            <Boton
-              label="Materias"
-              color="success"
-              size="small"
-              className="ml-2"
-              onClick={() => router.push("/materias")}
-            />
-          )}
-
-          {rol !== "Cajero" && rol !== "Docente" && (
-            <Boton
-              label="Horarios"
-              color="success"
-              size="small"
-              className="ml-2"
-              onClick={() => router.push("/horarios")}
-            />
-          )}
-
-          {rol !== "Secretaria-o" && rol !== "Docente" && (
-            <Boton
-              label="Pagos"
-              color="success"
-              size="small"
-              className="ml-2"
-              onClick={() => router.push("/pago")}
-            />
-          )}
-
-          {rol !== "Docente" && (
-            <Boton
-              label="Notificaciones"
-              color="success"
-              size="small"
-              className="ml-2"
-              onClick={() => router.push("/notificaciones")}
-            />
-          )}
-
-          {rol !== "Docente" && (
-            <Boton
-              label="Avisos"
-              color="success"
-              size="small"
-              className="ml-2"
-              onClick={() => router.push("/avisos")}
-            />
-          )}
-
-          {rol !== "Cajero" && rol !== "Docente" && (
-            <Boton
-              label="Roles"
-              color="success"
-              size="small"
-              className="ml-2"
-              onClick={() => router.push("/rol")}
-            />
-          )}
-
-          {rol !== "Cajero" && (
-            <Boton
-              label="Asignaciones"
-              color="success"
-              size="small"
-              className="ml-2"
-              onClick={() => router.push("/asignacion")}
-            />
-          )}
-
-          {rol !== "Cajero" && rol !== "Docente" && (
-            <Boton
-              label="Cursos"
-              color="success"
-              size="small"
-              className="ml-2"
-              onClick={() => router.push("/cursos")}
-            />
-          )}
-
-          {rol === "Administrador" && (
-            <Boton
-              label="Auditoria"
-              color="success"
-              size="small"
-              className="ml-2"
-              onClick={() => router.push("/auditoria")}
-            />
-          )}
-
-          {rol !== "Cajero" && rol !== "Docente" && (
-            <Boton
-              label="Tutores"
-              color="success"
-              size="small"
-              className="ml-2"
-              onClick={() => router.push("/tutor")}
-            />
-          )}
-
+        {/* Parte derecha: Notificaciones y Logout */}
+        <div className={styles.navbarRight}>
           {rol === "Docente" && usuarioId && (
-            <Box sx={{ ml: 2 }}>
+            <div className={styles.notificationsContainer}>
               <BadgeNotificaciones docenteId={usuarioId} />
-            </Box>
+            </div>
           )}
 
-          <LogoutButton />
-        </Toolbar>
-      </AppBar>
-    </>
+          <div className={styles.userInfo}>
+            <div className={styles.userAvatar}>
+              <span className={styles.avatarIcon}>👤</span>
+            </div>
+            <div className={styles.userDetails}>
+              <span className={styles.userRole}>{rol}</span>
+            </div>
+          </div>
+
+          <div className={styles.logoutContainer}>
+            <LogoutButton />
+          </div>
+        </div>
+      </div>
+    </nav>
   );
 }
