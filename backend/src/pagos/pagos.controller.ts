@@ -27,10 +27,6 @@ import { UsuariosService } from 'src/usuarios/usuarios.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Usuarios } from 'src/usuarios/usuarios.entity';
-<<<<<<< HEAD
-
-=======
->>>>>>> charu
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Injectable()
@@ -104,7 +100,6 @@ export class PagosController {
   @ApiBody({ schema: { example: { idpersonal: 123 } } })
   async pagar(
     @Param('id', ParseIntPipe) id: number,
-haru
     @Body(SoloIdPersonalPipe) dto: SoloIdPersonalBody,
   ): Promise<{ ok: boolean }> {
     if (!(await esCajero(this.usuariosRepo, dto.idpersonal))) {
@@ -199,7 +194,6 @@ haru
   }
 
   @Patch('estudiante/:idEstudiante/pagar_ultima_gestion')
-
   @ApiOperation({
     summary: 'Pagar toda la última gestión (año) pendiente de un estudiante',
   })
@@ -247,17 +241,10 @@ haru
       },
     },
   })
-  async pagarTrimestre(
-    @Body('ids') ids: number[],
-    @Body('idpersonal') idpersonal: number,
-  ) {
-    return this.service.pagarTrimestre(ids, idpersonal);
-  }
   @Delete(':id')
   @ApiOperation({ summary: 'Eliminación lógica de un pago' })
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.service.remove(id);
   }
-
 }

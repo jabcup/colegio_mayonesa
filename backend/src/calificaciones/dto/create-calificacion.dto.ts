@@ -1,10 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-<<<<<<< HEAD
-import { IsNotEmpty, IsNumber, Max, Min } from 'class-validator';
-=======
+
 import { IsNotEmpty, IsNumber, IsOptional, Max, Min } from 'class-validator';
->>>>>>> samuel
 
 export class CreateCalificacionDto {
   @ApiProperty({
@@ -51,12 +48,9 @@ export class CreateCalificacionDto {
     description: 'Año escolar',
   })
   @IsNotEmpty()
-<<<<<<< HEAD
   @Min(0)
   @Max(100)
-=======
   @Type(() => Number)
->>>>>>> samuel
   @IsNumber()
   @Min(2000)
   anioEscolar: number;
