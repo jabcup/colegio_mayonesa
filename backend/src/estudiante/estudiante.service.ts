@@ -35,15 +35,29 @@ export class EstudianteService {
 
   async createEstudianteFull(dto: CreateEstudianteFullDto) {
     return this.dataSource.transaction(async (manager) => {
+      // Validar que el CI no esté repetido
+      const ciExistente = await manager.findOne(Estudiante, {
+        where: { identificacion: dto.identificacion },
+      });
+
+      if (ciExistente) {
+        throw new BadRequestException('Ya existe un estudiante con este número de CI');
+      }
+
+      // Generar correo institucional: primerNombre.ci@colegio.edu.bo
+      const primerNombre = dto.nombres.trim().split(' ')[0].toLowerCase();
+      const correoInstitucional = `${primerNombre}.${dto.identificacion}@colegio.edu.bo`;
+
+      // Cambia el dominio si es diferente (ej: @unidadeducativa.edu.bo)
+      const dominio = 'colegio.edu.bo'; // ← Puedes mover esto a .env si quieres
+
       const estudiante = manager.create(Estudiante, {
         nombres: dto.nombres,
         apellidoPat: dto.apellidoPat,
         apellidoMat: dto.apellidoMat, // nullable
         identificacion: dto.identificacion,
         correo: dto.correo,
-        correo_institucional: `${
-          dto.nombres.toLowerCase().split(' ')[0]
-        }.${dto.apellidoPat.toLowerCase()}@mayonesa.estudiante.edu.bo`,
+        correo_institucional: `${primerNombre}.${dto.identificacion}@${dominio}`,
 
         rude: `R${dto.identificacion}${dto.nombres.charAt(0).toUpperCase()}${dto.apellidoPat.charAt(0).toUpperCase()}${(
           dto.apellidoMat || ''
@@ -162,7 +176,28 @@ export class EstudianteService {
       throw new NotFoundException('Estudiante no encontrado');
     }
 
+    // Validar CI único si se está cambiando
+    if (dto.identificacion && dto.identificacion !== estudiante.identificacion) {
+      const ciExistente = await this.estudianteRepository.findOne({
+        where: { identificacion: dto.identificacion },
+      });
+
+      if (ciExistente) {
+        throw new BadRequestException('Ya existe otro estudiante con este número de CI');
+      }
+    }
+
+    // Aplicar los cambios del DTO
     Object.assign(estudiante, dto);
+
+    // Regenerar correo institucional si cambian nombre o CI
+    if (dto.nombres || dto.identificacion) {
+      const primerNombre = (dto.nombres || estudiante.nombres).trim().split(' ')[0].toLowerCase();
+      const ci = dto.identificacion || estudiante.identificacion;
+      const dominio = 'colegio.edu.bo'; // ← Cambia si es necesario
+      estudiante.correo_institucional = `${primerNombre}.${ci}@${dominio}`;
+    }
+
     return this.estudianteRepository.save(estudiante);
   }
 

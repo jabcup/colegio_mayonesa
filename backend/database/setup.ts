@@ -4,9 +4,9 @@ import { DataSource } from 'typeorm';
 const setupDataSource = new DataSource({
   type: 'mysql',
   host: 'localhost',
-  port: 3306,
-  username: '',
-  password: '',
+  port: 3308,
+  username: 'root',
+  password: '7090158',
   database: 'colegio',
   synchronize: true,
   logging: true,

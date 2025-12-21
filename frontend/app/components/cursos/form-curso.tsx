@@ -9,6 +9,7 @@ import {
   DialogActions,
   Button,
   MenuItem,
+  FormHelperText,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 
@@ -30,9 +31,7 @@ interface Paralelos {
 interface Props {
   open: boolean;
   onClose: () => void;
-  //Edit
   selectedCurso: Curso | null;
-
   onCreate: (data: {
     nombre: string;
     idParalelo: number;
@@ -47,13 +46,6 @@ interface Props {
   }) => void;
 }
 
-export interface UpdateCursoDto {
-  nombre: string;
-  paralelo: string;
-  gestion: number;
-  capacidad: number;
-}
-
 export default function FormCurso({
   open,
   onClose,
@@ -64,26 +56,30 @@ export default function FormCurso({
   const [form, setForm] = useState({
     nombre: "",
     idParalelo: 0,
-    gestion: 0,
-    capacidad: 0,
+    gestion: new Date().getFullYear(), // Valor por defecto: año actual
+    capacidad: 15, // Valor sugerido razonable
   });
 
   const [paralelos, setParalelos] = useState<Paralelos[]>([]);
+  const [errors, setErrors] = useState({
+    nombre: false,
+    idParalelo: false,
+    gestion: false,
+    capacidad: false,
+  });
 
-  const cargarParalelos = async() => {
+  const cargarParalelos = async () => {
     try {
-      const res = await api.get(`/paralelos/MostrarParalelos`);;
-
+      const res = await api.get(`/paralelos/MostrarParalelos`);
       setParalelos(res.data);
     } catch (error) {
       console.error(error);
       alert("Error al cargar los paralelos");
     }
-  }
+  };
 
   useEffect(() => {
     if (selectedCurso) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm({
         nombre: selectedCurso.nombre,
         idParalelo: selectedCurso.paralelo.id,
@@ -94,67 +90,82 @@ export default function FormCurso({
       setForm({
         nombre: "",
         idParalelo: 0,
-        gestion: 0,
-        capacidad: 0,
+        gestion: new Date().getFullYear(),
+        capacidad: 15,
       });
     }
+    setErrors({ nombre: false, idParalelo: false, gestion: false, capacidad: false });
   }, [selectedCurso]);
 
   useEffect(() => {
     cargarParalelos();
   }, []);
 
-
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+    const numValue = name === "idParalelo" || name === "gestion" || name === "capacidad"
+      ? Number(value)
+      : value;
+
     setForm((prev) => ({
       ...prev,
-      [name]: name === "idParalelo" ? Number(value) : value,
+      [name]: numValue,
     }));
   };
 
+  // Validación en tiempo real
+  const validateForm = () => {
+    const newErrors = {
+      nombre: form.nombre.trim() === "",
+      idParalelo: form.idParalelo === 0,
+      gestion: form.gestion < 0,
+      capacidad: form.capacidad < 1 || form.capacidad > 20,
+    };
+    setErrors(newErrors);
+    return !Object.values(newErrors).some(Boolean);
+  };
+
   const handleSubmit = () => {
-    if (form.gestion < 1990 || form.gestion > new Date().getFullYear()) {
-      alert("La gestion debe estar entre 1990 y el año actual");
-      return;
+    if (!validateForm()) {
+      return; // No hace nada si hay errores
     }
 
     const payload = {
-      nombre: form.nombre,
+      nombre: form.nombre.trim(),
       idParalelo: form.idParalelo,
       gestion: form.gestion,
       capacidad: form.capacidad,
     };
 
-    console.log("Payload enviado:", payload);
-
     if (selectedCurso && onUpdate) {
-      // Modo EDITAR
-      onUpdate({
-        nombre: form.nombre,
-        idParalelo: form.idParalelo,
-        gestion: form.gestion,
-        capacidad: form.capacidad,
+      onUpdate(payload);
+    } else {
+      onCreate(payload);
+      // Resetear solo en creación
+      setForm({
+        nombre: "",
+        idParalelo: 0,
+        gestion: new Date().getFullYear(),
+        capacidad: 15,
       });
-      return;
     }
-
-
-    onCreate(payload);
-
-    setForm({
-      nombre: "",
-      idParalelo: 0,
-      gestion: 0,
-      capacidad: 0,
-    });
-
     onClose();
   };
 
   const isUpdate = Boolean(selectedCurso);
+
+  // Generar opciones de 1 a 20 para capacidad
+  const capacidadOptions = Array.from({ length: 16 }, (_, i) => i + 5);
+
+  const isFormValid = form.nombre.trim() !== "" &&
+                      form.idParalelo !== 0 &&
+                      form.gestion >= 2000 &&
+                      form.gestion <= 2100 &&
+                      form.capacidad >= 5 &&
+                      form.capacidad <= 20;
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>{isUpdate ? "Editar Curso" : "Crear Curso"}</DialogTitle>
@@ -163,12 +174,15 @@ export default function FormCurso({
           autoFocus
           margin="dense"
           name="nombre"
-          label="Nombre"
+          label="Nombre del curso"
           type="text"
           fullWidth
           value={form.nombre}
           onChange={handleChange}
+          error={errors.nombre}
+          helperText={errors.nombre ? "El nombre es obligatorio" : ""}
         />
+
         <TextField
           select
           margin="dense"
@@ -177,6 +191,8 @@ export default function FormCurso({
           fullWidth
           value={form.idParalelo}
           onChange={handleChange}
+          error={errors.idParalelo}
+          helperText={errors.idParalelo ? "Selecciona un paralelo" : ""}
         >
           <MenuItem value={0} disabled>
             Seleccione un paralelo
@@ -191,41 +207,41 @@ export default function FormCurso({
         <TextField
           margin="dense"
           name="gestion"
-          label="Gestion"
+          label="Gestión (año)"
           type="number"
           fullWidth
           value={form.gestion}
           onChange={handleChange}
-          inputProps={{ min: 1990, max: new Date().getFullYear() }}
-          error={
-            form.gestion !== 0 &&
-            (Number(form.gestion) < 1990 || Number(form.gestion) > new Date().getFullYear())
-          }
-          helperText={
-            form.gestion !== 0 &&
-            (Number(form.gestion) < 1990 || Number(form.gestion) > new Date().getFullYear())
-              ? "Colocar un año de gestion aceptable mayor a 1990 y menor al actual"
-              : ""
-          }
+          inputProps={{ min: 0 }}
+          error={errors.gestion}
+          helperText={errors.gestion ? "La gestión no puede ser negativa" : "Ej: 2025"}
         />
+
         <TextField
+          select
           margin="dense"
           name="capacidad"
-          label="Capacidad"
-          type="number"
+          label="Capacidad máxima"
           fullWidth
           value={form.capacidad}
           onChange={handleChange}
-        />
+          error={errors.capacidad}
+          helperText={errors.capacidad ? "Debe ser entre 1 y 20" : "Máximo 20 estudiantes"}
+        >
+          {capacidadOptions.map((num) => (
+            <MenuItem key={num} value={num}>
+              {num} estudiantes
+            </MenuItem>
+          ))}
+        </TextField>
       </DialogContent>
+
       <DialogActions>
         <Button onClick={onClose}>Cancelar</Button>
         <Button
-          onClick={() => {
-            handleSubmit();
-            onClose();
-          }}
+          onClick={handleSubmit}
           variant="contained"
+          disabled={!isFormValid} // ← Desactiva si hay errores
         >
           {isUpdate ? "Actualizar" : "Crear"}
         </Button>
