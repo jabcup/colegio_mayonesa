@@ -14,7 +14,7 @@ import { RolesService } from './roles.service';
 import { UpdateRolDto } from './dto/update-rol.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 @Controller('roles')
 export class RolesController {
   constructor(private readonly rolService: RolesService) {}

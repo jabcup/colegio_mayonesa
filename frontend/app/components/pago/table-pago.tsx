@@ -92,6 +92,7 @@ export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
       await onUpdate?.()
     } catch (e: any) {
       alert(e.response?.data?.message || 'Error al pagar')
+
     }
   }
 

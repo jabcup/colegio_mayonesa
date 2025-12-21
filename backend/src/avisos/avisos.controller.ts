@@ -14,6 +14,7 @@ import { CreateAvisosDto } from './dto/create-avisos.dto';
 import { UpdateAvisosDto } from './dto/update-avisos.dto';
 import { Curso } from '../cursos/cursos.entity';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Public } from 'src/auth/public.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('avisos')
@@ -31,6 +32,7 @@ export class AvisosController {
   }
 
   @Get('Curso/:cursoId')
+  @Public()
   @ApiOperation({ summary: 'Obtener Avisos por Curso' })
   async obtenerAvisosPorCurso(@Param('cursoId') cursoId: number) {
     const curso = new Curso();

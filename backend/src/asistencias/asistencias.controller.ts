@@ -14,6 +14,7 @@ import { CreateAsistenciaDto } from './dto/create-asistencia.dto';
 import { UpdateAsistenciaDto } from './dto/update-asistencia.dto';
 import { ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Public } from 'src/auth/public.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('asistencias')
@@ -71,6 +72,7 @@ export class AsistenciasController {
   }
 
   @Get('asistenciaSemanal/:idEstudiante/:fecha')
+  @Public()
   @ApiOperation({
     summary: 'Obtener asistencia semanal de un estudiante',
   })
@@ -81,6 +83,20 @@ export class AsistenciasController {
     return this.asistenciasService.obtenerAsistenciasSemanaLaboral(
       idEstudiante,
       fecha,
+    );
+  }
+
+  @Get('obtener/:idEstudiante/:fechaReferencia')
+  @ApiOperation({
+    summary: 'Obtener asistencias semanales de un estudiante',
+  })
+  async obtener(
+    @Param('idEstudiante') idEstudiante: number,
+    @Param('fechaReferencia') fechaReferencia: string,
+  ) {
+    return this.asistenciasService.obtener(
+      Number(idEstudiante),
+      new Date(fechaReferencia),
     );
   }
 }

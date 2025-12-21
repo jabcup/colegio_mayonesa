@@ -9,13 +9,12 @@ import {
   ParseIntPipe,
   HttpCode,
   HttpStatus,
+  UseGuards,
   Injectable,
   PipeTransform,
   BadRequestException,
   ForbiddenException,
   Res,
-  UseGuards,
-  Query,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -29,6 +28,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Usuarios } from 'src/usuarios/usuarios.entity';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Public } from 'src/auth/public.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Injectable()
@@ -83,6 +83,71 @@ export class PagosController {
   @ApiOperation({ summary: 'Obtener la lista de pagos' })
   findAll(): Promise<PagoResponseDto[]> {
     return this.service.findAll();
+  }
+
+  @Get('estudiante/:idEstudiante')
+  @Public()
+  @ApiOperation({ summary: 'Obtener la lista de pagos por estudiante' })
+  async obtenerPagosPorEstudiante(
+    @Param('idEstudiante', ParseIntPipe) idEstudiante: number,
+  ) {
+    return this.service.obtenerPagosPorEstudiante(idEstudiante);
+  }
+
+  @Get('comprobante/:id')
+  @ApiOperation({ summary: 'Descargar comprobante PDF de un pago' })
+  @ApiResponse({ status: 200, description: 'PDF del comprobante' })
+  async comprobante(
+    @Param('id', ParseIntPipe) id: number,
+    @Res() res: Response,
+  ) {
+    const pagoEntity = await this.service.findOneRaw(id);
+    if (pagoEntity.deuda !== 'cancelado') {
+      throw new BadRequestException('El pago no está cancelado');
+    }
+    const pdf = await this.comprobanteService.generar(pagoEntity);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="comprobante-${id}.pdf"`,
+      'Content-Length': pdf.length,
+    });
+    res.end(pdf);
+  }
+
+  @Post('comprobante-multiple')
+  @ApiOperation({
+    summary: 'Generar comprobante consolidado para múltiples pagos',
+  })
+  @ApiBody({
+    schema: {
+      example: { ids: [1, 2, 3] },
+      properties: {
+        ids: { type: 'array', items: { type: 'number' } },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'PDF del comprobante consolidado' })
+  async comprobanteMultiple(@Body('ids') ids: number[], @Res() res: Response) {
+    if (!ids || ids.length === 0) {
+      throw new BadRequestException('Debe proporcionar al menos un ID de pago');
+    }
+
+    const pagos = await Promise.all(
+      ids.map((id) => this.service.findOneRaw(id)),
+    );
+
+    const pagosPendientes = pagos.filter((p) => p.deuda !== 'cancelado');
+    if (pagosPendientes.length > 0) {
+      throw new BadRequestException('Todos los pagos deben estar cancelados');
+    }
+
+    const pdf = await this.comprobanteService.generarMultiple(pagos);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="comprobante-multiple.pdf"`,
+      'Content-Length': pdf.length,
+    });
+    res.end(pdf);
   }
 
   @Get(':id')
@@ -155,44 +220,12 @@ export class PagosController {
     @Param('estudianteId', ParseIntPipe) estudianteId: number,
     @Body('idpersonal') idpersonal: number,
   ) {
-    return this.service.pagarAnio(estudianteId, idpersonal);
-  }
-
-  @Get('comprobante/:id')
-  @ApiOperation({ summary: 'Descargar comprobante PDF de un pago' })
-  @ApiResponse({ status: 200, description: 'PDF del comprobante' })
-  async comprobante(
-    @Param('id', ParseIntPipe) id: number,
-    @Res() res: Response,
-  ) {
-    const pagoEntity = await this.service.findOneRaw(id);
-    if (pagoEntity.deuda !== 'cancelado') {
-      throw new BadRequestException('El pago no está cancelado');
+    try {
+      return await this.service.pagarAnio(estudianteId, idpersonal);
+    } catch (e) {
+      const message = (e as any)?.message || 'Error al pagar año';
+      throw new BadRequestException(message);
     }
-    const pdf = await this.comprobanteService.generar(pagoEntity);
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="comprobante-${id}.pdf"`,
-      'Content-Length': pdf.length,
-    });
-    res.end(pdf);
-  }
-
-  @Get('comprobante-anio/:estudianteId')
-  @ApiOperation({
-    summary: 'Generar comprobante de pago anual (10 mensualidades)',
-  })
-  async generarComprobanteAnio(
-    @Param('estudianteId', ParseIntPipe) estudianteId: number,
-    @Res() res: Response,
-  ) {
-    const pdfBuffer = await this.service.generarComprobanteAnio(estudianteId);
-
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="comprobante-anual-${estudianteId}.pdf"`,
-    });
-    res.send(pdfBuffer);
   }
 
   @Patch(':id')
@@ -209,23 +242,5 @@ export class PagosController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.service.remove(id);
-  }
-
-  @Get('comprobante-trimestre/:estudianteId')
-  @ApiOperation({
-    summary: 'Generar comprobante de pago trimestral (3 mensualidades)',
-  })
-  async generarComprobanteTrimestre(
-    @Param('estudianteId', ParseIntPipe) estudianteId: number,
-    @Res() res: Response,
-  ) {
-    const pdfBuffer =
-      await this.service.generarComprobanteTrimestre(estudianteId);
-
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="comprobante-trimestre-${estudianteId}.pdf"`,
-    });
-    res.send(pdfBuffer);
   }
 }

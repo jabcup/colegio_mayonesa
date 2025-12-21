@@ -18,7 +18,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 // Rutas Publicas
 import { Public } from 'src/auth/public.decorator';
 
-// @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
@@ -37,6 +37,7 @@ export class UsuariosController {
     return this.usuariosService.updateCorreoUsuario(id, updateCorreoUsuarioDto);
   }
 
+  @Public()
   @Put('actualizarContrasena/:id')
   @ApiOperation({ summary: 'Actualizar la clave de un usuario' })
   updateContrasenaUsuario(
