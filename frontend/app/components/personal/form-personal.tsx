@@ -16,6 +16,7 @@ interface Rol {
   id: number;
   nombre: string;
 }
+
 interface Personal {
   id: number;
   nombres: string;
@@ -42,6 +43,17 @@ const defaultValues: Personal = {
   idRol: 1,
 };
 
+const calcularEdad = (fechaNacimiento: string): number => {
+  const hoy = new Date();
+  const nacimiento = new Date(fechaNacimiento);
+  let edad = hoy.getFullYear() - nacimiento.getFullYear();
+  const mes = hoy.getMonth() - nacimiento.getMonth();
+  if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+    edad--;
+  }
+  return edad;
+};
+
 export default function PersonalForm({
   personalToEdit,
   onClose,
@@ -53,6 +65,7 @@ export default function PersonalForm({
   const isEdit = !!personalToEdit;
   const [form, setForm] = useState<Personal>(defaultValues);
   const [roles, setRoles] = useState<Rol[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     api
@@ -61,42 +74,68 @@ export default function PersonalForm({
       .catch(() => alert("Error al cargar roles"));
   }, []);
 
-  useEffect(
-    () =>
-      setForm(
-        personalToEdit ? { ...defaultValues, ...personalToEdit } : defaultValues
-      ),
-    [personalToEdit]
-  );
+  useEffect(() => {
+    setForm(
+      personalToEdit
+        ? { ...defaultValues, ...personalToEdit }
+        : defaultValues
+    );
+  }, [personalToEdit]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: "" });
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!form.nombres.trim()) newErrors.nombres = "Nombres es requerido";
+    if (!form.apellidoPat.trim()) newErrors.apellidoPat = "Apellido paterno es requerido";
+    if (!form.identificacion.trim()) newErrors.identificacion = "Identificación es requerida";
+    if (!form.correo.trim()) newErrors.correo = "Correo es requerido";
+
+    if (form.identificacion && !/^\d+$/.test(form.identificacion)) {
+      newErrors.identificacion = "La identificación debe contener solo números";
+    }
+
+    if (form.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo)) {
+      newErrors.correo = "Correo electrónico inválido";
+    }
+
+    if (form.telefono && form.telefono.trim() !== "") {
+      if (!/^\d+$/.test(form.telefono)) {
+        newErrors.telefono = "El teléfono debe contener solo números";
+      } else if (form.telefono.length !== 8) {
+        newErrors.telefono = "El teléfono debe tener 8 dígitos";
+      }
+    }
+
+    if (form.fecha_nacimiento) {
+      const edad = calcularEdad(form.fecha_nacimiento);
+      if (edad < 18) {
+        newErrors.fecha_nacimiento = "El personal debe tener al menos 18 años";
+      }
+    } else {
+      newErrors.fecha_nacimiento = "Fecha de nacimiento es requerida";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (
-      !form.nombres.trim() ||
-      !form.apellidoPat.trim() ||
-      !form.identificacion.trim() ||
-      !form.correo.trim()
-    ) {
-      alert("Completa todos los campos obligatorios");
+    
+    if (!validateForm()) {
       return;
     }
-    if (!/^\d+$/.test(form.identificacion)) {
-      alert("CI solo números");
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.correo)) {
-      alert("Correo inválido");
-      return;
-    }
-    if (form.telefono && !/^\d+$/.test(form.telefono)) {
-      alert("Teléfono solo números");
-      return;
-    }
+
     try {
-      const { id, fecha_creacion, estado, ...rest } = form;
+      const { id, ...rest } = form;
 
       const payload: any = {
         nombres: rest.nombres.trim(),
@@ -114,6 +153,7 @@ export default function PersonalForm({
       isEdit
         ? await api.put(`/personal/EditarPersonal/${form.id}`, payload)
         : await api.post('/personal/CrearPersonalCompleto', payload);
+      
       alert(isEdit ? 'Personal actualizado' : 'Personal creado');
       onClose ? onClose() : router.back();
     } catch (e: any) {
@@ -141,6 +181,8 @@ export default function PersonalForm({
             value={form.idRol}
             onChange={handleChange}
             required
+            error={!!errors.idRol}
+            helperText={errors.idRol}
           >
             {roles.map((r) => (
               <MenuItem key={r.id} value={r.id}>
@@ -149,22 +191,29 @@ export default function PersonalForm({
             ))}
           </TextField>
         )}
+        
         <TextField
           label="Nombres"
           name="nombres"
           value={form.nombres}
           onChange={handleChange}
           required
+          error={!!errors.nombres}
+          helperText={errors.nombres}
           inputProps={{ maxLength: 100 }}
         />
+        
         <TextField
           label="Apellido Paterno"
           name="apellidoPat"
           value={form.apellidoPat}
           onChange={handleChange}
           required
+          error={!!errors.apellidoPat}
+          helperText={errors.apellidoPat}
           inputProps={{ maxLength: 50 }}
         />
+        
         <TextField
           label="Apellido Materno"
           name="apellidoMat"
@@ -172,21 +221,28 @@ export default function PersonalForm({
           onChange={handleChange}
           inputProps={{ maxLength: 50 }}
         />
+        
         <TextField
           label="Teléfono"
           name="telefono"
           value={form.telefono}
           onChange={handleChange}
-          inputProps={{ maxLength: 20 }}
+          error={!!errors.telefono}
+          helperText={errors.telefono}
+          inputProps={{ maxLength: 8 }}
         />
+        
         <TextField
           label="CI"
           name="identificacion"
           value={form.identificacion}
           onChange={handleChange}
           required
+          error={!!errors.identificacion}
+          helperText={errors.identificacion}
           inputProps={{ maxLength: 20 }}
         />
+        
         <TextField
           label="Dirección"
           name="direccion"
@@ -194,6 +250,7 @@ export default function PersonalForm({
           onChange={handleChange}
           inputProps={{ maxLength: 200 }}
         />
+        
         <TextField
           label="Correo"
           name="correo"
@@ -201,18 +258,26 @@ export default function PersonalForm({
           value={form.correo}
           onChange={handleChange}
           required
+          error={!!errors.correo}
+          helperText={errors.correo}
           inputProps={{ maxLength: 100 }}
         />
+        
         <TextField
           label="Fecha Nacimiento"
           name="fecha_nacimiento"
           type="date"
           value={form.fecha_nacimiento}
           onChange={handleChange}
+          required
+          error={!!errors.fecha_nacimiento}
+          helperText={errors.fecha_nacimiento}
           InputLabelProps={{ shrink: true }}
+          inputProps={{ max: new Date().toISOString().split('T')[0] }}
         />
+        
         <Box display="flex" gap={2} justifyContent="flex-end">
-          <Button variant="outlined" onClick={onClose || router.back}>
+          <Button variant="outlined" onClick={onClose || (() => router.back())}>
             Cancelar
           </Button>
           <Button type="submit" variant="contained">
