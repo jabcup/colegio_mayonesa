@@ -260,9 +260,9 @@ export class PagosController {
   //   },
   // })
 
-  @Delete('eliminacionLogica/:id')
-  @HttpCode(HttpStatus.OK)
-  remove(@Param('id', ParseIntPipe) id: number): Promise<{ message: string }> {
+  @Delete('eliminar/:id')
+  @ApiOperation({ summary: 'Eliminación lógica de un pago' })
+  remove(@Param('id') id: number) {
     return this.service.remove(id);
   }
 }

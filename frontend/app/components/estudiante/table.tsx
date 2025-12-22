@@ -173,7 +173,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
         <TableHead>
           <TableRow sx={{ backgroundColor: 'primary.light' }}>
             <TableCell width="50px" />
-            <TableCell><strong>ID</strong></TableCell>
+            {/* <TableCell><strong>ID</strong></TableCell> */}
             <TableCell><strong>Estudiante</strong></TableCell>
             <TableCell><strong>CI</strong></TableCell>
             <TableCell><strong>Correo</strong></TableCell>
@@ -218,7 +218,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                       </IconButton>
                     </TableCell>
 
-                    <TableCell>{e.estudiante.id}</TableCell>
+                    {/* <TableCell>{e.estudiante.id}</TableCell> */}
                     
                     <TableCell>
                       <Box>

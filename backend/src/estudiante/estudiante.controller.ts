@@ -3,9 +3,13 @@ import {
   Controller,
   Delete,
   Get,
+  HttpException,
+  HttpStatus,
   Param,
+  ParseIntPipe,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
@@ -61,4 +65,54 @@ export class EstudianteController {
   remove(@Param('id') id: string) {
     return this.estudianteService.eliminar(+id);
   }
+
+      @Get('verificar-ci-unico')
+    async verificarCIUnico(
+      @Query('ciNumero') ciNumero: string,
+      @Query('idExcluir', new ParseIntPipe({ optional: true })) idExcluir?: number,
+    ) {
+      try {
+        // Validar que se proporcione el número de CI
+        if (!ciNumero || ciNumero.trim() === '') {
+          throw new HttpException(
+            'El número de CI es requerido',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+  
+        // Validar que el CI contenga solo números
+        if (!/^\d+$/.test(ciNumero)) {
+          throw new HttpException(
+            'El número de CI debe contener solo dígitos',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+  
+        // Verificar la unicidad del CI
+        const resultado = await this.estudianteService.verificarCIUnico(
+          ciNumero,
+          idExcluir,
+        );
+  
+        return {
+          success: true,
+          ...resultado,
+          timestamp: new Date().toISOString(),
+        };
+      } catch (error) {
+        if (error instanceof HttpException) {
+          throw error;
+        }
+  
+        console.error('Error en verificar-ci-unico:', error);
+        throw new HttpException(
+          {
+            success: false,
+            message: 'Error interno al verificar el CI',
+            error: error,
+          },
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
 }

@@ -42,6 +42,7 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
   const esEdicion = !!pagoInicial
   const personalId = Number(Cookies.get('personal_id') ?? 0)
   const conceptoEsMensualidad = esEdicion && pagoInicial?.concepto?.startsWith("Mensualidad")
+  const esActualizar = esEdicion && pagoInicial?.deuda === "pendiente"
 
   useEffect(() => {
     if (esEdicion) {
@@ -222,6 +223,7 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
         label="Estado"
         value={form.deuda}
         onChange={(e) => setForm({ ...form, deuda: e.target.value as any })}
+        disabled={esActualizar}
       >
         <MenuItem value="pendiente">Pendiente</MenuItem>
         <MenuItem value="cancelado">Cancelado</MenuItem>

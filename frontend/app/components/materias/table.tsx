@@ -69,7 +69,7 @@ export default function MateriasTable({ materias, tipo, onMateriasUpdate }: Prop
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>ID</TableCell>
+            {/* <TableCell>ID</TableCell> */}
             <TableCell>Nombre</TableCell>
             <TableCell>Acciones</TableCell>
           </TableRow>
@@ -77,7 +77,7 @@ export default function MateriasTable({ materias, tipo, onMateriasUpdate }: Prop
         <TableBody>
           {materias.map((m) => (
             <TableRow key={m.id}>
-              <TableCell>{m.id}</TableCell>
+              {/* <TableCell>{m.id}</TableCell> */}
               <TableCell>{m.nombre}</TableCell>
               <TableCell>
                 {tipo === "activas" ? (

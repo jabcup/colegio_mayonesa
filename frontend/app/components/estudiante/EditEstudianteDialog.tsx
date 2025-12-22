@@ -10,6 +10,9 @@ import {
   TextField,
   MenuItem,
   CircularProgress,
+  Grid,
+  Typography,
+  InputAdornment,
 } from "@mui/material";
 import { api } from "@/app/lib/api";
 
@@ -38,6 +41,20 @@ interface Props {
   onUpdated: () => void;
 }
 
+// Opciones de extensión para CI
+const extensionOptions = [
+  { value: '', label: 'Sin ext.' },
+  { value: 'LP', label: 'LP' },
+  { value: 'SC', label: 'SC' },
+  { value: 'CB', label: 'CB' },
+  { value: 'CH', label: 'CH' },
+  { value: 'PT', label: 'PT' },
+  { value: 'TJ', label: 'TJ' },
+  { value: 'OR', label: 'OR' },
+  { value: 'BE', label: 'BE' },
+  { value: 'PD', label: 'PD' },
+];
+
 export default function EditEstudianteDialog({
   open,
   estudiante,
@@ -45,12 +62,14 @@ export default function EditEstudianteDialog({
   onUpdated,
 }: Props) {
   const [loading, setLoading] = useState(false);
+  const [verificandoCI, setVerificandoCI] = useState(false);
 
   const [form, setForm] = useState({
     nombres: "",
     apellidoPat: "",
     apellidoMat: "",
-    identificacion: "",
+    ciNumero: "",
+    ciExtension: "",
     correo: "",
     direccion: "",
     telefono_referencia: "",
@@ -63,7 +82,7 @@ export default function EditEstudianteDialog({
     nombres?: string;
     apellidoPat?: string;
     apellidoMat?: string;
-    identificacion?: string;
+    ciNumero?: string;
     correo?: string;
     telefono_referencia?: string;
     fecha_nacimiento?: string;
@@ -72,13 +91,28 @@ export default function EditEstudianteDialog({
   // Cambia este dominio por el de tu institución
   const DOMINIO_INSTITUCIONAL = "colegio.edu.bo";
 
+  // Función para extraer solo el número del CI
+  const extraerNumeroCI = (identificacion: string): string => {
+    return identificacion.replace(/\s+[A-Za-z]{1,2}$/, '').trim();
+  };
+
+  // Función para extraer la extensión del CI
+  const extraerExtensionCI = (identificacion: string): string => {
+    const match = identificacion.match(/([A-Za-z]{1,2})$/);
+    return match ? match[0] : '';
+  };
+
   useEffect(() => {
     if (estudiante) {
+      const ciNumero = extraerNumeroCI(estudiante.identificacion);
+      const ciExtension = extraerExtensionCI(estudiante.identificacion);
+      
       setForm({
         nombres: estudiante.nombres || "",
         apellidoPat: estudiante.apellidoPat || "",
         apellidoMat: estudiante.apellidoMat || "",
-        identificacion: estudiante.identificacion || "",
+        ciNumero: ciNumero || "",
+        ciExtension: ciExtension || "",
         correo: estudiante.correo || "",
         direccion: estudiante.direccion || "",
         telefono_referencia: estudiante.telefono_referencia || "",
@@ -108,8 +142,8 @@ export default function EditEstudianteDialog({
   };
 
   const validateCI = (ci: string): string => {
-    if (!ci.trim()) return "CI es requerido";
-    if (!soloNumeros(ci)) return "La CI solo puede contener números";
+    if (!ci.trim()) return "Número de CI es requerido";
+    if (!soloNumeros(ci)) return "El número de CI solo puede contener números";
     if (ci.length < 5 || ci.length > 15) return "CI debe tener entre 5 y 15 dígitos";
     return "";
   };
@@ -144,12 +178,60 @@ export default function EditEstudianteDialog({
     return "";
   };
 
+  // Función para verificar si un CI ya existe
+  const verificarCIUnico = async (ciNumero: string, idEstudianteActual?: number): Promise<boolean> => {
+    if (!ciNumero.trim() || ciNumero.length < 5) return true;
+    
+    try {
+      const params = new URLSearchParams({
+        ciNumero: ciNumero,
+        ...(idEstudianteActual && { idExcluir: idEstudianteActual.toString() })
+      });
+      
+      const response = await api.get(`/estudiante/verificar-ci-unico?${params}`);
+      return response.data.esUnico;
+    } catch (error: any) {
+      console.error('Error verificando CI único:', error);
+      return true; // En caso de error, permitir continuar
+    }
+  };
+
+  // Validar CI único en tiempo real
+  const validarCIUnicoEnTiempoReal = async () => {
+    if (!form.ciNumero.trim() || form.ciNumero.length < 5) return;
+    
+    setVerificandoCI(true);
+    try {
+      const esUnico = await verificarCIUnico(form.ciNumero, estudiante?.id);
+      if (!esUnico) {
+        setErrors(prev => ({
+          ...prev,
+          ciNumero: "Este número de CI ya está registrado en el sistema"
+        }));
+      }
+    } catch (error) {
+      console.error('Error en validación de CI:', error);
+    } finally {
+      setVerificandoCI(false);
+    }
+  };
+
+  // Obtener la identificación completa concatenada
+  const getIdentificacionCompleta = () => {
+    const ci = form.ciNumero.trim();
+    const extension = form.ciExtension.trim();
+    
+    if (!ci) return "";
+    
+    return extension ? `${ci} ${extension}` : ci;
+  };
+
   const generarCorreoInstitucional = (): string => {
-    if (!form.nombres || !form.identificacion) {
+    if (!form.nombres || !form.ciNumero) {
       return "No disponible hasta completar nombre y CI";
     }
     const primerNombre = form.nombres.trim().split(" ")[0].toLowerCase();
-    const ci = form.identificacion.trim();
+    const ci = form.ciNumero.trim();
     return `${primerNombre}.${ci}@${DOMINIO_INSTITUCIONAL}`;
   };
 
@@ -164,13 +246,19 @@ export default function EditEstudianteDialog({
       }
     }
 
-    if (name === "identificacion" || name === "telefono_referencia") {
+    if (name === "ciNumero" || name === "telefono_referencia") {
       if (!soloNumeros(value)) {
         return; // Solo permite números
       }
     }
 
-    setForm({ ...form, [name]: finalValue });
+    if (name === "ciNumero") {
+      // Solo permitir números para CI
+      const soloNumeros = value.replace(/\D/g, '');
+      setForm({ ...form, [name]: soloNumeros });
+    } else {
+      setForm({ ...form, [name]: finalValue });
+    }
 
     // Validación en tiempo real
     let error = "";
@@ -185,7 +273,7 @@ export default function EditEstudianteDialog({
           error = "Solo letras y espacios";
         }
         break;
-      case "identificacion":
+      case "ciNumero":
         error = validateCI(value);
         break;
       case "telefono_referencia":
@@ -200,6 +288,15 @@ export default function EditEstudianteDialog({
     }
 
     setErrors((prev) => ({ ...prev, [name]: error }));
+  };
+
+  const handleExtensionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setForm({ ...form, ciExtension: value });
+    
+    if (errors.ciNumero) {
+      setErrors({ ...errors, ciNumero: "" });
+    }
   };
 
   const handleSubmit = async () => {
@@ -218,7 +315,22 @@ export default function EditEstudianteDialog({
       newErrors.apellidoMat = "Solo letras";
     }
 
-    newErrors.identificacion = validateCI(form.identificacion);
+    // Validar CI
+    newErrors.ciNumero = validateCI(form.ciNumero);
+    
+    // Si el CI es válido numéricamente, verificar unicidad
+    if (!newErrors.ciNumero) {
+      try {
+        const esUnico = await verificarCIUnico(form.ciNumero, estudiante.id);
+        if (!esUnico) {
+          newErrors.ciNumero = "Este número de CI ya está registrado en el sistema";
+        }
+      } catch (error) {
+        console.error('Error validando unicidad del CI:', error);
+        newErrors.ciNumero = "Error al verificar la unicidad del CI";
+      }
+    }
+
     newErrors.telefono_referencia = validateTelefono(form.telefono_referencia);
     newErrors.correo = validateEmail(form.correo);
     newErrors.fecha_nacimiento = validateFechaNacimiento(form.fecha_nacimiento);
@@ -232,12 +344,34 @@ export default function EditEstudianteDialog({
 
     setLoading(true);
     try {
-      await api.put(`/estudiante/editar/${estudiante.id}`, form);
+      // Preparar datos con identificación completa
+      const datosParaEnviar = {
+        nombres: form.nombres.trim(),
+        apellidoPat: form.apellidoPat.trim(),
+        apellidoMat: form.apellidoMat.trim(),
+        identificacion: getIdentificacionCompleta(),
+        correo: form.correo.trim(),
+        direccion: form.direccion.trim(),
+        telefono_referencia: form.telefono_referencia.trim(),
+        fecha_nacimiento: form.fecha_nacimiento,
+        sexo: form.sexo,
+        nacionalidad: form.nacionalidad,
+      };
+
+      await api.put(`/estudiante/editar/${estudiante.id}`, datosParaEnviar);
       alert("Estudiante actualizado exitosamente");
       onUpdated();
       onClose();
     } catch (err: any) {
-      alert(err?.response?.data?.message || "Error al actualizar estudiante");
+      if (err.response?.data?.message?.includes('identificacion') || err.response?.status === 409) {
+        setErrors(prev => ({
+          ...prev,
+          ciNumero: "Este número de CI ya está registrado en el sistema"
+        }));
+        alert("Este número de CI ya está registrado en el sistema");
+      } else {
+        alert(err?.response?.data?.message || "Error al actualizar estudiante");
+      }
     } finally {
       setLoading(false);
     }
@@ -287,17 +421,64 @@ export default function EditEstudianteDialog({
               helperText={errors.apellidoMat || "Opcional, solo letras"}
             />
 
-            <TextField
-              label="CI *"
-              name="identificacion"
-              value={form.identificacion}
-              onChange={handleChange}
-              fullWidth
-              margin="normal"
-              error={!!errors.identificacion}
-              helperText={errors.identificacion || "Solo números (5-15 dígitos)"}
-              inputProps={{ maxLength: 15 }}
-            />
+            {/* Campo de CI con extensión */}
+            <div style={{ margin: "16px 0 8px 0" }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Cédula de Identidad *
+              </Typography>
+              <Grid container spacing={1}>
+                <Grid item xs={8}>
+                  <TextField
+                    label="Número de CI"
+                    name="ciNumero"
+                    value={form.ciNumero}
+                    onChange={handleChange}
+                    onBlur={validarCIUnicoEnTiempoReal}
+                    fullWidth
+                    error={!!errors.ciNumero}
+                    helperText={errors.ciNumero || "Solo números (5-15 dígitos)"}
+                    disabled={verificandoCI || loading}
+                    inputProps={{ 
+                      maxLength: 15,
+                      inputMode: 'numeric',
+                      pattern: '[0-9]*'
+                    }}
+                    InputProps={{
+                      endAdornment: verificandoCI ? (
+                        <InputAdornment position="end">
+                          <Typography variant="caption" color="text.secondary">
+                            Verificando...
+                          </Typography>
+                        </InputAdornment>
+                      ) : null,
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={4}>
+                  <TextField
+                    select
+                    label="Extensión"
+                    name="ciExtension"
+                    value={form.ciExtension}
+                    onChange={handleExtensionChange}
+                    fullWidth
+                    disabled={loading}
+                    InputLabelProps={{ shrink: true }}
+                  >
+                    {extensionOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+              </Grid>
+              {form.ciNumero && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                  CI completo: {getIdentificacionCompleta()}
+                </Typography>
+              )}
+            </div>
 
             <TextField
               label="Correo Institucional (generado)"
@@ -305,7 +486,7 @@ export default function EditEstudianteDialog({
               fullWidth
               margin="normal"
               InputProps={{ readOnly: true }}
-              helperText="primerNombre.ci@colegio.edu.bo"
+              helperText="primerNombre.ciNumero@colegio.edu.bo"
             />
 
             <TextField
@@ -364,33 +545,49 @@ export default function EditEstudianteDialog({
               onChange={handleChange}
               fullWidth
               margin="normal"
+              disabled={loading}
             >
               <MenuItem value="masculino">Masculino</MenuItem>
               <MenuItem value="femenino">Femenino</MenuItem>
             </TextField>
 
             <TextField
+              select
               label="Nacionalidad"
               name="nacionalidad"
               value={form.nacionalidad}
               onChange={handleChange}
               fullWidth
               margin="normal"
-            />
+              disabled={loading}
+            >
+              <MenuItem value="Boliviano/a">Boliviano/a</MenuItem>
+              <MenuItem value="Argentino/a">Argentino/a</MenuItem>
+              <MenuItem value="Chileno/a">Chileno/a</MenuItem>
+              <MenuItem value="Peruano/a">Peruano/a</MenuItem>
+              <MenuItem value="Uruguayo/a">Uruguayo/a</MenuItem>
+              <MenuItem value="Paraguayo/a">Paraguayo/a</MenuItem>
+              <MenuItem value="Brasileño/a">Brasileño/a</MenuItem>
+              <MenuItem value="Colombiano/a">Colombiano/a</MenuItem>
+              <MenuItem value="Venezolano/a">Venezolano/a</MenuItem>
+              <MenuItem value="Ecuatoriano/a">Ecuatoriano/a</MenuItem>
+              <MenuItem value="Mexicano/a">Mexicano/a</MenuItem>
+              <MenuItem value="Otro">Otro</MenuItem>
+            </TextField>
           </>
         )}
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
+        <Button onClick={onClose} disabled={loading || verificandoCI}>
           Cancelar
         </Button>
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={loading}
+          disabled={loading || verificandoCI}
         >
-          {loading ? "Actualizando..." : "Actualizar"}
+          {loading ? "Actualizando..." : verificandoCI ? "Verificando..." : "Actualizar"}
         </Button>
       </DialogActions>
     </Dialog>

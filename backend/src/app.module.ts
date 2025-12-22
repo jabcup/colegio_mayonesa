@@ -36,7 +36,7 @@ import { AuthModule } from './auth/auth.module';
       host: 'localhost',
       port: 3306,
       username: 'root',
-      password: '82002',
+      password: '12345',
       database: 'colegio',
       autoLoadEntities: true,
       synchronize: false,
