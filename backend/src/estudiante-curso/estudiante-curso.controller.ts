@@ -15,7 +15,7 @@ import { EstudianteCursoService } from './estudiante-curso.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Public } from 'src/auth/public.decorator';
 
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 @Controller('estudiante-curso')
 export class EstudianteCursoController {
   constructor(
