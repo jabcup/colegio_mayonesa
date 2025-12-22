@@ -22,7 +22,7 @@ export class Personal {
   @Column({ type: 'varchar', length: 150, nullable: true })
   telefono: string;
 
-  @Column({ type: 'varchar', length: 150, nullable: true })
+  @Column({ type: 'varchar', length: 150, nullable: true, unique  : true })
   identificacion: string;
 
   @Column({ type: 'varchar', length: 150, nullable: true })

@@ -33,7 +33,7 @@ export class EstudianteCursoService {
   async getCursoEstudiante(idEstudiante: number) {
     return this.estudianteCursoRepository.find({
       where: { estudiante: { id: idEstudiante }, estado: 'activo' },
-      relations: ['curso'],
+      relations: ['curso', 'curso.paralelo'],
     });
   }
   async getEstudiantesPorCurso(idCurso: number) {

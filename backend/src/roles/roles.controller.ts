@@ -13,12 +13,14 @@ import { CreateRolDto } from './dto/create-rol.dto';
 import { RolesService } from './roles.service';
 import { UpdateRolDto } from './dto/update-rol.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Public } from 'src/auth/public.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('roles')
 export class RolesController {
   constructor(private readonly rolService: RolesService) {}
   @Post('CrearRol')
+  @Public ()
   @ApiOperation({ summary: 'Crear Rol' })
   async createRol(@Body() createRolDto: CreateRolDto) {
     const rol = await this.rolService.createRol(createRolDto);

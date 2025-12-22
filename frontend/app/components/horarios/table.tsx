@@ -69,7 +69,7 @@ export default function HorariosTable({ horarios, tipo, onHorariosUpdate }: Prop
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>ID</TableCell>
+            {/* <TableCell>ID</TableCell> */}
             <TableCell>Horario</TableCell>
             <TableCell>Acciones</TableCell>
           </TableRow>
@@ -77,7 +77,7 @@ export default function HorariosTable({ horarios, tipo, onHorariosUpdate }: Prop
         <TableBody>
           {horarios.map((h) => (
             <TableRow key={h.id}>
-              <TableCell>{h.id}</TableCell>
+              {/* <TableCell>{h.id}</TableCell> */}
               <TableCell>{h.horario}</TableCell>
               <TableCell>
                 {tipo === "activas" ? (

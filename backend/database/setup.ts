@@ -6,7 +6,7 @@ const setupDataSource = new DataSource({
   host: 'localhost',
   port: 3306,
   username: 'root',
-  password: '82002',
+  password: '12345',
   database: 'colegio',
   synchronize: true,
   logging: true,

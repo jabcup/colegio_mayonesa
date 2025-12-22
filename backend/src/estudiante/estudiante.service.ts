@@ -46,7 +46,7 @@ export class EstudianteService {
 
       // Generar correo institucional: primerNombre.ci@colegio.edu.bo
       const primerNombre = dto.nombres.trim().split(' ')[0].toLowerCase();
-      const correoInstitucional = `${primerNombre}.${dto.identificacion}@colegio.edu.bo`;
+const correoInstitucional = `${primerNombre.toLocaleLowerCase()}.${dto.identificacion.split(' ')[0]}@colegio.edu.bo`;
 
       // Cambia el dominio si es diferente (ej: @unidadeducativa.edu.bo)
       const dominio = 'colegio.edu.bo'; // ← Puedes mover esto a .env si quieres
@@ -212,5 +212,64 @@ export class EstudianteService {
 
     estudiante.estado = 'inactivo';
     await this.estudianteRepository.save(estudiante);
+  }
+
+   async verificarCIUnico(
+    ciNumero: string,
+    idExcluir?: number,
+  ): Promise<{ esUnico: boolean; mensaje: string }> {
+    try {
+      // Normalizar el número de CI (eliminar espacios y convertir a string)
+      const ciNormalizado = ciNumero.trim();
+      
+      if (!ciNormalizado) {
+        return {
+          esUnico: true,
+          mensaje: 'CI no proporcionado',
+        };
+      }
+
+      // Buscar registros donde el identificacion comience con el número de CI
+      // Esto cubre casos como "1234567 LP", "1234567 SC", etc.
+      const queryBuilder = this.estudianteRepository
+        .createQueryBuilder('estudiante')
+        .where('estudiante.identificacion LIKE :ciConEspacio', {
+          ciConEspacio: `${ciNormalizado} %`,
+        })
+        .orWhere('estudiante.identificacion = :ciExacto', {
+          ciExacto: ciNormalizado,
+        })
+        .andWhere('estudiante.estado = :estado', { estado: 'activo' });
+
+      // Excluir el registro actual en caso de edición
+      if (idExcluir) {
+        queryBuilder.andWhere('estudiante.id != :idExcluir', {
+          idExcluir: idExcluir,
+        });
+      }
+
+      const estudianteExistente = await queryBuilder.getOne();
+
+      if (estudianteExistente) {
+        return {
+          esUnico: false,
+          mensaje: `El número de CI ${ciNormalizado} ya está registrado ${
+            estudianteExistente.identificacion.includes(' ')
+              ? `con extensión ${estudianteExistente.identificacion.split(' ')[1]}`
+              : ''
+          } para ${estudianteExistente.nombres} ${estudianteExistente.apellidoPat}`,
+        };
+      }
+
+      return {
+        esUnico: true,
+        mensaje: 'CI disponible',
+      };
+    } catch (error) {
+      console.error('Error en verificarCIUnico:', error);
+      throw new Error(
+        'Error al verificar la unicidad del CI. Por favor, intente nuevamente.',
+      );
+    }
   }
 }

@@ -67,9 +67,11 @@ export class PagosService {
     return this.findOne(id);
   }
 
-  async remove(id: number): Promise<void> {
-    const p = await this.findOne(id);
-    await this.repo.update(id, { estado: 'inactivo' });
+  async remove(id: number): Promise<Pagos> {
+    const p = await this.repo.findOne({ where: { id } });
+    if (!p) {throw new NotFoundException('Pago no encontrado');}
+    p.estado = 'inactivo';
+    return this.repo.save(p);
   }
 
   private async primeraPendiente(estudianteId: number): Promise<Pagos | null> {

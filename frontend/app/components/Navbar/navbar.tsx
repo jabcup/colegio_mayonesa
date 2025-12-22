@@ -27,9 +27,9 @@ export default function Navbar() {
         label: "Gestión Académica",
         icon: "📚",
         submenus: [
-          { label: "Estudiantes", path: "/estudiante", roles: ["all"] },
-          { label: "Calificaciones", path: "/calificacion", roles: ["Administrador", "Docente", "Secretaria-o"] },
-          { label: "Asistencias", path: "/asistencias", roles: ["Administrador", "Docente", "Secretaria-o"] },
+          { label: "Estudiantes", path: "/estudiante", roles: ["Administrador", "Docente", "Secretaria-o", "Cajero"] },
+          { label: "Calificaciones", path: "/calificacion", roles: [ "Docente"] },
+          { label: "Asistencias", path: "/asistencias", roles: [ "Docente"] },
           { label: "Materias", path: "/materias", roles: ["Administrador"] },
           { label: "Cursos", path: "/cursos", roles: ["Administrador"] },
           { label: "Horarios", path: "/horarios", roles: ["Administrador"] },
@@ -48,8 +48,8 @@ export default function Navbar() {
         label: "Gestión Financiera",
         icon: "💰",
         submenus: [
-          { label: "Pagos", path: "/pago", roles: ["Administrador", "Director", "Cajero"] },
-          { label: "Reportes", path: "/reporte", roles: ["all"] },
+          { label: "Pagos", path: "/pago", roles: ["Administrador", "Director", "Cajero", "cajero"] },
+          { label: "Reportes", path: "/reporte", roles: ["Administrador", "Docente", "Secretaria-o", "Cajero"] },
         ]
       },
       comunicaciones: {
