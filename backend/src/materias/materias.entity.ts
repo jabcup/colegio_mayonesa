@@ -14,6 +14,7 @@ export class Materias {
     type: 'varchar',
     length: 50,
     nullable: false,
+    unique: true,
   })
   nombre: string;
 

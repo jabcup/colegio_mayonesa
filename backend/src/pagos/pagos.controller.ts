@@ -30,7 +30,6 @@ import { Usuarios } from 'src/usuarios/usuarios.entity';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Public } from 'src/auth/public.decorator';
 
-@UseGuards(JwtAuthGuard)
 @Injectable()
 class SoloIdPersonalPipe implements PipeTransform {
   transform(value: any) {
@@ -61,7 +60,7 @@ async function esCajero(
 
   return usuario?.rol?.nombre === 'Cajero' && usuario.estado === 'activo';
 }
-
+@UseGuards(JwtAuthGuard)
 @ApiTags('Pagos')
 @Controller('pagos')
 export class PagosController {
@@ -237,6 +236,33 @@ export class PagosController {
     return this.service.update(id, dto);
   }
 
+  @Patch('estudiante/:idEstudiante/pagar_ultima_gestion')
+  @ApiOperation({
+    summary: 'Pagar toda la última gestión (año) pendiente de un estudiante',
+  })
+  @ApiBody({ schema: { example: { idpersonal: 123 } } })
+  @ApiResponse({
+    status: 200,
+    description: 'Cantidad de pagos actualizados',
+    schema: {
+      example: {
+        message:
+          'Se marcaron como cancelados 3 pagos pendientes del último año.',
+        updatedCount: 3,
+      },
+    },
+  })
+
+  // async pagarUltimaGestion(
+  //   @Param('idEstudiante', ParseIntPipe) idEstudiante: number,
+  //   @Body(SoloIdPersonalPipe) dto: SoloIdPersonalBody,
+  // ): Promise<{ message: string; updatedCount: number }> {
+  //   if (!(await esCajero(this.usuariosRepo, dto.idpersonal))) {
+  //     throw new ForbiddenException('El personal no es cajero o no está activo');
+  //   }
+
+  //   return this.service.pagarUltimaGestion(idEstudiante, dto.idpersonal);
+  // }
   @Delete(':id')
   @ApiOperation({ summary: 'Eliminación lógica de un pago' })
   @HttpCode(HttpStatus.NO_CONTENT)

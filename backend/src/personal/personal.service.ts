@@ -4,7 +4,6 @@ import { Usuarios } from '../usuarios/usuarios.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { CreatePersonalDto } from './dto/create-personal.dto';
-import { CreatePersonalFullDto } from './dto/create-personal-full.dto';
 import { UpdatePersonalDto } from './dto/update-personal.dto';
 import { Roles } from 'src/roles/roles.entity';
 import * as bcrypt from 'bcrypt';
@@ -89,7 +88,7 @@ export class PersonalService {
 
   async updatePersonal(
     id: number,
-    dtoPersonal: UpdatePersonalDto,
+    dtoPersonal: Partial<CreatePersonalDto>,
   ): Promise<Personal> {
     const personal = await this.personalRepository.findOne({ where: { id } });
 
@@ -111,7 +110,7 @@ export class PersonalService {
     return this.personalRepository.save(personal);
   }
 
-  async crearPersonalCompleto(dto: CreatePersonalFullDto) {
+  async crearPersonalCompleto(dto: CreatePersonalDto) {
     return this.dataSource.transaction(async (manager) => {
       const personal = manager.create(Personal, {
         nombres: dto.nombres,
@@ -137,7 +136,7 @@ export class PersonalService {
       const hashPass = await bcrypt.hash(dto.identificacion, 10);
 
       const usuario = manager.create(Usuarios, {
-        correo_institucional: `${nuevoPersonal.nombres.toLowerCase()}.${nuevoPersonal.apellidoPat.toLowerCase()}@mayonesa.com`,
+        correo_institucional: `${nuevoPersonal.nombres.toLowerCase()}.${nuevoPersonal.apellidoPat.toLowerCase()}@colegio.edu.bo`,
         contrasena: hashPass,
         rol,
         personal: nuevoPersonal,
