@@ -34,6 +34,7 @@ import EditPadreDialog from "../padre/EditPadreDialog";
 import EditEstudianteDialog from "./EditEstudianteDialog";
 import { getAuthData } from "@/app/lib/auth";
 import { Boton } from "../botones/botonNav";
+import ModalCursosEstudiante from "./ModalCursosEstudiante";
 
 interface EstudianteConTutores {
   estudiante: {
@@ -160,6 +161,25 @@ export default function TableEstudiante({ estudiantes }: Props) {
     }
   };
 
+  const [openModal, setOpenModal] = useState(false);
+  const [cursos, setCursos] = useState<any[]>([]);
+
+
+const handleVerCurso = async (id: number) => {
+  try {
+    const res = await api.get(`/estudiante-curso/cursoEstudiante/${id}`);
+
+    setCursos(res.data);     
+    setOpenModal(true);      
+
+  } catch (err: any) {
+    alert(err?.response?.data?.message || "Error al ver cursos");
+  }
+};
+
+
+
+  // Función para obtener color según la relación
   const getRelacionColor = (relacion: string) => {
     switch (relacion.toLowerCase()) {
       case "padre": return "primary";
@@ -321,99 +341,120 @@ export default function TableEstudiante({ estudiantes }: Props) {
                         </Typography>
                       </TableCell>
 
-                      <TableCell>
+              <TableCell>
+                <Box>
+                  <Typography variant="body2" noWrap sx={{ maxWidth: 200 }}>
+                    {e.estudiante.correo || "Sin correo"}
+                  </Typography>
+                  {e.estudiante.correo_institucional && (
+                    <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 200, display: "block" }}>
+                      {e.estudiante.correo_institucional}
+                    </Typography>
+                  )}
+                </Box>
+              </TableCell>
+
+                    <TableCell>
+                      {e.tutores.length === 0 ? (
+                        <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                          Sin tutores
+                        </Typography>
+                      ) : (
                         <Box>
-                          <Typography variant="body2" noWrap sx={{ maxWidth: 200 }}>
-                            {e.estudiante.correo || "Sin correo"}
-                          </Typography>
-                          {e.estudiante.correo_institucional && (
-                            <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 200, display: "block" }}>
-                              {e.estudiante.correo_institucional}
-                            </Typography>
+                          {e.tutores.length <= 3 ? (
+                            <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+                              {e.tutores.map((tutor) => (
+                                <Tooltip
+                                  key={tutor.id}
+                                  title={`${tutor.nombres} ${tutor.apellidoPat} (${tutor.relacion})`}
+                                >
+                                  <Chip
+                                    size="small"
+                                    label={`${tutor.nombres.split(' ')[0]} ${tutor.apellidoPat.charAt(0)}.`}
+                                    color={getRelacionColor(tutor.relacion)}
+                                    variant="outlined"
+                                    sx={{
+                                      maxWidth: 120,
+                                      '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' }
+                                    }}
+                                  />
+                                </Tooltip>
+                              ))}
+                            </Box>
+                          ) : (
+                            <Tooltip
+                              title={e.tutores.map(t => `${t.nombres} ${t.apellidoPat} (${t.relacion})`).join(', ')}
+                            >
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <AvatarGroup max={3}>
+                                  {e.tutores.slice(0, 3).map((tutor) => (
+                                    <Avatar
+                                      key={tutor.id}
+                                      sx={{
+                                        width: 24,
+                                        height: 24,
+                                        bgcolor: getRelacionColor(tutor.relacion),
+                                        fontSize: '0.75rem'
+                                      }}
+                                    >
+                                      {tutor.nombres.charAt(0)}
+                                    </Avatar>
+                                  ))}
+                                </AvatarGroup>
+                                <Typography variant="caption" color="text.secondary">
+                                  +{e.tutores.length - 3} más
+                                </Typography>
+                              </Box>
+                            </Tooltip>
                           )}
                         </Box>
-                      </TableCell>
-
-                      <TableCell>
-                        {e.tutores.length === 0 ? (
-                          <Typography variant="body2" color="text.secondary" fontStyle="italic">
-                            Sin tutores
-                          </Typography>
-                        ) : (
-                          <Box>
-                            {e.tutores.length <= 3 ? (
-                              <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-                                {e.tutores.map((tutor) => (
-                                  <Tooltip key={tutor.id} title={`${tutor.nombres} ${tutor.apellidoPat} (${tutor.relacion})`}>
-                                    <Chip
-                                      size="small"
-                                      label={`${tutor.nombres.split(" ")[0]} ${tutor.apellidoPat.charAt(0)}.`}
-                                      color={getRelacionColor(tutor.relacion)}
-                                      variant="outlined"
-                                      sx={{ maxWidth: 120 }}
-                                    />
-                                  </Tooltip>
-                                ))}
-                              </Box>
-                            ) : (
-                              <Tooltip title={e.tutores.map((t) => `${t.nombres} ${t.apellidoPat} (${t.relacion})`).join(", ")}>
-                                <Box display="flex" alignItems="center" gap={1}>
-                                  <AvatarGroup max={3}>
-                                    {e.tutores.slice(0, 3).map((tutor) => (
-                                      <Avatar
-                                        key={tutor.id}
-                                        sx={{ width: 24, height: 24, fontSize: "0.75rem" }}
-                                      >
-                                        {tutor.nombres.charAt(0)}
-                                      </Avatar>
-                                    ))}
-                                  </AvatarGroup>
-                                  <Typography variant="caption" color="text.secondary">
-                                    +{e.tutores.length - 3} más
-                                  </Typography>
-                                </Box>
-                              </Tooltip>
-                            )}
-                          </Box>
-                        )}
-                      </TableCell>
-
-                      {rol !== "Cajero" && rol !== "Docente" && (
-                        <TableCell>
-                          <Box display="flex" flexDirection="column" gap={1}>
-                            <Box display="flex" gap={1}>
-                              <Boton
-                                label="Editar"
-                                size="small"
-                                color="warning"
-                                onClick={() => {
-                                  setSelectedEstudiante(e.estudiante);
-                                  setOpenEditEstudiante(true);
-                                }}
-                              />
-                              <Boton
-                                label="Eliminar"
-                                size="small"
-                                color="error"
-                                onClick={() => {
-                                  if (confirm(`¿Seguro que deseas eliminar al estudiante ${estudianteFullName}?`)) {
-                                    handleEliminarEstudiante(e.estudiante.id);
-                                  }
-                                }}
-                              />
-                            </Box>
-                          </Box>
-                        </TableCell>
                       )}
+                    </TableCell>
+
+                    {rol !== "Cajero" && rol !== "Docente" && (
+                      <TableCell>
+                        <Box display="flex" flexDirection="column" gap={1}>
+                          <Box display="flex" gap={1}>
+                            <Boton
+                              label="Ver Curso"
+                              size="small"
+                              color="primary"
+                              onClick={() => {
+                                handleVerCurso(e.estudiante.id);
+                              }}
+                            />
+                            <Boton
+                              label="Editar"
+                              size="small"
+                              color="warning"
+                              onClick={() => {
+                                setSelectedEstudiante(e.estudiante);
+                                setOpenEditEstudiante(true);
+                              }}
+                            />
+                            <Boton
+                              label="Eliminar"
+                              size="small"
+                              color="error"
+                              onClick={() => {
+                                if (confirm(`¿Seguro que deseas eliminar al estudiante ${estudianteFullName}?`)) {
+                                  handleEliminarEstudiante(e.estudiante.id);
+                                }
+                              }}
+                            />
+                          </Box>
+                        </Box>
+                      </TableCell>
+                    )}
                     </TableRow>
 
                     {/* Fila expandible */}
                   <TableRow key={`expand-${e.estudiante.id}`}>
-                    <TableCell 
-                      colSpan={rol !== "Cajero" && rol !== "Docente" ? 7 : 6} 
-                      sx={{ 
-                        p: 0, 
-                        borderBottom: isOpen ? 1 : 0, 
+                    <TableCell
+                      colSpan={rol !== "Cajero" && rol !== "Docente" ? 7 : 6}
+                      sx={{
+                        p: 0,
+                        borderBottom: isOpen ? 1 : 0,
                         borderColor: 'divider',
                         backgroundColor: isOpen ? 'background.default' : 'transparent'
                       }}
@@ -425,7 +466,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                               <Typography variant="h6" gutterBottom color="primary">
                                 👤 Información del Estudiante
                               </Typography>
-                              
+
                               <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)' }} gap={3}>
                                 <Box>
                                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -435,7 +476,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                                     {estudianteFullName}
                                   </Typography>
                                 </Box>
-                                
+
                                 <Box>
                                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                     CI / Identificación
@@ -444,7 +485,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                                     {e.estudiante.identificacion}
                                   </Typography>
                                 </Box>
-                                
+
                                 <Box>
                                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                     Edad
@@ -453,7 +494,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                                     {calcularEdad(e.estudiante.fecha_nacimiento)}
                                   </Typography>
                                 </Box>
-                                
+
                                 <Box>
                                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                     Fecha de Nacimiento
@@ -462,7 +503,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                                     {formatDate(e.estudiante.fecha_nacimiento)}
                                   </Typography>
                                 </Box>
-                                
+
                                 <Box>
                                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                     Sexo
@@ -471,7 +512,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                                     {e.estudiante.sexo}
                                   </Typography>
                                 </Box>
-                                
+
                                 <Box>
                                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                     Nacionalidad
@@ -480,7 +521,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                                     {e.estudiante.nacionalidad}
                                   </Typography>
                                 </Box>
-                                
+
                                 <Box>
                                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                     Correo Personal
@@ -489,7 +530,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                                     {e.estudiante.correo || "No especificado"}
                                   </Typography>
                                 </Box>
-                                
+
                                 <Box>
                                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                     Correo Institucional
@@ -498,7 +539,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                                     {e.estudiante.correo_institucional}
                                   </Typography>
                                 </Box>
-                                
+
                                 <Box>
                                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                     RUDE
@@ -507,7 +548,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                                     {e.estudiante.rude}
                                   </Typography>
                                 </Box>
-                                
+
                                 <Box>
                                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                     Dirección
@@ -516,7 +557,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                                     {e.estudiante.direccion}
                                   </Typography>
                                 </Box>
-                                
+
                                 <Box>
                                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                     Teléfono de Referencia
@@ -525,7 +566,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                                     {e.estudiante.telefono_referencia || "No especificado"}
                                   </Typography>
                                 </Box>
-                                
+
                                 <Box>
                                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                                     Fecha de Registro
@@ -543,7 +584,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                             <Typography variant="h6" gutterBottom color="primary">
                               Tutor Principal ({e.tutores.length})
                             </Typography>
-                            
+
                             {e.tutores.length === 0 ? (
                               <Box textAlign="center" py={4} sx={{ backgroundColor: 'grey.50', borderRadius: 1 }}>
                                 <Typography variant="body1" color="text.secondary" gutterBottom>
@@ -562,11 +603,11 @@ export default function TableEstudiante({ estudiantes }: Props) {
                             ) : (
                               <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }} gap={2}>
                                 {e.tutores.map((tutor) => (
-                                  <Paper 
-                                    key={tutor.id} 
-                                    elevation={1} 
-                                    sx={{ 
-                                      p: 2, 
+                                  <Paper
+                                    key={tutor.id}
+                                    elevation={1}
+                                    sx={{
+                                      p: 2,
                                       position: 'relative',
                                       borderLeft: 4,
                                       borderLeftColor: getRelacionColor(tutor.relacion),
@@ -582,14 +623,14 @@ export default function TableEstudiante({ estudiantes }: Props) {
                                           <Typography variant="h6">
                                             {tutor.nombres} {tutor.apellidoPat}
                                           </Typography>
-                                          <Chip 
+                                          <Chip
                                             label={tutor.relacion}
                                             size="small"
                                             color={getRelacionColor(tutor.relacion)}
                                             sx={{ textTransform: 'capitalize' }}
                                           />
                                         </Box>
-                                        
+
                                         {tutor.apellidoMat && (
                                           <Typography variant="body2" color="text.secondary">
                                             {tutor.apellidoMat}
@@ -597,7 +638,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                                         )}
                                       </Box>
                                     </Box>
-                                    
+
                                     <Box display="grid" gridTemplateColumns="1fr 1fr" gap={1}>
                                       <Box>
                                         <Typography variant="caption" color="text.secondary" display="block">
@@ -608,7 +649,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                                           {tutor.telefono}
                                         </Typography>
                                       </Box>
-                                      
+
                                       {tutor.correo && (
                                         <Box>
                                           <Typography variant="caption" color="text.secondary" display="block">
@@ -620,7 +661,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                                           </Typography>
                                         </Box>
                                       )}
-                                      
+
                                       {tutor.fechaAsignacion && (
                                         <Box gridColumn="span 2">
                                           <Typography variant="caption" color="text.secondary" display="block">
@@ -632,7 +673,7 @@ export default function TableEstudiante({ estudiantes }: Props) {
                                         </Box>
                                       )}
                                     </Box>
-                                    
+
                                     {rol !== "Cajero" && rol !== "Docente" && (
                                       <Box mt={2} display="flex" gap={1} flexWrap="wrap">
                                         <Boton
@@ -690,7 +731,15 @@ export default function TableEstudiante({ estudiantes }: Props) {
           onUpdated={() => window.location.reload()}
         />
       )}
+
+      <ModalCursosEstudiante
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        cursos={cursos}
+      />
     </TableContainer>
     </>
+
+
   );
 }
