@@ -18,6 +18,7 @@ import { UsuariosModule } from 'src/usuarios/usuarios.module';
     UsuariosModule,
   ],
   controllers: [PagosController],
+
   providers: [PagosService, PagosComprobanteService],
 })
 export class PagosModule {}

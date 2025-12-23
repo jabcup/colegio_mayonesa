@@ -5,7 +5,7 @@ import { api } from "@/app/lib/api";
 import { toast } from "sonner";
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search, X } from "lucide-react";
 
 interface Curso {
   id: number;
@@ -38,6 +38,10 @@ export default function FormAviso({ open, onClose, onSuccess, avisoToEdit }: Pro
   const [asunto, setAsunto] = useState("");
   const [mensaje, setMensaje] = useState("");
 
+  // Estados para el buscador
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+
   const idPersonal = 1;
   const isEditMode = !!avisoToEdit;
 
@@ -46,10 +50,12 @@ export default function FormAviso({ open, onClose, onSuccess, avisoToEdit }: Pro
       cargarCursos();
       if (isEditMode && avisoToEdit) {
         setSelectedCurso(avisoToEdit.Curso);
+        setSearchTerm(getNombreCurso(avisoToEdit.Curso));
         setAsunto(avisoToEdit.asunto);
         setMensaje(avisoToEdit.mensaje);
       } else {
         setSelectedCurso(null);
+        setSearchTerm("");
         setAsunto("");
         setMensaje("");
       }
@@ -99,6 +105,24 @@ export default function FormAviso({ open, onClose, onSuccess, avisoToEdit }: Pro
   const getNombreCurso = (curso: Curso) =>
     `${curso.nombre} ${curso.nivel ? `- ${curso.nivel}` : ""} ${curso.paralelo?.nombre || ""}`.trim();
 
+  // Filtrar cursos
+  const cursosFiltrados = cursos.filter((curso) => {
+    const nombreCompleto = getNombreCurso(curso).toLowerCase();
+    return nombreCompleto.includes(searchTerm.toLowerCase());
+  });
+
+  const seleccionarCurso = (curso: Curso) => {
+    setSelectedCurso(curso);
+    setSearchTerm(getNombreCurso(curso));
+    setShowDropdown(false);
+  };
+
+  const limpiarCurso = () => {
+    setSelectedCurso(null);
+    setSearchTerm("");
+    setShowDropdown(true);
+  };
+
   return (
     <Transition appear show={open} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={onClose}>
@@ -136,26 +160,75 @@ export default function FormAviso({ open, onClose, onSuccess, avisoToEdit }: Pro
                   </div>
                 ) : (
                   <div className="space-y-5">
+                    {/* BUSCADOR DE CURSO */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Curso
                       </label>
-                      <select
-                        value={selectedCurso?.id || ""}
-                        onChange={(e) => {
-                          const curso = cursos.find(c => c.id === Number(e.target.value));
-                          setSelectedCurso(curso || null);
-                        }}
-                        disabled={isEditMode}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
-                      >
-                        <option value="">Selecciona un curso</option>
-                        {cursos.map((curso) => (
-                          <option key={curso.id} value={curso.id}>
-                            {getNombreCurso(curso)}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="relative">
+                        <div className={`flex items-center border rounded-lg bg-white ${isEditMode ? "bg-gray-100 border-gray-300" : "border-gray-300 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500"}`}>
+                          <Search className="h-5 w-5 text-gray-400 ml-3" />
+                          <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => {
+                              setSearchTerm(e.target.value);
+                              if (!isEditMode) {
+                                setShowDropdown(true);
+                                if (!e.target.value.trim()) {
+                                  setSelectedCurso(null);
+                                }
+                              }
+                            }}
+                            onFocus={() => !isEditMode && setShowDropdown(true)}
+                            placeholder={isEditMode ? getNombreCurso(selectedCurso!) : "Buscar curso..."}
+                            readOnly={isEditMode}
+                            className={`w-full px-3 py-3 outline-none rounded-lg ${isEditMode ? "cursor-not-allowed" : ""}`}
+                          />
+                          {!isEditMode && selectedCurso && (
+                            <button
+                              onClick={limpiarCurso}
+                              className="mr-3 text-gray-400 hover:text-gray-600"
+                            >
+                              <X className="h-5 w-5" />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Dropdown solo en modo creación */}
+                        {!isEditMode && showDropdown && searchTerm && (
+                          <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                            {cursosFiltrados.length > 0 ? (
+                              cursosFiltrados.map((curso) => (
+                                <button
+                                  key={curso.id}
+                                  onClick={() => seleccionarCurso(curso)}
+                                  className="w-full text-left px-4 py-3 hover:bg-indigo-50 border-b last:border-b-0 transition"
+                                >
+                                  <div className="font-medium">
+                                    {curso.nombre} {curso.nivel && `- ${curso.nivel}`}
+                                  </div>
+                                  {curso.paralelo && (
+                                    <div className="text-sm text-gray-500">
+                                      Paralelo {curso.paralelo.nombre}
+                                    </div>
+                                  )}
+                                </button>
+                              ))
+                            ) : (
+                              <div className="px-4 py-6 text-center text-gray-500">
+                                No se encontraron cursos
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {selectedCurso && !isEditMode && (
+                        <p className="mt-2 text-sm text-indigo-600 font-medium">
+                          Seleccionado: {getNombreCurso(selectedCurso)}
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -179,7 +252,7 @@ export default function FormAviso({ open, onClose, onSuccess, avisoToEdit }: Pro
                         rows={6}
                         value={mensaje}
                         onChange={(e) => setMensaje(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
                         placeholder="Escribe el mensaje completo..."
                       />
                     </div>
@@ -195,8 +268,8 @@ export default function FormAviso({ open, onClose, onSuccess, avisoToEdit }: Pro
                   </button>
                   <button
                     onClick={handleSubmit}
-                    disabled={loading}
-                    className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+                    disabled={loading || !selectedCurso}
+                    className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isEditMode ? "Guardar Cambios" : "Enviar Aviso"}
                   </button>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { api } from "@/app/lib/api";
 import { toast } from "sonner";
-import { Loader2, ArrowUpDown, Pencil, Trash2 } from "lucide-react";
+import { Loader2, ArrowUpDown, Pencil, Trash2, Search } from "lucide-react";
 
 interface Estudiante {
   id: number;
@@ -36,6 +36,10 @@ export default function TableNotificaciones() {
   const [loadingEst, setLoadingEst] = useState(false);
   const [loadingNotif, setLoadingNotif] = useState(false);
   const [sortDesc, setSortDesc] = useState(true);
+
+  // Nuevos estados para la búsqueda
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
 
   // Para edición
   const [editNotif, setEditNotif] = useState<Notificacion | null>(null);
@@ -111,7 +115,7 @@ export default function TableNotificaciones() {
     try {
       await api.put(`/notificaciones/${editNotif.id}`, {
         idEstudiante: selectedEstudiante.id,
-        idPersonal: editNotif.Personal?.id || 1, // ajustar según tu backend
+        idPersonal: editNotif.Personal?.id || 1,
         asunto: editAsunto,
         mensaje: editMensaje,
       });
@@ -137,35 +141,96 @@ export default function TableNotificaciones() {
       est.identificacion ? ` - ${est.identificacion}` : ""
     }`.trim();
 
+  // Filtrar estudiantes según el término de búsqueda
+  const estudiantesFiltrados = estudiantes.filter((est) => {
+    const nombreCompleto = getNombreCompleto(est).toLowerCase();
+    const term = searchTerm.toLowerCase();
+    return nombreCompleto.includes(term);
+  });
+
+  const seleccionarEstudiante = (est: Estudiante) => {
+    setSelectedEstudiante(est);
+    setSearchTerm(getNombreCompleto(est)); // Mostrar el nombre seleccionado
+    setShowDropdown(false);
+  };
+
+  const limpiarSeleccion = () => {
+    setSelectedEstudiante(null);
+    setSearchTerm("");
+    setShowDropdown(true);
+  };
+
   return (
     <div className="space-y-6">
-      {/* SELECT ESTUDIANTE */}
-      <div>
+      {/* BUSCADOR DE ESTUDIANTE */}
+      <div className="relative">
         <label className="block text-sm font-medium mb-2">
           Buscar estudiante
         </label>
-        <select
-          value={selectedEstudiante?.id || ""}
-          onChange={(e) => {
-            const est = estudiantes.find(
-              (s) => s.id === Number(e.target.value)
-            );
-            setSelectedEstudiante(est || null);
-          }}
-          disabled={loadingEst}
-          className="w-full max-w-md px-4 py-3 border rounded-lg"
-        >
-          <option value="">
-            {loadingEst
-              ? "Cargando estudiantes..."
-              : "Selecciona un estudiante..."}
-          </option>
-          {estudiantes.map((est) => (
-            <option key={est.id} value={est.id}>
-              {getNombreCompleto(est)}
-            </option>
-          ))}
-        </select>
+        <div className="relative max-w-md">
+          <div className="flex items-center border rounded-lg bg-white">
+            <Search className="h-5 w-5 text-gray-400 ml-3" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setShowDropdown(true);
+                if (!e.target.value) {
+                  setSelectedEstudiante(null);
+                }
+              }}
+              onFocus={() => setShowDropdown(true)}
+              placeholder="Escribe para buscar un estudiante..."
+              className="w-full px-3 py-3 outline-none rounded-lg"
+              disabled={loadingEst}
+            />
+            {selectedEstudiante && (
+              <button
+                onClick={limpiarSeleccion}
+                className="mr-3 text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Dropdown con resultados */}
+          {showDropdown && searchTerm && estudiantesFiltrados.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {estudiantesFiltrados.map((est) => (
+                <button
+                  key={est.id}
+                  onClick={() => seleccionarEstudiante(est)}
+                  className="w-full text-left px-4 py-3 hover:bg-indigo-50 border-b last:border-b-0"
+                >
+                  <div className="font-medium">{est.nombres} {est.apellidoPat} {est.apellidoMat}</div>
+                  {est.identificacion && (
+                    <div className="text-sm text-gray-500">{est.identificacion}</div>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {showDropdown && searchTerm && estudiantesFiltrados.length === 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg p-4 text-center text-gray-500">
+              No se encontraron estudiantes
+            </div>
+          )}
+
+          {loadingEst && (
+            <div className="absolute inset-x-0 top-12 text-center">
+              <Loader2 className="animate-spin mx-auto mt-4" />
+            </div>
+          )}
+        </div>
+
+        {selectedEstudiante && (
+          <p className="mt-2 text-sm text-gray-600">
+            Estudiante seleccionado: <strong>{getNombreCompleto(selectedEstudiante)}</strong>
+          </p>
+        )}
       </div>
 
       {selectedEstudiante && (

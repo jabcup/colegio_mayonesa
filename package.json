@@ -1,0 +1,21 @@
+{
+  "name": "colegio_mayonesa",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jabcup/colegio_mayonesa.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/jabcup/colegio_mayonesa/issues"
+  },
+  "homepage": "https://github.com/jabcup/colegio_mayonesa#readme"
+}

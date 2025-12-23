@@ -8,6 +8,7 @@ const pdfFonts = require('pdfmake/build/vfs_fonts');
 export class PagosComprobanteService {
   async generar(pago: Pagos): Promise<Buffer> {
     const fechaEmision = new Date().toLocaleString('es-BO');
+
     const docDefinition: any = {
       pageSize: 'A4',
       pageMargins: [50, 50, 50, 50],

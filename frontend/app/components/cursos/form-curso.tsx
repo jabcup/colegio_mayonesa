@@ -5,12 +5,13 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  TextField,
   DialogActions,
   Button,
+  TextField,
   MenuItem,
-  FormHelperText,
+  InputAdornment,
 } from "@mui/material";
+import { School as SchoolIcon } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 
 interface Curso {
@@ -56,17 +57,11 @@ export default function FormCurso({
   const [form, setForm] = useState({
     nombre: "",
     idParalelo: 0,
-    gestion: new Date().getFullYear(), // Valor por defecto: año actual
-    capacidad: 15, // Valor sugerido razonable
+    gestion: new Date().getFullYear(),
+    capacidad: 15,
   });
 
   const [paralelos, setParalelos] = useState<Paralelos[]>([]);
-  const [errors, setErrors] = useState({
-    nombre: false,
-    idParalelo: false,
-    gestion: false,
-    capacidad: false,
-  });
 
   const cargarParalelos = async () => {
     try {
@@ -74,7 +69,6 @@ export default function FormCurso({
       setParalelos(res.data);
     } catch (error) {
       console.error(error);
-      alert("Error al cargar los paralelos");
     }
   };
 
@@ -94,46 +88,38 @@ export default function FormCurso({
         capacidad: 15,
       });
     }
-    setErrors({ nombre: false, idParalelo: false, gestion: false, capacidad: false });
-  }, [selectedCurso]);
+  }, [selectedCurso, open]);
 
   useEffect(() => {
     cargarParalelos();
   }, []);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    const numValue = name === "idParalelo" || name === "gestion" || name === "capacidad"
-      ? Number(value)
-      : value;
+  // Lista de niveles predefinidos
+  const nivelesPrimaria = [
+    "1ero de Primaria",
+    "2do de Primaria",
+    "3ero de Primaria",
+    "4to de Primaria",
+    "5to de Primaria",
+    "6to de Primaria",
+  ];
 
-    setForm((prev) => ({
-      ...prev,
-      [name]: numValue,
-    }));
-  };
-
-  // Validación en tiempo real
-  const validateForm = () => {
-    const newErrors = {
-      nombre: form.nombre.trim() === "",
-      idParalelo: form.idParalelo === 0,
-      gestion: form.gestion < 0,
-      capacidad: form.capacidad < 1 || form.capacidad > 20,
-    };
-    setErrors(newErrors);
-    return !Object.values(newErrors).some(Boolean);
-  };
+  const nivelesSecundaria = [
+    "1ero de Secundaria",
+    "2do de Secundaria",
+    "3ero de Secundaria",
+    "4to de Secundaria",
+    "5to de Secundaria",
+    "6to de Secundaria",
+  ];
 
   const handleSubmit = () => {
-    if (!validateForm()) {
-      return; // No hace nada si hay errores
+    if (!form.nombre || form.idParalelo === 0 || form.capacidad < 5 || form.capacidad > 20) {
+      return;
     }
 
     const payload = {
-      nombre: form.nombre.trim(),
+      nombre: form.nombre,
       idParalelo: form.idParalelo,
       gestion: form.gestion,
       capacidad: form.capacidad,
@@ -143,7 +129,6 @@ export default function FormCurso({
       onUpdate(payload);
     } else {
       onCreate(payload);
-      // Resetear solo en creación
       setForm({
         nombre: "",
         idParalelo: 0,
@@ -156,46 +141,79 @@ export default function FormCurso({
 
   const isUpdate = Boolean(selectedCurso);
 
-  // Generar opciones de 1 a 20 para capacidad
   const capacidadOptions = Array.from({ length: 16 }, (_, i) => i + 5);
 
-  const isFormValid = form.nombre.trim() !== "" &&
-                      form.idParalelo !== 0 &&
-                      form.gestion >= 2000 &&
-                      form.gestion <= 2100 &&
-                      form.capacidad >= 5 &&
-                      form.capacidad <= 20;
+  const isFormValid =
+    form.nombre !== "" &&
+    form.idParalelo !== 0 &&
+    form.gestion >= 2000 &&
+    form.gestion <= 2100 &&
+    form.capacidad >= 5 &&
+    form.capacidad <= 20;
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle>{isUpdate ? "Editar Curso" : "Crear Curso"}</DialogTitle>
-      <DialogContent>
-        <TextField
-          autoFocus
-          margin="dense"
-          name="nombre"
-          label="Nombre del curso"
-          type="text"
-          fullWidth
-          value={form.nombre}
-          onChange={handleChange}
-          error={errors.nombre}
-          helperText={errors.nombre ? "El nombre es obligatorio" : ""}
-        />
+      <DialogTitle sx={{ fontWeight: "bold", fontSize: "1.8rem" }}>
+        {isUpdate ? "Editar Curso" : "Crear Nuevo Curso"}
+      </DialogTitle>
 
+      <DialogContent dividers>
+        {/* Combobox para Nivel del Curso */}
+        <TextField
+          select
+          label="Nivel del Curso"
+          value={form.nombre}
+          onChange={(e) => setForm((prev) => ({ ...prev, nombre: e.target.value }))}
+          fullWidth
+          margin="dense"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SchoolIcon color="action" />
+              </InputAdornment>
+            ),
+          }}
+          helperText="Selecciona el nivel y grado del curso"
+        >
+          <MenuItem disabled value="">
+            <em>Selecciona un nivel</em>
+          </MenuItem>
+
+          {/* Grupo Primaria */}
+          <MenuItem disabled sx={{ fontWeight: "bold", color: "primary.main" }}>
+            PRIMARIA
+          </MenuItem>
+          {nivelesPrimaria.map((nivel) => (
+            <MenuItem key={nivel} value={nivel}>
+              {nivel}
+            </MenuItem>
+          ))}
+
+          {/* Grupo Secundaria */}
+          <MenuItem disabled sx={{ fontWeight: "bold", color: "primary.main" }}>
+            SECUNDARIA
+          </MenuItem>
+          {nivelesSecundaria.map((nivel) => (
+            <MenuItem key={nivel} value={nivel}>
+              {nivel}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        {/* Paralelo */}
         <TextField
           select
           margin="dense"
-          name="idParalelo"
           label="Paralelo"
           fullWidth
           value={form.idParalelo}
-          onChange={handleChange}
-          error={errors.idParalelo}
-          helperText={errors.idParalelo ? "Selecciona un paralelo" : ""}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, idParalelo: Number(e.target.value) }))
+          }
+          helperText="Ej: A, B, C..."
         >
           <MenuItem value={0} disabled>
-            Seleccione un paralelo
+            Selecciona un paralelo
           </MenuItem>
           {paralelos.map((paralelo) => (
             <MenuItem key={paralelo.id} value={paralelo.id}>
@@ -204,29 +222,31 @@ export default function FormCurso({
           ))}
         </TextField>
 
+        {/* Gestión */}
         <TextField
           margin="dense"
-          name="gestion"
           label="Gestión (año)"
           type="number"
           fullWidth
           value={form.gestion}
-          onChange={handleChange}
-          inputProps={{ min: 0 }}
-          error={errors.gestion}
-          helperText={errors.gestion ? "La gestión no puede ser negativa" : "Ej: 2025"}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, gestion: Number(e.target.value) }))
+          }
+          inputProps={{ min: 2020, max: 2030 }}
+          helperText="Año escolar"
         />
 
+        {/* Capacidad */}
         <TextField
           select
           margin="dense"
-          name="capacidad"
           label="Capacidad máxima"
           fullWidth
           value={form.capacidad}
-          onChange={handleChange}
-          error={errors.capacidad}
-          helperText={errors.capacidad ? "Debe ser entre 1 y 20" : "Máximo 20 estudiantes"}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, capacidad: Number(e.target.value) }))
+          }
+          helperText="Máximo 20 estudiantes"
         >
           {capacidadOptions.map((num) => (
             <MenuItem key={num} value={num}>
@@ -236,14 +256,18 @@ export default function FormCurso({
         </TextField>
       </DialogContent>
 
-      <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
+      <DialogActions sx={{ px: 3, pb: 3 }}>
+        <Button onClick={onClose} size="large">
+          Cancelar
+        </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
-          disabled={!isFormValid} // ← Desactiva si hay errores
+          color="primary"
+          disabled={!isFormValid}
+          size="large"
         >
-          {isUpdate ? "Actualizar" : "Crear"}
+          {isUpdate ? "Actualizar Curso" : "Crear Curso"}
         </Button>
       </DialogActions>
     </Dialog>

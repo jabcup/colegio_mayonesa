@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { api } from "@/app/lib/api";
 import { toast } from "sonner";
-import { Edit, Trash2, ArrowUpDown, Loader2 } from "lucide-react";
+import { Edit, Trash2, ArrowUpDown, Loader2, Search, X } from "lucide-react";
 
 interface Curso {
   id: number;
@@ -31,6 +31,10 @@ export default function TableAvisos({ onEdit }: { onEdit?: (aviso: Aviso) => voi
   const [loadingAvisos, setLoadingAvisos] = useState(false);
   const [sortDesc, setSortDesc] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
+
+  // Estados para el buscador
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     const cargarCursos = async () => {
@@ -67,7 +71,7 @@ export default function TableAvisos({ onEdit }: { onEdit?: (aviso: Aviso) => voi
   useEffect(() => {
     if (selectedCurso) cargarAvisos();
     else setAvisos([]);
-  }, [selectedCurso]);
+  }, [selectedCurso, sortDesc]);
 
   const handleDelete = async (id: number) => {
     try {
@@ -93,27 +97,92 @@ export default function TableAvisos({ onEdit }: { onEdit?: (aviso: Aviso) => voi
   const getNombreCurso = (curso: Curso) =>
     `${curso.nombre} ${curso.nivel ? `- ${curso.nivel}` : ""} ${curso.paralelo?.nombre || ""}`.trim();
 
+  // Filtrado de cursos
+  const cursosFiltrados = cursos.filter((curso) => {
+    const nombreCompleto = getNombreCurso(curso).toLowerCase();
+    return nombreCompleto.includes(searchTerm.toLowerCase());
+  });
+
+  const seleccionarCurso = (curso: Curso) => {
+    setSelectedCurso(curso);
+    setSearchTerm(getNombreCurso(curso));
+    setShowDropdown(false);
+  };
+
+  const limpiarSeleccion = () => {
+    setSelectedCurso(null);
+    setSearchTerm("");
+    setShowDropdown(true);
+  };
+
   return (
     <div className="space-y-6">
-      <div>
+      {/* BUSCADOR DE CURSO */}
+      <div className="relative max-w-md">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Buscar curso
         </label>
-        <select
-          value={selectedCurso?.id || ""}
-          onChange={(e) => {
-            const curso = cursos.find(c => c.id === Number(e.target.value));
-            setSelectedCurso(curso || null);
-          }}
-          className="w-full max-w-md px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="">Selecciona un curso...</option>
-          {cursos.map((curso) => (
-            <option key={curso.id} value={curso.id}>
-              {getNombreCurso(curso)}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <div className="flex items-center border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500">
+            <Search className="h-5 w-5 text-gray-400 ml-3" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setShowDropdown(true);
+                if (!e.target.value.trim()) {
+                  setSelectedCurso(null);
+                }
+              }}
+              onFocus={() => setShowDropdown(true)}
+              placeholder="Escribe para buscar un curso..."
+              className="w-full px-3 py-3 outline-none rounded-lg"
+            />
+            {selectedCurso && (
+              <button
+                onClick={limpiarSeleccion}
+                className="mr-3 text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+
+          {/* Dropdown con resultados */}
+          {showDropdown && searchTerm && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {cursosFiltrados.length > 0 ? (
+                cursosFiltrados.map((curso) => (
+                  <button
+                    key={curso.id}
+                    onClick={() => seleccionarCurso(curso)}
+                    className="w-full text-left px-4 py-3 hover:bg-indigo-50 border-b last:border-b-0 transition"
+                  >
+                    <div className="font-medium">
+                      {curso.nombre} {curso.nivel && `- ${curso.nivel}`}
+                    </div>
+                    {curso.paralelo && (
+                      <div className="text-sm text-gray-500">
+                        Paralelo {curso.paralelo.nombre}
+                      </div>
+                    )}
+                  </button>
+                ))
+              ) : (
+                <div className="px-4 py-6 text-center text-gray-500">
+                  No se encontraron cursos
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {selectedCurso && (
+          <p className="mt-2 text-sm text-indigo-600 font-medium">
+            Curso seleccionado: {getNombreCurso(selectedCurso)}
+          </p>
+        )}
       </div>
 
       {selectedCurso && (
@@ -187,7 +256,7 @@ export default function TableAvisos({ onEdit }: { onEdit?: (aviso: Aviso) => voi
         </>
       )}
 
-      {/* Confirmación de eliminación bonita */}
+      {/* Confirmación de eliminación */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-8 max-w-sm shadow-2xl">
