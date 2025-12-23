@@ -34,9 +34,9 @@ import { AuthModule } from './auth/auth.module';
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: 'localhost',
-      port: 3308,
+      port: 3306,
       username: 'root',
-      password: '7090158',
+      password: '12345',
       database: 'colegio',
       autoLoadEntities: true,
       synchronize: false,
