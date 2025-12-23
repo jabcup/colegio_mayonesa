@@ -334,7 +334,7 @@ const handleVerCurso = async (id: number) => {
                         <Box display="flex" flexDirection="column" gap={1}>
                           <Box display="flex" gap={1}>
                             <Boton
-                              label="Ver"
+                              label="Ver Curso"
                               size="small"
                               color="primary"
                               onClick={() => {
