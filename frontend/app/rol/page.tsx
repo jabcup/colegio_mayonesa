@@ -42,7 +42,7 @@ export default function Rol() {
     const cargarRoles = async () => {
         setLoading(true);
         try {
-            const Rolesres = await api.get("/roles/MostrarRoles");
+            const Rolesres = await api.get("/roles/RolesActivos");
             
             const RolesMap = (Rolesres.data as BackRol[]).map((r) => ({
                 id: r.id,

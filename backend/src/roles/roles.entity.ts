@@ -10,7 +10,7 @@ export class Roles {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 150 })
+  @Column({ type: 'varchar', length: 150, unique: true })
   nombre: string;
 
   @Column({ type: 'enum', enum: ['activo', 'inactivo'], default: 'activo' })

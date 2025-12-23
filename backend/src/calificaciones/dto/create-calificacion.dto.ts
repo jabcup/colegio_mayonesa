@@ -21,27 +21,6 @@ export class CreateCalificacionDto {
   @IsNumber()
   idEstudiante: number;
 
-  // @ApiProperty({
-  //   example: 1,
-  //   description: 'Primer Trimestre',
-  // })
-  // @IsNotEmpty()
-  // @Type(() => Number)
-  // @Min(1)
-  // @Max(3)
-  // @IsNumber()
-  // trimestre: number;
-
-  // @ApiProperty({
-  //   example: 2023,
-  //   description: 'Año escolar',
-  // })
-  // @IsNotEmpty()
-  // @Type(() => Number)
-  // @IsNumber()
-  // @Min(2000)
-  // anioEscolar: number;
-
   @ApiProperty({
     example: 2023,
     description: 'Año escolar',

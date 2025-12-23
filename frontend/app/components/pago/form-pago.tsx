@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button, TextField, MenuItem } from "@mui/material"
+import { Button, TextField, MenuItem, Autocomplete } from "@mui/material"
 import { api } from "@/app/lib/api"
 import Cookies from "js-cookie"
 
 interface Estudiante {
   id: number
   label: string
+  identificacion?: string
 }
 
 interface Pago {
@@ -35,12 +36,19 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
     concepto: "",
     deuda: "pendiente" as "pendiente" | "cancelado"
   })
+  const [estudianteSel, setEstudianteSel] = useState<Estudiante | null>(null)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const esEdicion = !!pagoInicial
   const personalId = Number(Cookies.get('personal_id') ?? 0)
+  const conceptoEsMensualidad = esEdicion && pagoInicial?.concepto?.startsWith("Mensualidad")
+  const esActualizar = esEdicion && pagoInicial?.deuda === "pendiente"
 
   useEffect(() => {
     if (esEdicion) {
+      const est = estudiantes.find(e => e.id === pagoInicial.idEstudiante)
+      if (est) setEstudianteSel(est)
+      
       setForm({
         idEstudiante: pagoInicial.idEstudiante.toString(),
         cantidad: pagoInicial.cantidad.toString(),
@@ -49,16 +57,50 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
         deuda: pagoInicial.deuda
       })
     }
-  }, [esEdicion, pagoInicial])
+  }, [esEdicion, pagoInicial, estudiantes])
+
+  useEffect(() => {
+    if (estudianteSel) {
+      setForm(prev => ({ ...prev, idEstudiante: estudianteSel.id.toString() }))
+    }
+  }, [estudianteSel])
 
   const total = Number(form.cantidad) - Number(form.descuento)
 
+  const validarFormulario = () => {
+    const newErrors: Record<string, string> = {}
+    
+    if (!form.idEstudiante) {
+      newErrors.idEstudiante = "Debe seleccionar un estudiante"
+    }
+    
+    if (!form.cantidad || Number(form.cantidad) <= 0) {
+      newErrors.cantidad = "Debe ingresar una cantidad válida"
+    }
+    
+    if (form.descuento && Number(form.descuento) < 0) {
+      newErrors.descuento = "El descuento no puede ser negativo"
+    }
+    
+    if (Number(form.cantidad) > 0 && Number(form.descuento) >= Number(form.cantidad)) {
+      newErrors.descuento = "El descuento no puede ser mayor o igual a la cantidad"
+    }
+    
+    if (!form.concepto.trim()) {
+      newErrors.concepto = "El concepto es requerido"
+    }
+    
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.idEstudiante || !form.cantidad || Number(form.cantidad) <= 0) {
-      alert("Completa cantidad válida y selecciona estudiante")
+    
+    if (!validarFormulario()) {
       return
     }
+    
     const payload = {
       idEstudiante: Number(form.idEstudiante),
       idPersonal: personalId,
@@ -68,6 +110,7 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
       concepto: form.concepto.trim(),
       deuda: form.deuda
     }
+    
     try {
       if (esEdicion) {
         await api.patch(`/pagos/${pagoInicial!.id}`, payload)
@@ -81,27 +124,61 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
     }
   }
 
+  const handleCantidadChange = (value: string) => {
+    setForm({ ...form, cantidad: value })
+    if (errors.cantidad) setErrors({ ...errors, cantidad: "" })
+    
+    if (errors.descuento && Number(value) > 0 && Number(form.descuento) < Number(value)) {
+      setErrors({ ...errors, descuento: "" })
+    }
+  }
+
+  const handleDescuentoChange = (value: string) => {
+    setForm({ ...form, descuento: value })
+    if (errors.descuento) setErrors({ ...errors, descuento: "" })
+  }
+
+  const handleConceptoChange = (value: string) => {
+    if (!conceptoEsMensualidad) {
+      setForm({ ...form, concepto: value })
+      if (errors.concepto) setErrors({ ...errors, concepto: "" })
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit} className="p-4 space-y-4 max-w-md">
       {estudiantes.length === 0 ? (
         <TextField fullWidth disabled label="Cargando estudiantes..." />
       ) : (
-        <TextField
-          select
-          fullWidth
-          label="Estudiante"
-          value={form.idEstudiante}
-          onChange={(e) => setForm({ ...form, idEstudiante: e.target.value })}
-          required
+        <Autocomplete
+          options={estudiantes}
+          value={estudianteSel}
+          onChange={(e, v) => setEstudianteSel(v)}
+          getOptionLabel={(o) => {
+            if (o.identificacion) {
+              return `${o.label} | CI: ${o.identificacion}`
+            }
+            return o.label
+          }}
+          filterOptions={(options, { inputValue }) => {
+            const q = inputValue.toLowerCase()
+            return options.filter(o =>
+              o.label.toLowerCase().includes(q) ||
+              o.identificacion?.toLowerCase().includes(q) ||
+              String(o.id).includes(q)
+            )
+          }}
           disabled={esEdicion}
-          SelectProps={{ MenuProps: { sx: { maxHeight: 300 } } }}
-        >
-          {estudiantes.map((est) => (
-            <MenuItem key={est.id} value={est.id} sx={{ minHeight: 36 }}>
-              {est.label}
-            </MenuItem>
-          ))}
-        </TextField>
+          renderInput={(params) => (
+            <TextField 
+              {...params} 
+              label="Estudiante (nombre o CI)" 
+              required
+              error={!!errors.idEstudiante}
+              helperText={errors.idEstudiante}
+            />
+          )}
+        />
       )}
 
       <TextField
@@ -109,8 +186,10 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
         type="number"
         label="Cantidad"
         value={form.cantidad}
-        onChange={(e) => setForm({ ...form, cantidad: e.target.value })}
+        onChange={(e) => handleCantidadChange(e.target.value)}
         required
+        error={!!errors.cantidad}
+        helperText={errors.cantidad}
         inputProps={{ min: 0, step: 0.01 }}
       />
 
@@ -119,7 +198,9 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
         type="number"
         label="Descuento"
         value={form.descuento}
-        onChange={(e) => setForm({ ...form, descuento: e.target.value })}
+        onChange={(e) => handleDescuentoChange(e.target.value)}
+        error={!!errors.descuento}
+        helperText={errors.descuento}
         inputProps={{ min: 0, step: 0.01 }}
       />
 
@@ -127,9 +208,13 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
         fullWidth
         label="Concepto"
         value={form.concepto}
-        onChange={(e) => setForm({ ...form, concepto: e.target.value })}
+        onChange={(e) => handleConceptoChange(e.target.value)}
         required
+        disabled={conceptoEsMensualidad}
+        error={!!errors.concepto}
+        helperText={errors.concepto}
         inputProps={{ maxLength: 150 }}
+        placeholder={conceptoEsMensualidad ? "Concepto de mensualidad no editable" : ""}
       />
 
       <TextField
@@ -138,6 +223,7 @@ export default function FormPago({ estudiantes = [], onClose, onCreate, pagoInic
         label="Estado"
         value={form.deuda}
         onChange={(e) => setForm({ ...form, deuda: e.target.value as any })}
+        disabled={esActualizar}
       >
         <MenuItem value="pendiente">Pendiente</MenuItem>
         <MenuItem value="cancelado">Cancelado</MenuItem>

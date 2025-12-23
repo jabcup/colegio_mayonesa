@@ -59,7 +59,8 @@ export class AsignacionClasesService {
       horario: { id: dtoAsignacion.idHorario },
     });
 
-    const asignacionGuardada = await this.asignacionRepository.save(nuevaAsignacion);
+    const asignacionGuardada =
+      await this.asignacionRepository.save(nuevaAsignacion);
 
     // === GENERAMOS NOTIFICACIÓN AUTOMÁTICA AL DOCENTE ===
     try {
@@ -70,12 +71,14 @@ export class AsignacionClasesService {
       });
 
       if (asignacionCompleta) {
-        const cursoNombre = `${asignacionCompleta.curso.nombre} ${asignacionCompleta.curso.paralelo || ''}`.trim();
+        const cursoNombre =
+          `${asignacionCompleta.curso.nombre} ${asignacionCompleta.curso.paralelo || ''}`.trim();
         const materiaNombre = asignacionCompleta.materia.nombre;
         const horarioTexto = asignacionCompleta.horario.horario;
         const dia = asignacionCompleta.dia;
 
-        const mensaje = `¡Nueva asignación de clase!\n\n` +
+        const mensaje =
+          `¡Nueva asignación de clase!\n\n` +
           `• Curso: ${cursoNombre}\n` +
           `• Materia: ${materiaNombre}\n` +
           `• Día: ${dia}\n` +
@@ -194,30 +197,57 @@ export class AsignacionClasesService {
       const asignacion = await manager.findOne(AsignacionClase, {
         where: { id },
       });
+      if (!asignacion) throw new Error('Asignación no encontrada');
 
-      if (!asignacion) {
-        throw new Error('Asignacion no encontrada');
-      }
-
+      // Actualizamos los campos
       asignacion.dia = dto.dia ?? asignacion.dia;
+      if (dto.idPersonal) asignacion.personal = { id: dto.idPersonal } as any;
+      if (dto.idCurso) asignacion.curso = { id: dto.idCurso } as any;
+      if (dto.idMateria) asignacion.materia = { id: dto.idMateria } as any;
+      if (dto.idHorario) asignacion.horario = { id: dto.idHorario } as any;
 
-      if (dto.idPersonal) {
-        asignacion.personal = { id: dto.idPersonal } as any;
-      }
+      const asignacionGuardada = await manager.save(asignacion);
 
-      if (dto.idCurso) {
-        asignacion.curso = { id: dto.idCurso } as any;
-      }
+      // --- Fuera de la transacción enviamos la notificación ---
+      setImmediate(() => {
+        void (async () => {
+          try {
+            const asignacionCompleta = await this.asignacionRepository.findOne({
+              where: { id: asignacionGuardada.id },
+              relations: ['personal', 'curso', 'materia', 'horario'],
+            });
 
-      if (dto.idMateria) {
-        asignacion.materia = { id: dto.idMateria } as any;
-      }
+            if (asignacionCompleta) {
+              const cursoNombre =
+                `${asignacionCompleta.curso?.nombre || ''} ${asignacionCompleta.curso?.paralelo || ''}`.trim();
+              const materiaNombre = asignacionCompleta.materia?.nombre || '';
+              const horarioTexto = asignacionCompleta.horario?.horario || '';
+              const dia = asignacionCompleta.dia;
 
-      if (dto.idHorario) {
-        asignacion.horario = { id: dto.idHorario } as any;
-      }
+              const mensaje =
+                `¡Asignación de clase actualizada!\n\n` +
+                `• Curso: ${cursoNombre}\n` +
+                `• Materia: ${materiaNombre}\n` +
+                `• Día: ${dia}\n` +
+                `• Horario: ${horarioTexto}\n\n` +
+                `Se han realizado cambios en tu asignación de clase.`;
 
-      return await manager.save(asignacion);
+              await this.notiDocentesService.crearNotificacionAsignacion(
+                asignacionCompleta.personal.id,
+                mensaje,
+                asignacionCompleta.id,
+              );
+            }
+          } catch (error) {
+            console.error(
+              'Error al crear notificación de actualización para docente:',
+              error,
+            );
+          }
+        })();
+      });
+
+      return asignacionGuardada;
     });
   }
 

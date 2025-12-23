@@ -12,6 +12,9 @@ import {
   FormControlLabel,
   CircularProgress,
   FormHelperText,
+  Grid,
+  Typography,
+  InputAdornment,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { api } from "@/app/lib/api";
@@ -32,7 +35,7 @@ interface Padre {
 interface Curso {
   id: number;
   nombre: string;
-  paralelo: { nombre: string};
+  paralelo: { nombre: string };
   gestion: number;
 }
 
@@ -40,8 +43,23 @@ interface FormErrors {
   [key: string]: string;
 }
 
+// Opciones de extensión para CI
+const extensionOptions = [
+  { value: '', label: 'Sin ext.' },
+  { value: 'LP', label: 'LP' },
+  { value: 'SC', label: 'SC' },
+  { value: 'CB', label: 'CB' },
+  { value: 'CH', label: 'CH' },
+  { value: 'PT', label: 'PT' },
+  { value: 'TJ', label: 'TJ' },
+  { value: 'OR', label: 'OR' },
+  { value: 'BE', label: 'BE' },
+  { value: 'PD', label: 'PD' },
+];
+
 export default function FormEstudiante({ open, onClose, onCreate }: Props) {
   const [loading, setLoading] = useState(false);
+  const [verificandoCI, setVerificandoCI] = useState(false);
   const [padres, setPadres] = useState<Padre[]>([]);
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [crearNuevoPadre, setCrearNuevoPadre] = useState(false);
@@ -52,7 +70,8 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
     nombres: "",
     apellidoPat: "",
     apellidoMat: "",
-    identificacion: "",
+    ciNumero: "",
+    ciExtension: "",
     correo: "",
     direccion: "",
     telefono_referencia: "",
@@ -95,6 +114,18 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
     }
   };
 
+  // === RESTRICCIONES PADRE (copiadas de FormPadre) ===
+  const SOLO_LETRAS_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñ ]{2,20}$/;
+
+  const limpiarEspacios = (texto: string) => texto.replace(/\s+/g, " ").trim();
+
+  const capitalizar = (texto: string) =>
+    texto
+      .toLowerCase()
+      .split(" ")
+      .map((palabra) => palabra.charAt(0).toUpperCase() + palabra.slice(1))
+      .join(" ");
+
   // Validaciones
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -106,52 +137,47 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
     return phone === "" || phoneRegex.test(phone);
   };
 
-  const validateCI = (ci: string): boolean => {
-    const ciRegex = /^[0-9]{5,15}$/;
+  const validateCINumero = (ci: string): boolean => {
+    const ciRegex = /^[0-9]{5,8}$/;
     return ci === "" || ciRegex.test(ci);
   };
 
-  // const validateRequired = (value: string, fieldName: string): string => {
-  //   if (!value.trim()) return `${fieldName} es requerido`;
-  //   return "";
-  // };
-
   const validateRequired = (value: any, fieldName: string): string => {
-  // Caso 1: valor nulo o indefinido
-  if (value === null || value === undefined) {
-    return `${fieldName} es requerido`;
-  }
-  
-  // Caso 2: string vacío o solo espacios
-  if (typeof value === "string") {
-    if (!value.trim()) {
+    // Caso 1: valor nulo o indefinido
+    if (value === null || value === undefined) {
       return `${fieldName} es requerido`;
     }
+
+    // Caso 2: string vacío o solo espacios
+    if (typeof value === "string") {
+      if (!value.trim()) {
+        return `${fieldName} es requerido`;
+      }
+      return "";
+    }
+
+    // Caso 3: número (0 es válido)
+    if (typeof value === "number") {
+      return "";
+    }
+
+    // Caso 4: boolean (siempre válido)
+    if (typeof value === "boolean") {
+      return "";
+    }
+
+    // Caso 5: array vacío
+    if (Array.isArray(value) && value.length === 0) {
+      return `${fieldName} es requerido`;
+    }
+
+    // Caso 6: objeto vacío
+    if (typeof value === "object" && Object.keys(value).length === 0) {
+      return `${fieldName} es requerido`;
+    }
+
     return "";
-  }
-  
-  // Caso 3: número (0 es válido)
-  if (typeof value === "number") {
-    return "";
-  }
-  
-  // Caso 4: boolean (siempre válido)
-  if (typeof value === "boolean") {
-    return "";
-  }
-  
-  // Caso 5: array vacío
-  if (Array.isArray(value) && value.length === 0) {
-    return `${fieldName} es requerido`;
-  }
-  
-  // Caso 6: objeto vacío
-  if (typeof value === "object" && Object.keys(value).length === 0) {
-    return `${fieldName} es requerido`;
-  }
-  
-  return "";
-};
+  };
 
   const validateLength = (
     value: string,
@@ -165,48 +191,156 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
     return "";
   };
 
-  const validateDate = (date: string): string => {
+  const validateFechaNacimiento = (date: string): string => {
     if (!date) return "Fecha de nacimiento es requerida";
 
-    const selectedDate = new Date(date);
+    const birthDate = new Date(date);
     const today = new Date();
-    const minDate = new Date();
-    minDate.setFullYear(today.getFullYear() - 100);
 
-    if (selectedDate > today) return "La fecha no puede ser futura";
-    if (selectedDate < minDate) return "Fecha no válida";
+    // No permitir fechas futuras
+    if (birthDate > today) {
+      return "La fecha de nacimiento no puede ser futura";
+    }
 
-    return "";
+    // Calcular edad exacta
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    const dayDiff = today.getDate() - birthDate.getDate();
+
+    // Ajustar si aún no ha cumplido años este año
+    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+      age--;
+    }
+
+    // Validar rango de edad
+    if (age < 5) {
+      return "El estudiante debe tener al menos 5 años";
+    }
+    if (age > 18) {
+      return "El estudiante no puede tener más de 18 años";
+    }
+
+    return ""; // Todo bien
+  };
+
+  const soloLetrasYEspacios = (texto: string): boolean => {
+    const regex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/;
+    return regex.test(texto);
+  };
+
+  const soloNumeros = (texto: string): boolean => {
+    const regex = /^[0-9]*$/;
+    return regex.test(texto);
+  };
+
+  // Función para verificar si un CI ya existe
+  const verificarCIUnico = async (ciNumero: string): Promise<boolean> => {
+    if (!ciNumero.trim() || ciNumero.length < 5) return true;
+    
+    try {
+      const params = new URLSearchParams({
+        ciNumero: ciNumero,
+      });
+      
+      const response = await api.get(`/estudiante/verificar-ci-unico?${params}`);
+      return response.data.esUnico;
+    } catch (error: any) {
+      console.error('Error verificando CI único:', error);
+      return true; // En caso de error, permitir continuar
+    }
+  };
+
+  // Validar CI único en tiempo real
+  const validarCIUnicoEnTiempoReal = async () => {
+    if (!form.ciNumero.trim() || form.ciNumero.length < 5) return;
+    
+    setVerificandoCI(true);
+    try {
+      const esUnico = await verificarCIUnico(form.ciNumero);
+      if (!esUnico) {
+        setErrors(prev => ({
+          ...prev,
+          ciNumero: "Este número de CI ya está registrado en el sistema"
+        }));
+      }
+    } catch (error) {
+      console.error('Error en validación de CI:', error);
+    } finally {
+      setVerificandoCI(false);
+    }
+  };
+
+  // Obtener la identificación completa concatenada
+  const getIdentificacionCompleta = () => {
+    const ci = form.ciNumero.trim();
+    const extension = form.ciExtension.trim();
+    
+    if (!ci) return "";
+    
+    return extension ? `${ci} ${extension}` : ci;
   };
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
 
-    // Validación en tiempo real
+    // Bloquear números y símbolos en nombres y apellidos
+    if (name === "nombres" || name === "apellidoPat" || name === "apellidoMat") {
+      if (!soloLetrasYEspacios(value)) {
+        // Si el usuario intenta poner número o símbolo → NO actualizamos el campo
+        return;
+      }
+    }
+
+    // Bloquear letras y símbolos en CI (solo para ciNumero) y teléfono de referencia
+    if (name === "ciNumero" || name === "telefono_referencia") {
+      if (!soloNumeros(value)) {
+        return; // Solo permite números
+      }
+    }
+
+    // Actualizar el formulario solo si pasa la validación
+    if (name === "ciNumero") {
+      // Solo permitir números para CI
+      const soloNumeros = value.replace(/\D/g, '');
+      setForm({ ...form, [name]: soloNumeros });
+    } else if (name === "ciExtension") {
+      setForm({ ...form, [name]: value });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
+
+    // Validación en tiempo real (tus validaciones existentes)
     let error = "";
 
     switch (name) {
       case "nombres":
         error = validateRequired(value, "Nombres");
         if (!error) error = validateLength(value, 2, 50, "Nombres");
-        break;
-      
-      case "apellidoPat":
-        error = validateRequired(value, "Apellido Paterno");
-        if (!error) error = validateLength(value, 2, 50, "Apellido Paterno");
-        break;
-      
-      case "apellidoMat":
-        // Solo validar longitud si se ingresa algo, no requerido
-        if (value && value.trim() !== "") {
-          error = validateLength(value, 2, 50, "Apellido Materno");
+        if (!error && !soloLetrasYEspacios(value)) {
+          error = "Solo se permiten letras y espacios";
         }
         break;
 
-      case "identificacion":
-        if (value && !validateCI(value)) {
-          error = "La CI debe contener solo números (5-15 dígitos)";
+      case "apellidoPat":
+        error = validateRequired(value, "Apellido Paterno");
+        if (!error) error = validateLength(value, 2, 50, "Apellido Paterno");
+        if (!error && !soloLetrasYEspacios(value)) {
+          error = "Solo se permiten letras y espacios";
+        }
+        break;
+
+      case "apellidoMat":
+        if (value && value.trim() !== "") {
+          error = validateLength(value, 2, 50, "Apellido Materno");
+          if (!error && !soloLetrasYEspacios(value)) {
+            error = "Solo se permiten letras y espacios";
+          }
+        }
+        break;
+
+      case "ciNumero":
+        if (value && !validateCINumero(value)) {
+          error = "La CI debe contener solo números (5-8 dígitos)";
         }
         if (!error) error = validateRequired(value, "CI");
         break;
@@ -216,12 +350,12 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
           error = "Formato de correo inválido";
         }
         break;
-      
+
       case "direccion":
         error = validateRequired(value, "Dirección");
         if (!error) error = validateLength(value, 5, 200, "Dirección");
         break;
-      
+
       case "telefono_referencia":
         if (value && !validatePhone(value)) {
           error = "Teléfono inválido (7-15 dígitos)";
@@ -229,17 +363,17 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
         break;
 
       case "fecha_nacimiento":
-        error = validateDate(value);
+        error = validateFechaNacimiento(value);
         break;
 
       case "sexo":
         error = validateRequired(value, "Sexo");
         break;
-      
+
       case "nacionalidad":
         error = validateRequired(value, "Nacionalidad");
         break;
-      
+
       case "relacion":
         error = validateRequired(value, "Relación");
         break;
@@ -261,40 +395,62 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
     }));
   };
 
+  const handleExtensionChange = (e: any) => {
+    const { value } = e.target;
+    setForm({ ...form, ciExtension: value });
+    
+    if (errors.ciNumero) {
+      setErrors({ ...errors, ciNumero: "" });
+    }
+  };
+
   const handleNuevoPadreChange = (e: any) => {
     const { name, value } = e.target;
-    setNuevoPadre({ ...nuevoPadre, [name]: value });
 
-    // Validación para nuevo padre
+    let nuevoValor = value;
+
+    // Normalizar solo nombres y apellidos
+    if (["nombres", "apellidoPat", "apellidoMat"].includes(name)) {
+      nuevoValor = capitalizar(limpiarEspacios(value));
+    }
+
+    setNuevoPadre({ ...nuevoPadre, [name]: nuevoValor });
+
     let error = "";
 
     switch (name) {
       case "nombres":
-        error = validateRequired(value, "Nombre del padre");
-        if (!error) error = validateLength(value, 2, 50, "Nombre del padre");
+        if (!nuevoValor) {
+          error = "Nombres es requerido";
+        } else if (!SOLO_LETRAS_REGEX.test(nuevoValor)) {
+          error = "Solo letras, sin números ni símbolos (máx. 20)";
+        }
         break;
-      
+
       case "apellidoPat":
-        error = validateRequired(value, "Apellido Paterno");
-        if (!error) error = validateLength(value, 2, 50, "Apellido Paterno");
+        if (!nuevoValor) {
+          error = "Apellido Paterno es requerido";
+        } else if (!SOLO_LETRAS_REGEX.test(nuevoValor)) {
+          error = "Solo letras, sin números ni símbolos (máx. 20)";
+        }
         break;
-      
+
       case "apellidoMat":
-        // Solo validar longitud si se ingresa algo, no requerido
-        if (value && value.trim() !== "") {
-          error = validateLength(value, 2, 50, "Apellido Materno");
+        if (nuevoValor && !SOLO_LETRAS_REGEX.test(nuevoValor)) {
+          error = "Solo letras, sin números ni símbolos (máx. 20)";
         }
         break;
 
       case "telefono":
-        if (value && !validatePhone(value)) {
+        if (!nuevoValor.trim()) {
+          error = "Teléfono es requerido";
+        } else if (!/^[0-9]{7,15}$/.test(nuevoValor)) {
           error = "Teléfono inválido (7-15 dígitos)";
         }
-        if (!error) error = validateRequired(value, "Teléfono");
         break;
 
       case "correo":
-        if (value && !validateEmail(value)) {
+        if (nuevoValor && !validateEmail(nuevoValor)) {
           error = "Formato de correo inválido";
         }
         break;
@@ -306,26 +462,42 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
     }));
   };
 
-  const validateForm = (): boolean => {
+  const validateForm = async (): Promise<boolean> => {
     const newErrors: FormErrors = {};
     const newPadreErrors: FormErrors = {};
-    
+
     // Validar campos principales del estudiante
     newErrors.nombres = validateRequired(form.nombres, "Nombres");
     if (!newErrors.nombres) newErrors.nombres = validateLength(form.nombres, 2, 50, "Nombres");
-    
+
     newErrors.apellidoPat = validateRequired(form.apellidoPat, "Apellido Paterno");
     if (!newErrors.apellidoPat) newErrors.apellidoPat = validateLength(form.apellidoPat, 2, 50, "Apellido Paterno");
-    
+
     // Apellido materno es opcional, solo validar longitud si se ingresa
     if (form.apellidoMat && form.apellidoMat.trim() !== "") {
-      newErrors.apellidoMat = validateLength(form.apellidoMat, 2, 50, "Apellido Materno");
+      newErrors.apellidoMat = validateLength(
+        form.apellidoMat,
+        2,
+        50,
+        "Apellido Materno"
+      );
     }
-    
-    newErrors.identificacion = validateRequired(form.identificacion, "CI");
-    if (!newErrors.identificacion && !validateCI(form.identificacion)) {
-      newErrors.identificacion =
-        "La CI debe contener solo números (5-15 dígitos)";
+
+    // Validar CI
+    newErrors.ciNumero = validateRequired(form.ciNumero, "CI");
+    if (!newErrors.ciNumero && !validateCINumero(form.ciNumero)) {
+      newErrors.ciNumero = "La CI debe contener solo números (5-15 dígitos)";
+    } else if (!newErrors.ciNumero) {
+      // Validar unicidad del CI si es válido numéricamente
+      try {
+        const esUnico = await verificarCIUnico(form.ciNumero);
+        if (!esUnico) {
+          newErrors.ciNumero = "Este número de CI ya está registrado en el sistema";
+        }
+      } catch (error) {
+        console.error('Error validando unicidad del CI:', error);
+        newErrors.ciNumero = "Error al verificar la unicidad del CI";
+      }
     }
 
     if (form.correo && !validateEmail(form.correo)) {
@@ -340,7 +512,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
       newErrors.telefono_referencia = "Teléfono inválido (7-15 dígitos)";
     }
 
-    newErrors.fecha_nacimiento = validateDate(form.fecha_nacimiento);
+    newErrors.fecha_nacimiento = validateFechaNacimiento(form.fecha_nacimiento);
     newErrors.sexo = validateRequired(form.sexo, "Sexo");
     newErrors.nacionalidad = validateRequired(
       form.nacionalidad,
@@ -355,21 +527,31 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
 
     // Validar nuevo padre si es necesario
     if (crearNuevoPadre) {
-      newPadreErrors.nombres = validateRequired(nuevoPadre.nombres, "Nombre del padre");
-      if (!newPadreErrors.nombres) newPadreErrors.nombres = validateLength(nuevoPadre.nombres, 2, 50, "Nombre del padre");
-      
-      newPadreErrors.apellidoPat = validateRequired(nuevoPadre.apellidoPat, "Apellido Paterno");
-      if (!newPadreErrors.apellidoPat) newPadreErrors.apellidoPat = validateLength(nuevoPadre.apellidoPat, 2, 50, "Apellido Paterno");
-      
-      // Apellido materno del padre es opcional
-      if (nuevoPadre.apellidoMat && nuevoPadre.apellidoMat.trim() !== "") {
-        newPadreErrors.apellidoMat = validateLength(nuevoPadre.apellidoMat, 2, 50, "Apellido Materno");
+      newPadreErrors.nombres = !nuevoPadre.nombres
+        ? "Nombres es requerido"
+        : !SOLO_LETRAS_REGEX.test(nuevoPadre.nombres)
+          ? "Solo letras, sin números ni símbolos (máx. 20)"
+          : "";
+
+      newPadreErrors.apellidoPat = !nuevoPadre.apellidoPat
+        ? "Apellido Paterno es requerido"
+        : !SOLO_LETRAS_REGEX.test(nuevoPadre.apellidoPat)
+          ? "Solo letras, sin números ni símbolos (máx. 20)"
+          : "";
+
+      if (
+        nuevoPadre.apellidoMat &&
+        !SOLO_LETRAS_REGEX.test(nuevoPadre.apellidoMat)
+      ) {
+        newPadreErrors.apellidoMat =
+          "Solo letras, sin números ni símbolos (máx. 20)";
       }
-      
-      newPadreErrors.telefono = validateRequired(nuevoPadre.telefono, "Teléfono");
-      if (!newPadreErrors.telefono && !validatePhone(nuevoPadre.telefono)) {
-        newPadreErrors.telefono = "Teléfono inválido (7-15 dígitos)";
-      }
+
+      newPadreErrors.telefono = !nuevoPadre.telefono
+        ? "Teléfono es requerido"
+        : !/^[0-9]{7,15}$/.test(nuevoPadre.telefono)
+          ? "Teléfono inválido (7-15 dígitos)"
+          : "";
 
       if (nuevoPadre.correo && !validateEmail(nuevoPadre.correo)) {
         newPadreErrors.correo = "Formato de correo inválido";
@@ -387,39 +569,60 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
     return !hasErrors;
   };
 
-  const handleSubmit = () => {
-    if (!validateForm()) {
-      alert("Por favor, complete todos los campos requeridos correctamente.");
-      return;
-    }
-
-    const payload: any = {
-      ...form,
-      idCurso: Number(form.idCurso),
-    };
-
-    // Remover apellidoMat si está vacío para enviarlo como undefined
-    if (!payload.apellidoMat || payload.apellidoMat.trim() === "") {
-      delete payload.apellidoMat;
-    }
-
-    // Remover idPadre temporalmente
-    delete payload.idPadre;
-
-    if (crearNuevoPadre) {
-      payload.padreData = {
-        ...nuevoPadre,
-        correo: nuevoPadre.correo || undefined,
-      };
-      // También para el padre, apellidoMat es opcional
-      if (!payload.padreData.apellidoMat || payload.padreData.apellidoMat.trim() === "") {
-        delete payload.padreData.apellidoMat;
+  const handleSubmit = async () => {
+    setLoading(true);
+    
+    try {
+      const esValido = await validateForm();
+      if (!esValido) {
+        alert("Por favor, complete todos los campos requeridos correctamente.");
+        setLoading(false);
+        return;
       }
-    } else {
-      payload.idPadre = Number(form.idPadre);
-    }
 
-    onCreate(payload);
+      // Preparar datos con identificación completa
+      const identificacionCompleta = getIdentificacionCompleta();
+      
+      const payload: any = {
+        ...form,
+        identificacion: identificacionCompleta, // Enviamos la CI concatenada
+        idCurso: Number(form.idCurso),
+      };
+
+      // Remover campos de CI separados y apellidoMat si está vacío
+      delete payload.ciNumero;
+      delete payload.ciExtension;
+      
+      if (!payload.apellidoMat || payload.apellidoMat.trim() === "") {
+        delete payload.apellidoMat;
+      }
+
+      // Remover idPadre temporalmente
+      delete payload.idPadre;
+
+      if (crearNuevoPadre) {
+        payload.padreData = {
+          ...nuevoPadre,
+          correo: nuevoPadre.correo || undefined,
+        };
+        // También para el padre, apellidoMat es opcional
+        if (
+          !payload.padreData.apellidoMat ||
+          payload.padreData.apellidoMat.trim() === ""
+        ) {
+          delete payload.padreData.apellidoMat;
+        }
+      } else {
+        payload.idPadre = Number(form.idPadre);
+      }
+
+      onCreate(payload);
+    } catch (error) {
+      console.error("Error en handleSubmit:", error);
+      alert("Ocurrió un error al validar el formulario");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -428,7 +631,13 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
 
       <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         {loading ? (
-          <div style={{ display: "flex", justifyContent: "center", padding: "20px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              padding: "20px",
+            }}
+          >
             <CircularProgress />
           </div>
         ) : (
@@ -442,41 +651,91 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               helperText={errors.nombres}
               fullWidth
               margin="normal"
+              disabled={verificandoCI}
             />
-            
-            <TextField 
-              label="Primer Apellido *" 
-              name="apellidoPat" 
+
+            <TextField
+              label="Primer Apellido *"
+              name="apellidoPat"
               value={form.apellidoPat}
               onChange={handleChange}
               error={!!errors.apellidoPat}
               helperText={errors.apellidoPat}
               fullWidth
               margin="normal"
+              disabled={verificandoCI}
             />
-            
-            <TextField 
-              label="Segundo Apellido" 
-              name="apellidoMat" 
+
+            <TextField
+              label="Segundo Apellido"
+              name="apellidoMat"
               value={form.apellidoMat}
               onChange={handleChange}
               error={!!errors.apellidoMat}
               helperText={errors.apellidoMat || "Opcional"}
               fullWidth
               margin="normal"
+              disabled={verificandoCI}
             />
 
-            <TextField
-              label="CI *"
-              name="identificacion"
-              value={form.identificacion}
-              onChange={handleChange}
-              error={!!errors.identificacion}
-              helperText={errors.identificacion || "Solo números, 5-15 dígitos"}
-              inputProps={{ maxLength: 15 }}
-              fullWidth
-              margin="normal"
-            />
+            {/* Campo de CI con extensión */}
+            <div style={{ margin: "8px 0" }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Cédula de Identidad *
+              </Typography>
+              <Grid container spacing={1}>
+                <Grid item xs={8}>
+                  <TextField
+                    label="Número de CI"
+                    name="ciNumero"
+                    value={form.ciNumero}
+                    onChange={handleChange}
+                    onBlur={validarCIUnicoEnTiempoReal}
+                    error={!!errors.ciNumero}
+                    helperText={errors.ciNumero || "Solo números (8 dígitos)"}
+                    fullWidth
+                    disabled={verificandoCI}
+                    inputProps={{ 
+                      maxLength: 15,
+                      inputMode: 'numeric',
+                      pattern: '[0-9]*'
+                    }}
+                    InputProps={{
+                      endAdornment: verificandoCI ? (
+                        <InputAdornment position="end">
+                          <Typography variant="caption" color="text.secondary">
+                            Verificando...
+                          </Typography>
+                        </InputAdornment>
+                      ) : null,
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={4}>
+                  <TextField
+                    select
+                    label="Extensión"
+                    name="ciExtension"
+                    value={form.ciExtension}
+                    onChange={handleExtensionChange}
+                    fullWidth
+                    disabled={verificandoCI}
+                    InputLabelProps={{ shrink: true }}
+                  >
+                    {extensionOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+              </Grid>
+              {form.ciNumero && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                  CI completo: {getIdentificacionCompleta()}
+                </Typography>
+              )}
+            </div>
 
             <TextField
               label="Correo"
@@ -488,6 +747,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               helperText={errors.correo}
               fullWidth
               margin="normal"
+              disabled={verificandoCI}
             />
 
             <TextField
@@ -501,6 +761,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               rows={2}
               fullWidth
               margin="normal"
+              disabled={verificandoCI}
             />
 
             <TextField
@@ -513,6 +774,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               inputProps={{ maxLength: 15 }}
               fullWidth
               margin="normal"
+              disabled={verificandoCI}
             />
 
             <TextField
@@ -522,10 +784,11 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               value={form.fecha_nacimiento}
               onChange={handleChange}
               error={!!errors.fecha_nacimiento}
-              helperText={errors.fecha_nacimiento}
+              helperText={errors.fecha_nacimiento || "Edad permitida: 5 a 18 años"}
               InputLabelProps={{ shrink: true }}
               fullWidth
               margin="normal"
+              disabled={verificandoCI}
             />
 
             <TextField
@@ -538,6 +801,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               helperText={errors.sexo}
               fullWidth
               margin="normal"
+              disabled={verificandoCI}
             >
               <MenuItem value="">Seleccione...</MenuItem>
               <MenuItem value="masculino">Masculino</MenuItem>
@@ -545,6 +809,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
             </TextField>
 
             <TextField
+              select
               label="Nacionalidad *"
               name="nacionalidad"
               value={form.nacionalidad}
@@ -553,7 +818,21 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               helperText={errors.nacionalidad}
               fullWidth
               margin="normal"
-            />
+              disabled={verificandoCI}
+            >
+              <MenuItem value="Boliviano/a">Boliviano/a</MenuItem>
+              <MenuItem value="Argentino/a">Argentino/a</MenuItem>
+              <MenuItem value="Chileno/a">Chileno/a</MenuItem>
+              <MenuItem value="Peruano/a">Peruano/a</MenuItem>
+              <MenuItem value="Uruguayo/a">Uruguayo/a</MenuItem>
+              <MenuItem value="Paraguayo/a">Paraguayo/a</MenuItem>
+              <MenuItem value="Brasileño/a">Brasileño/a</MenuItem>
+              <MenuItem value="Colombiano/a">Colombiano/a</MenuItem>
+              <MenuItem value="Venezolano/a">Venezolano/a</MenuItem>
+              <MenuItem value="Ecuatoriano/a">Ecuatoriano/a</MenuItem>
+              <MenuItem value="Mexicano/a">Mexicano/a</MenuItem>
+              <MenuItem value="Otro">Otro</MenuItem>
+            </TextField>
 
             <TextField
               select
@@ -565,6 +844,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               helperText={errors.relacion}
               fullWidth
               margin="normal"
+              disabled={verificandoCI}
             >
               <MenuItem value="">Seleccione...</MenuItem>
               <MenuItem value="Padre">Padre</MenuItem>
@@ -579,6 +859,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
                 <Checkbox
                   checked={crearNuevoPadre}
                   onChange={(e) => setCrearNuevoPadre(e.target.checked)}
+                  disabled={verificandoCI}
                 />
               }
               label="Registrar nuevo padre"
@@ -595,6 +876,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
                 helperText={errors.idPadre}
                 fullWidth
                 margin="normal"
+                disabled={verificandoCI}
               >
                 <MenuItem value="">Seleccione un padre...</MenuItem>
                 {padres.map((p) => (
@@ -616,27 +898,34 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
                   helperText={padreErrors.nombres}
                   fullWidth
                   margin="normal"
+                  inputProps={{ maxLength: 20 }}
+                  disabled={verificandoCI}
                 />
-                <TextField 
-                  label="Primer Apellido *" 
-                  name="apellidoPat" 
+                <TextField
+                  label="Primer Apellido *"
+                  name="apellidoPat"
                   value={nuevoPadre.apellidoPat}
                   onChange={handleNuevoPadreChange}
                   error={!!padreErrors.apellidoPat}
                   helperText={padreErrors.apellidoPat}
                   fullWidth
                   margin="normal"
+                  inputProps={{ maxLength: 20 }}
+                  disabled={verificandoCI}
                 />
-                <TextField 
-                  label="Segundo Apellido" 
-                  name="apellidoMat" 
+                <TextField
+                  label="Segundo Apellido"
+                  name="apellidoMat"
                   value={nuevoPadre.apellidoMat}
                   onChange={handleNuevoPadreChange}
                   error={!!padreErrors.apellidoMat}
                   helperText={padreErrors.apellidoMat || "Opcional"}
                   fullWidth
                   margin="normal"
+                  inputProps={{ maxLength: 20 }}
+                  disabled={verificandoCI}
                 />
+
                 <TextField
                   label="Teléfono *"
                   name="telefono"
@@ -644,10 +933,12 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
                   onChange={handleNuevoPadreChange}
                   error={!!padreErrors.telefono}
                   helperText={padreErrors.telefono || "7-15 dígitos"}
-                  inputProps={{ maxLength: 15 }}
+                  inputProps={{ maxLength: 15, inputMode: "numeric" }}
                   fullWidth
                   margin="normal"
+                  disabled={verificandoCI}
                 />
+
                 <TextField
                   label="Correo"
                   name="correo"
@@ -658,6 +949,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
                   helperText={padreErrors.correo}
                   fullWidth
                   margin="normal"
+                  disabled={verificandoCI}
                 />
               </>
             )}
@@ -672,6 +964,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               helperText={errors.idCurso}
               fullWidth
               margin="normal"
+              disabled={verificandoCI}
             >
               <MenuItem value="">Seleccione un curso...</MenuItem>
               {cursos.map((c) => (
@@ -689,9 +982,15 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
-        <Button variant="contained" onClick={handleSubmit}>
-          Registrar
+        <Button onClick={onClose} disabled={loading || verificandoCI}>
+          Cancelar
+        </Button>
+        <Button 
+          variant="contained" 
+          onClick={handleSubmit}
+          disabled={loading || verificandoCI}
+        >
+          {loading ? "Registrando..." : verificandoCI ? "Verificando CI..." : "Registrar"}
         </Button>
       </DialogActions>
     </Dialog>

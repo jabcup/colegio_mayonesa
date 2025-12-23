@@ -4,7 +4,6 @@ import { Usuarios } from '../usuarios/usuarios.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { CreatePersonalDto } from './dto/create-personal.dto';
-import { CreatePersonalFullDto } from './dto/create-personal-full.dto';
 import { UpdatePersonalDto } from './dto/update-personal.dto';
 import { Roles } from 'src/roles/roles.entity';
 import * as bcrypt from 'bcrypt';
@@ -89,7 +88,7 @@ export class PersonalService {
 
   async updatePersonal(
     id: number,
-    dtoPersonal: UpdatePersonalDto,
+    dtoPersonal: Partial<CreatePersonalDto>,
   ): Promise<Personal> {
     const personal = await this.personalRepository.findOne({ where: { id } });
 
@@ -111,7 +110,7 @@ export class PersonalService {
     return this.personalRepository.save(personal);
   }
 
-  async crearPersonalCompleto(dto: CreatePersonalFullDto) {
+  async crearPersonalCompleto(dto: CreatePersonalDto) {
     return this.dataSource.transaction(async (manager) => {
       const personal = manager.create(Personal, {
         nombres: dto.nombres,
@@ -137,7 +136,7 @@ export class PersonalService {
       const hashPass = await bcrypt.hash(dto.identificacion, 10);
 
       const usuario = manager.create(Usuarios, {
-        correo_institucional: `${nuevoPersonal.nombres.toLowerCase()}.${nuevoPersonal.apellidoPat.toLowerCase()}@mayonesa.com`,
+        correo_institucional: `${nuevoPersonal.apellidoPat.toLowerCase()}.${nuevoPersonal.identificacion.split(' ')[0]}@mayonesa.com`,
         contrasena: hashPass,
         rol,
         personal: nuevoPersonal,
@@ -153,4 +152,64 @@ export class PersonalService {
       };
     });
   }
+
+    async verificarCIUnico(
+    ciNumero: string,
+    idExcluir?: number,
+  ): Promise<{ esUnico: boolean; mensaje: string }> {
+    try {
+      // Normalizar el número de CI (eliminar espacios y convertir a string)
+      const ciNormalizado = ciNumero.trim();
+      
+      if (!ciNormalizado) {
+        return {
+          esUnico: true,
+          mensaje: 'CI no proporcionado',
+        };
+      }
+
+      // Buscar registros donde el identificacion comience con el número de CI
+      // Esto cubre casos como "1234567 LP", "1234567 SC", etc.
+      const queryBuilder = this.personalRepository
+        .createQueryBuilder('personal')
+        .where('personal.identificacion LIKE :ciConEspacio', {
+          ciConEspacio: `${ciNormalizado} %`,
+        })
+        .orWhere('personal.identificacion = :ciExacto', {
+          ciExacto: ciNormalizado,
+        })
+        .andWhere('personal.estado = :estado', { estado: 'activo' });
+
+      // Excluir el registro actual en caso de edición
+      if (idExcluir) {
+        queryBuilder.andWhere('personal.id != :idExcluir', {
+          idExcluir: idExcluir,
+        });
+      }
+
+      const personalExistente = await queryBuilder.getOne();
+
+      if (personalExistente) {
+        return {
+          esUnico: false,
+          mensaje: `El número de CI ${ciNormalizado} ya está registrado ${
+            personalExistente.identificacion.includes(' ')
+              ? `con extensión ${personalExistente.identificacion.split(' ')[1]}`
+              : ''
+          } para ${personalExistente.nombres} ${personalExistente.apellidoPat}`,
+        };
+      }
+
+      return {
+        esUnico: true,
+        mensaje: 'CI disponible',
+      };
+    } catch (error) {
+      console.error('Error en verificarCIUnico:', error);
+      throw new Error(
+        'Error al verificar la unicidad del CI. Por favor, intente nuevamente.',
+      );
+    }
+  }
+
 }

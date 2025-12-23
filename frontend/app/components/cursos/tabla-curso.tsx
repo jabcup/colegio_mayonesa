@@ -25,7 +25,7 @@ interface Paralelo {
 interface Curso {
   id: number;
   nombre: string;
-  paralelo: Paralelo | null; // ← Permitimos null por seguridad
+  paralelo: Paralelo | null;
   gestion: number;
   capacidad: number;
   fechaCreacion: string;

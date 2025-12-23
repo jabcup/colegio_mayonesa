@@ -28,4 +28,7 @@ export class VistaAsistenciasCurso {
 
   @ViewColumn()
   estado_asistencia: string;
+
+  @ViewColumn()
+  mes: number;
 }

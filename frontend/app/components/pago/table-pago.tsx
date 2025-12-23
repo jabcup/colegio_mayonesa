@@ -92,6 +92,10 @@ export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
       await onUpdate?.()
     } catch (e: any) {
       alert(e.response?.data?.message || 'Error al pagar')
+<<<<<<< HEAD
+=======
+
+>>>>>>> samuel
     }
   }
 
@@ -101,8 +105,8 @@ export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
   const handleEliminar = async (id: number) => {
     if (typeof window === 'undefined' || !window.confirm('¿Confirma eliminar este pago?')) return
     try {
-      await api.delete(`/pagos/${id}`)
-      await onUpdate?.()
+      await api.delete(`/pagos/eliminar/${id}`)
+      alert('Pago eliminado');
     } catch (e: any) {
       alert(e.response?.data?.message || 'Error al eliminar')
     }
@@ -163,12 +167,17 @@ export default function TablePagos({ pagos, estudiantes, onUpdate }: Props) {
                       Pagar
                     </Button>
                   )}
+                  {p.deuda !== "cancelado" && (
+                    <>
                   <Button size="small" onClick={() => handleActualizar(p)} sx={{ ml: 1 }}>
                     Actualizar
                   </Button>
+                  </>
+                  )}
                   <Button size="small" color="error" onClick={() => handleEliminar(p.id)} sx={{ ml: 1 }}>
                     Eliminar
                   </Button>
+                  
                 </TableCell>
               </TableRow>
             ))}

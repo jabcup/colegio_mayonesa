@@ -17,6 +17,7 @@ import { CreateCalificacionDto } from './dto/create-calificacion.dto';
 import { CalificacionesService } from './calificaciones.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { UpdateCalificacionDto } from './dto/update-calificacion.dto';
+import { Public } from 'src/auth/public.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('calificaciones')
@@ -73,6 +74,7 @@ export class CalificacionesController {
   }
 
   @Get('GestionActual/:idEstudiante')
+  @Public()
   @ApiOperation({ summary: 'Calificaciones del año actual' })
   async getCalificacionesAño(@Param('idEstudiante') id: number) {
     const calificaciones =

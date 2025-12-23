@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsInt, IsNotEmpty, IsString } from 'class-validator';
+import { IsDate, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreatePersonalDto {
@@ -21,47 +21,59 @@ export class CreatePersonalDto {
 
   @ApiProperty({
     example: 'Gómez',
-    description: 'Apellido materno del personal',
+    description: 'Apellido materno del personal (opcional)',
+    required: false,
   })
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  apellidoMat: string;
+  @MaxLength(150)
+  apellidoMat?: string;
 
   @ApiProperty({
     example: '77896577',
-    description: 'Teléfono del personal',
+    description: 'Teléfono del personal (opcional)',
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  telefono: string;
+  telefono?: string;
 
   @ApiProperty({
     example: '12345678',
-    description: 'Identificación del personal',
+    description: 'Identificación del personal (opcional)',
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  identificacion: string;
+  identificacion?: string;
 
   @ApiProperty({
     example: 'Calle Miraflores',
-    description: 'Dirección del personal',
+    description: 'Dirección del personal (opcional)',
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  direccion: string;
+  direccion?: string;
 
   @ApiProperty({
     example: 'ejemplo@correo.com',
-    description: 'Correo del personal',
+    description: 'Correo del personal (opcional)',
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  correo: string;
+  correo?: string;
 
   @ApiProperty({
     example: '2000-01-01',
-    description: 'Fecha de nacimiento del personal',
+    description: 'Fecha de nacimiento del personal (opcional)',
+    required: false,
   })
+  @IsOptional()
   @IsDate()
   @Type(() => Date)
-  fecha_nacimiento: Date;
+  fecha_nacimiento?: Date;
 
   @IsInt()
   idRol: number;

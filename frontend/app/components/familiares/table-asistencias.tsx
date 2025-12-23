@@ -10,7 +10,6 @@ import {
   Paper,
   Typography,
   Box,
-  TextField,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { api } from "@/app/lib/api";
@@ -21,14 +20,20 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/es";
 
-const DIAS_SEMANA = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes"];
+/* ---------------- CONSTANTES ---------------- */
 
-const COLORES_ASISTENCIA: Record<string, string> = {
+const DIAS_SEMANA = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes"] as const;
+
+const COLORES_ASISTENCIA = {
   presente: "#C8E6C9",
   falta: "#FFCDD2",
   justificativo: "#FFF9C4",
   ausente: "#E1BEE7",
-};
+} as const;
+
+type EstadoAsistencia = keyof typeof COLORES_ASISTENCIA;
+
+/* ---------------- INTERFACES ---------------- */
 
 interface Asignacion {
   id: number;
@@ -47,7 +52,7 @@ interface Asignacion {
 }
 
 interface Asistencia {
-  asistencia: "presente" | "falta" | "justificativo" | "ausente";
+  asistencia: string;
   asignacionClase: {
     id: number;
   };
@@ -57,15 +62,20 @@ interface Props {
   idEstudiante: number;
 }
 
+/* ---------------- COMPONENTE ---------------- */
+
 export default function TableAsistencia({ idEstudiante }: Props) {
+  console.log(idEstudiante);
   const [mapa, setMapa] = useState<Record<string, Record<string, Asignacion>>>(
     {}
   );
   const [horarios, setHorarios] = useState<string[]>([]);
-  const [asistenciasMap, setAsistenciasMap] = useState<Record<number, string>>(
-    {}
-  );
+  const [asistenciasMap, setAsistenciasMap] = useState<
+    Record<number, EstadoAsistencia>
+  >({});
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Dayjs>(dayjs());
+
+  /* ----------- ORDENAR HORARIOS ----------- */
 
   const ordenarHorarios = (a: string, b: string) => {
     const [horaA] = a.split(" - ");
@@ -73,67 +83,92 @@ export default function TableAsistencia({ idEstudiante }: Props) {
     return horaA.localeCompare(horaB);
   };
 
+  /* ----------- FETCH HORARIO ----------- */
+
   useEffect(() => {
     if (!idEstudiante) return;
 
     const fetchHorario = async () => {
-      const res = await api.get(
-        `/asignacion-clases/estudiante/${idEstudiante}`
-      );
+      try {
+        const res = await api.get(
+          `/asignacion-clases/estudiante/${idEstudiante}`
+        );
 
-      const asignaciones: Asignacion[] = res.data;
+        const asignaciones: Asignacion[] = Array.isArray(res.data)
+          ? res.data
+          : res.data.data ?? [];
 
-      const tempMapa: Record<string, Record<string, Asignacion>> = {};
-      const setHorariosUnicos = new Set<string>();
+        const tempMapa: Record<string, Record<string, Asignacion>> = {};
+        const horariosUnicos = new Set<string>();
 
-      asignaciones.forEach((a) => {
-        const h = a.horario.horario;
-        const d = a.dia;
+        asignaciones.forEach((a) => {
+          const h = a.horario.horario;
+          const d = a.dia;
 
-        setHorariosUnicos.add(h);
+          horariosUnicos.add(h);
 
-        if (!tempMapa[h]) tempMapa[h] = {};
-        tempMapa[h][d] = a;
-      });
+          if (!tempMapa[h]) tempMapa[h] = {};
+          tempMapa[h][d] = a;
+        });
 
-      setMapa(tempMapa);
-      setHorarios(Array.from(setHorariosUnicos).sort(ordenarHorarios));
+        setMapa(tempMapa);
+        setHorarios(Array.from(horariosUnicos).sort(ordenarHorarios));
+      } catch (error) {
+        console.error("Error al obtener horario", error);
+      }
     };
 
     fetchHorario();
   }, [idEstudiante]);
 
+  /* ----------- FETCH ASISTENCIAS ----------- */
+
   useEffect(() => {
     if (!idEstudiante || !fechaSeleccionada) return;
 
     const fetchAsistencias = async () => {
-      const fecha = fechaSeleccionada.format("YYYY-MM-DD");
+      try {
+        const fecha = fechaSeleccionada.format("YYYY-MM-DD");
 
-      const res = await api.get(
-        `/asistencias/asistenciaSemanal/${idEstudiante}/${fecha}`
-      );
+        console.log(fecha);
 
-      const asistencias: Asistencia[] = res.data;
+        const res = await api.get(
+          `/asistencias/asistenciaSemanal/${idEstudiante}/${fecha}`
+        );
 
-      const map: Record<number, string> = {};
-      asistencias.forEach((a) => {
-        map[a.asignacionClase.id] = a.asistencia;
-      });
+        console.log(res.data);
 
-      setAsistenciasMap(map);
+        const asistencias: Asistencia[] = Array.isArray(res.data)
+          ? res.data
+          : res.data.data ?? [];
+
+        const map: Record<number, EstadoAsistencia> = {};
+
+        asistencias.forEach((a) => {
+          const estado = a.asistencia?.toLowerCase();
+          
+
+
+          if (estado in COLORES_ASISTENCIA) {
+            map[a.asignacionClase.id] = estado as EstadoAsistencia;
+          }
+        });
+
+        setAsistenciasMap(map);
+      } catch (error) {
+        console.error("Error al obtener asistencias", error);
+      }
     };
 
     fetchAsistencias();
   }, [idEstudiante, fechaSeleccionada]);
 
-  useEffect(() => {
-    console.log(horarios);
-  });
-
+  /* ---------------- RENDER ---------------- */
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
       <Box sx={{ width: "95%", mx: "auto" }}>
+        {/* HEADER */}
         <Box
           sx={{
             display: "flex",
@@ -143,7 +178,7 @@ export default function TableAsistencia({ idEstudiante }: Props) {
             mb: 3,
           }}
         >
-          <Box sx={{ flex: 1 }}>
+          <Box>
             <Typography variant="h6" sx={{ mb: 1 }}>
               Horario Académico
             </Typography>
@@ -175,14 +210,12 @@ export default function TableAsistencia({ idEstudiante }: Props) {
             <DatePicker
               label="Semana de referencia"
               value={fechaSeleccionada}
-              onChange={(newValue) => {
-                if (newValue) setFechaSeleccionada(newValue);
-              }}
+              onChange={(newValue) =>
+                newValue && setFechaSeleccionada(newValue)
+              }
               disableFuture
               slotProps={{
-                textField: {
-                  fullWidth: true,
-                },
+                textField: { fullWidth: true },
               }}
             />
           </Box>
@@ -221,9 +254,11 @@ export default function TableAsistencia({ idEstudiante }: Props) {
                         key={dia}
                         align="center"
                         sx={{
-                          backgroundColor: asistencia
-                            ? COLORES_ASISTENCIA[asistencia]
-                            : "transparent",
+                          backgroundColor:
+                            asistencia &&
+                            COLORES_ASISTENCIA[asistencia]
+                              ? COLORES_ASISTENCIA[asistencia]
+                              : "transparent",
                         }}
                       >
                         {asignacion ? (
@@ -238,7 +273,10 @@ export default function TableAsistencia({ idEstudiante }: Props) {
                             </Typography>
                           </Box>
                         ) : (
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                          >
                             Sin asignar
                           </Typography>
                         )}

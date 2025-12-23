@@ -53,9 +53,9 @@ export class CreateEstudianteFullDto {
   @ApiProperty({
     example: 'Gómez',
     description: 'Apellido materno (opcional)',
-    required: false
+    required: false,
   })
-  @IsOptional() 
+  @IsOptional()
   @IsString()
   apellidoMat?: string;
 

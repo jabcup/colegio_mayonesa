@@ -16,13 +16,13 @@ export class Personal {
   @Column({ type: 'varchar', length: 150 })
   apellidoPat: string;
 
-  @Column({ type: 'varchar', length: 150 })
+  @Column({ type: 'varchar', length: 150, nullable: true })
   apellidoMat: string;
 
   @Column({ type: 'varchar', length: 150, nullable: true })
   telefono: string;
 
-  @Column({ type: 'varchar', length: 150, nullable: true })
+  @Column({ type: 'varchar', length: 150, nullable: true, unique: true })
   identificacion: string;
 
   @Column({ type: 'varchar', length: 150, nullable: true })

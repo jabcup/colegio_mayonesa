@@ -55,6 +55,121 @@ export default function AsistenciaTable() {
       alert('Error al eliminar');
     }
   };
+  const cargarBatch = () => {
+    if (!filtro.idCurso || !filtro.idAsignacion) {
+      toast.warning("Selecciona curso y materia");
+      return;
+    }
+    const nuevoBatch = estudiantes.map((e) => ({
+      estudiante: e,
+      asistencia: "presente",
+      idAsignacion: Number(filtro.idAsignacion),
+    }));
+    setBatch(nuevoBatch);
+  };
+
+  const handleAsistenciaChange = (id: number, value: string) => {
+    setBatch(
+      batch.map((b) =>
+        b.estudiante.id === id ? { ...b, asistencia: value } : b
+      )
+    );
+  };
+
+  const refrescarDatosCurso = async () => {
+  if (!filtro.idCurso) return;
+
+  const idDocente = Number(Cookies.get("personal_id") ?? 4);
+  setLoading(true);
+
+  try {
+    const estRes = await api.get(
+      `/estudiante-curso/estudiantes-por-curso/${filtro.idCurso}`
+    );
+    setEstudiantes(estRes.data.map((ec: any) => ec.estudiante));
+
+    const matRes = await api.get(
+      `/asignacion-clases/materias-por-docente-curso-asignacion/${idDocente}/${filtro.idCurso}`
+    );
+    setMaterias(
+      matRes.data.map((m: any) => ({
+        idAsignacion: m.idAsignacion,
+        idMateria: m.idMateria,
+        nombre: m.nombre,
+      }))
+    );
+  } catch {
+    toast.error("Error al refrescar datos");
+  } finally {
+    setLoading(false);
+  }
+};
+
+  //---------------Descomentar para registrar asistencias en calidad------------------------------
+
+// const registrarBatch = async () => {
+//   if (batch.length === 0) return;
+
+//   const payload = batch.map((b) => ({
+//     idAsignacion: b.idAsignacion,
+//     idEstudiante: b.estudiante.id,
+//     asistencia: b.asistencia,
+//   }));
+
+//   try {
+//     await api.post("/asistencias/batch", payload);
+
+//     toast.success("Asistencias registradas con éxito");
+
+//     setBatch([]);
+
+//     // 🔥 RECARGA REAL
+//     await refrescarDatosCurso();
+
+//     // 🔁 Vuelve a cargar la lista
+//     cargarBatch();
+//   } catch {
+//     toast.error("Error al registrar asistencias");
+//   }
+// };
+
+
+  //---------------Comentar para registrar asistencias en calidad------------------------------
+  const registrarBatch = async () => {
+  const hoy = new Date();
+  const diaSemana = hoy.getDay();
+
+  if (diaSemana === 0 || diaSemana === 6) {
+    toast.error(
+      "No se puede registrar asistencia en sábado ni domingo"
+    );
+    return;
+  }
+
+  if (batch.length === 0) {
+    toast.error("No hay asistencias para registrar");
+    return;
+  }
+
+  const payload = batch.map((b) => ({
+    idAsignacion: b.idAsignacion,
+    idEstudiante: b.estudiante.id,
+    asistencia: b.asistencia,
+  }));
+
+  try {
+    await api.post("/asistencias/batch", payload);
+    toast.success("Asistencias registradas con éxito");
+
+    setBatch([]);
+    await refrescarDatosCurso();
+
+    cargarBatch();
+  } catch (error) {
+    toast.error("Error al registrar asistencias");
+  }
+};
+
 
   const getBadgeVariant = (tipo: string) => {
     switch (tipo) {
@@ -67,6 +182,19 @@ export default function AsistenciaTable() {
   };
 
   if (loading) return <p>Cargando...</p>;
+
+  const nombreCompleto = (e?: Estudiante | null): string => {
+    if (!e) {
+      return "Estudiante no encontrado";
+    }
+    const nombres = e.nombres?.trim() || "";
+    const apellidoPat = e.apellidoPat?.trim() || "";
+    const apellidoMat = e.apellidoMat?.trim() || "";
+
+    const nombreFull = `${nombres} ${apellidoPat} ${apellidoMat}`.trim();
+
+    return nombreFull || "Sin nombre";
+  };
 
   return (
     <div className="rounded-md border">

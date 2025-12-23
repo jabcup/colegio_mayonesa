@@ -158,7 +158,7 @@ export default function EstudiantesPage() {
     <>
       <Navbar />
 
-      <div style={{ padding: "20px" }}>
+      {/* <div style={{ padding: "20px" }}> */}
         <Typography variant="h4" sx={{ mb: 2 }}>
           Estudiantes
         </Typography>
@@ -225,7 +225,7 @@ export default function EstudiantesPage() {
         ) : (
           <Typography>No hay estudiantes registrados</Typography>
         )}
-      </div>
+      {/* </div> */}
 
       <Snackbar
         open={snackbar.open}
