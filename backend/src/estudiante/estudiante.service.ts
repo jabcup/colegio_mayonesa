@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Estudiante } from './estudiante.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { Brackets, DataSource, Repository } from 'typeorm';
 import { CreateEstudianteFullDto } from './dto/create-estudiante-full.dto';
 import { Padres } from '../padres/padres.entity';
 import { EstudianteTutor } from '../padre-estudiante/padreEstudiante.entity';
@@ -41,15 +41,14 @@ export class EstudianteService {
       });
 
       if (ciExistente) {
-        throw new BadRequestException('Ya existe un estudiante con este número de CI');
+        throw new BadRequestException(
+          'Ya existe un estudiante con este número de CI',
+        );
       }
 
       // Generar correo institucional: primerNombre.ci@colegio.edu.bo
       const primerNombre = dto.nombres.trim().split(' ')[0].toLowerCase();
-const correoInstitucional = `${primerNombre.toLocaleLowerCase()}.${dto.identificacion.split(' ')[0]}@colegio.edu.bo`;
-
-      // Cambia el dominio si es diferente (ej: @unidadeducativa.edu.bo)
-      const dominio = 'colegio.edu.bo'; // ← Puedes mover esto a .env si quieres
+      const correoInstitucional = `${primerNombre.toLocaleLowerCase()}.${dto.identificacion.split(' ')[0]}@colegio.edu.bo`;
 
       const estudiante = manager.create(Estudiante, {
         nombres: dto.nombres,
@@ -57,9 +56,9 @@ const correoInstitucional = `${primerNombre.toLocaleLowerCase()}.${dto.identific
         apellidoMat: dto.apellidoMat, // nullable
         identificacion: dto.identificacion,
         correo: dto.correo,
-        correo_institucional: `${primerNombre}.${dto.identificacion}@${dominio}`,
+        correo_institucional: correoInstitucional,
 
-        rude: `R${dto.identificacion}${dto.nombres.charAt(0).toUpperCase()}${dto.apellidoPat.charAt(0).toUpperCase()}${(
+        rude: `R${dto.identificacion.split(' ')[0]}${dto.nombres.charAt(0).toUpperCase()}${dto.apellidoPat.charAt(0).toUpperCase()}${(
           dto.apellidoMat || ''
         )
           .charAt(0)
@@ -177,13 +176,18 @@ const correoInstitucional = `${primerNombre.toLocaleLowerCase()}.${dto.identific
     }
 
     // Validar CI único si se está cambiando
-    if (dto.identificacion && dto.identificacion !== estudiante.identificacion) {
+    if (
+      dto.identificacion &&
+      dto.identificacion !== estudiante.identificacion
+    ) {
       const ciExistente = await this.estudianteRepository.findOne({
         where: { identificacion: dto.identificacion },
       });
 
       if (ciExistente) {
-        throw new BadRequestException('Ya existe otro estudiante con este número de CI');
+        throw new BadRequestException(
+          'Ya existe otro estudiante con este número de CI',
+        );
       }
     }
 
@@ -192,7 +196,10 @@ const correoInstitucional = `${primerNombre.toLocaleLowerCase()}.${dto.identific
 
     // Regenerar correo institucional si cambian nombre o CI
     if (dto.nombres || dto.identificacion) {
-      const primerNombre = (dto.nombres || estudiante.nombres).trim().split(' ')[0].toLowerCase();
+      const primerNombre = (dto.nombres || estudiante.nombres)
+        .trim()
+        .split(' ')[0]
+        .toLowerCase();
       const ci = dto.identificacion || estudiante.identificacion;
       const dominio = 'colegio.edu.bo'; // ← Cambia si es necesario
       estudiante.correo_institucional = `${primerNombre}.${ci}@${dominio}`;
@@ -214,14 +221,13 @@ const correoInstitucional = `${primerNombre.toLocaleLowerCase()}.${dto.identific
     await this.estudianteRepository.save(estudiante);
   }
 
-   async verificarCIUnico(
+  async verificarCIUnico(
     ciNumero: string,
     idExcluir?: number,
   ): Promise<{ esUnico: boolean; mensaje: string }> {
     try {
       // Normalizar el número de CI (eliminar espacios y convertir a string)
       const ciNormalizado = ciNumero.trim();
-      
       if (!ciNormalizado) {
         return {
           esUnico: true,
@@ -229,17 +235,20 @@ const correoInstitucional = `${primerNombre.toLocaleLowerCase()}.${dto.identific
         };
       }
 
-      // Buscar registros donde el identificacion comience con el número de CI
-      // Esto cubre casos como "1234567 LP", "1234567 SC", etc.
       const queryBuilder = this.estudianteRepository
         .createQueryBuilder('estudiante')
         .where('estudiante.identificacion LIKE :ciConEspacio', {
           ciConEspacio: `${ciNormalizado} %`,
         })
-        .orWhere('estudiante.identificacion = :ciExacto', {
-          ciExacto: ciNormalizado,
-        })
-        .andWhere('estudiante.estado = :estado', { estado: 'activo' });
+        .andWhere(
+          new Brackets((qb) => {
+            qb.where('estudiante.identificacion = :ciExacto', {
+              ciExacto: ciNormalizado,
+            }).orWhere('estudiante.identificacion LIKE :ciConExtension', {
+              ciConExtension: `${ciNormalizado} %`,
+            });
+          }),
+        );
 
       // Excluir el registro actual en caso de edición
       if (idExcluir) {
