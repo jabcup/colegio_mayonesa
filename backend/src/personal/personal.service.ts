@@ -136,7 +136,7 @@ export class PersonalService {
       const hashPass = await bcrypt.hash(dto.identificacion, 10);
 
       const usuario = manager.create(Usuarios, {
-        correo_institucional: `${nuevoPersonal.nombres.toLowerCase()}.${nuevoPersonal.apellidoPat.toLowerCase()}@mayonesa.com`,
+        correo_institucional: `${nuevoPersonal.nombres.toLowerCase()}.${nuevoPersonal.apellidoPat.toLowerCase()}@colegio.edu.bo`,
         contrasena: hashPass,
         rol,
         personal: nuevoPersonal,

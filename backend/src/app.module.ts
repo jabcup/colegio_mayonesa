@@ -21,12 +21,12 @@ import { EstudianteCursoModule } from './estudiante-curso/estudiante-curso.modul
 import { ReportesModule } from './reportes/reportes.module';
 import { AuditoriaModule } from './auditoria/auditoria.module';
 import { ParaleloModule } from './paralelos/paralelo.module';
+import { AvisosModule } from './avisos/avisos.module';
+import { NotificacionesDocentesModule } from './notificaciones-docentes/notificaciones-docentes.module';
 // Auditoria
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AuditoriaInterceptor } from './auditoria/auditoria.interceptor';
 import { AuthModule } from './auth/auth.module';
-
-import { AvisosModule } from './avisos/avisos.module';
 
 @Module({
   imports: [
@@ -60,10 +60,10 @@ import { AvisosModule } from './avisos/avisos.module';
     EstudianteCursoModule,
     ReportesModule,
     AuditoriaModule,
+    AvisosModule,
+    NotificacionesDocentesModule,
     //Auditoria
     AuthModule,
-
-    AvisosModule,
 
     ParaleloModule,
   ],
@@ -74,4 +74,9 @@ import { AvisosModule } from './avisos/avisos.module';
     },
   ],
 })
+<<<<<<< HEAD
 export class AppModule {}
+=======
+export class AppModule { }
+
+>>>>>>> main

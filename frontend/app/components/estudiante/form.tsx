@@ -32,7 +32,7 @@ interface Padre {
 interface Curso {
   id: number;
   nombre: string;
-  paralelo: { nombre: string};
+  paralelo: { nombre: string };
   gestion: number;
 }
 
@@ -117,41 +117,41 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
   // };
 
   const validateRequired = (value: any, fieldName: string): string => {
-  // Caso 1: valor nulo o indefinido
-  if (value === null || value === undefined) {
-    return `${fieldName} es requerido`;
-  }
-  
-  // Caso 2: string vacío o solo espacios
-  if (typeof value === "string") {
-    if (!value.trim()) {
+    // Caso 1: valor nulo o indefinido
+    if (value === null || value === undefined) {
       return `${fieldName} es requerido`;
     }
+
+    // Caso 2: string vacío o solo espacios
+    if (typeof value === "string") {
+      if (!value.trim()) {
+        return `${fieldName} es requerido`;
+      }
+      return "";
+    }
+
+    // Caso 3: número (0 es válido)
+    if (typeof value === "number") {
+      return "";
+    }
+
+    // Caso 4: boolean (siempre válido)
+    if (typeof value === "boolean") {
+      return "";
+    }
+
+    // Caso 5: array vacío
+    if (Array.isArray(value) && value.length === 0) {
+      return `${fieldName} es requerido`;
+    }
+
+    // Caso 6: objeto vacío
+    if (typeof value === "object" && Object.keys(value).length === 0) {
+      return `${fieldName} es requerido`;
+    }
+
     return "";
-  }
-  
-  // Caso 3: número (0 es válido)
-  if (typeof value === "number") {
-    return "";
-  }
-  
-  // Caso 4: boolean (siempre válido)
-  if (typeof value === "boolean") {
-    return "";
-  }
-  
-  // Caso 5: array vacío
-  if (Array.isArray(value) && value.length === 0) {
-    return `${fieldName} es requerido`;
-  }
-  
-  // Caso 6: objeto vacío
-  if (typeof value === "object" && Object.keys(value).length === 0) {
-    return `${fieldName} es requerido`;
-  }
-  
-  return "";
-};
+  };
 
   const validateLength = (
     value: string,
@@ -165,45 +165,99 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
     return "";
   };
 
-  const validateDate = (date: string): string => {
+  const validateFechaNacimiento = (date: string): string => {
     if (!date) return "Fecha de nacimiento es requerida";
 
-    const selectedDate = new Date(date);
+    const birthDate = new Date(date);
     const today = new Date();
-    const minDate = new Date();
-    minDate.setFullYear(today.getFullYear() - 100);
 
-    if (selectedDate > today) return "La fecha no puede ser futura";
-    if (selectedDate < minDate) return "Fecha no válida";
+    // No permitir fechas futuras
+    if (birthDate > today) {
+      return "La fecha de nacimiento no puede ser futura";
+    }
 
-    return "";
+    // Calcular edad exacta
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    const dayDiff = today.getDate() - birthDate.getDate();
+
+    // Ajustar si aún no ha cumplido años este año
+    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+      age--;
+    }
+
+    // Validar rango de edad
+    if (age < 5) {
+      return "El estudiante debe tener al menos 5 años";
+    }
+    if (age > 18) {
+      return "El estudiante no puede tener más de 18 años";
+    }
+
+    return ""; // Todo bien
+  };
+
+  const soloLetrasYEspacios = (texto: string): boolean => {
+    const regex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/;
+    return regex.test(texto);
+  };
+
+  const soloNumeros = (texto: string): boolean => {
+    const regex = /^[0-9]*$/;
+    return regex.test(texto);
   };
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
+
+    // Bloquear números y símbolos en nombres y apellidos
+    if (name === "nombres" || name === "apellidoPat" || name === "apellidoMat") {
+      if (!soloLetrasYEspacios(value)) {
+        // Si el usuario intenta poner número o símbolo → NO actualizamos el campo
+        return;
+      }
+    }
+
+    // Bloquear letras y símbolos en CI y teléfono de referencia
+    if (name === "identificacion" || name === "telefono_referencia") {
+      if (!soloNumeros(value)) {
+        return; // Solo permite números
+      }
+    }
+
+    // Actualizar el formulario solo si pasa la validación
     setForm({ ...form, [name]: value });
 
-    // Validación en tiempo real
+    // Validación en tiempo real (tus validaciones existentes)
     let error = "";
 
     switch (name) {
       case "nombres":
         error = validateRequired(value, "Nombres");
         if (!error) error = validateLength(value, 2, 50, "Nombres");
-        break;
-      
-      case "apellidoPat":
-        error = validateRequired(value, "Apellido Paterno");
-        if (!error) error = validateLength(value, 2, 50, "Apellido Paterno");
-        break;
-      
-      case "apellidoMat":
-        // Solo validar longitud si se ingresa algo, no requerido
-        if (value && value.trim() !== "") {
-          error = validateLength(value, 2, 50, "Apellido Materno");
+        if (!error && !soloLetrasYEspacios(value)) {
+          error = "Solo se permiten letras y espacios";
         }
         break;
 
+      case "apellidoPat":
+        error = validateRequired(value, "Apellido Paterno");
+        if (!error) error = validateLength(value, 2, 50, "Apellido Paterno");
+        if (!error && !soloLetrasYEspacios(value)) {
+          error = "Solo se permiten letras y espacios";
+        }
+        break;
+
+      case "apellidoMat":
+        if (value && value.trim() !== "") {
+          error = validateLength(value, 2, 50, "Apellido Materno");
+          if (!error && !soloLetrasYEspacios(value)) {
+            error = "Solo se permiten letras y espacios";
+          }
+        }
+        break;
+
+      // ... el resto de casos quedan IGUAL (identificacion, correo, etc.)
       case "identificacion":
         if (value && !validateCI(value)) {
           error = "La CI debe contener solo números (5-15 dígitos)";
@@ -216,12 +270,12 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
           error = "Formato de correo inválido";
         }
         break;
-      
+
       case "direccion":
         error = validateRequired(value, "Dirección");
         if (!error) error = validateLength(value, 5, 200, "Dirección");
         break;
-      
+
       case "telefono_referencia":
         if (value && !validatePhone(value)) {
           error = "Teléfono inválido (7-15 dígitos)";
@@ -229,17 +283,17 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
         break;
 
       case "fecha_nacimiento":
-        error = validateDate(value);
+        error = validateFechaNacimiento(value);
         break;
 
       case "sexo":
         error = validateRequired(value, "Sexo");
         break;
-      
+
       case "nacionalidad":
         error = validateRequired(value, "Nacionalidad");
         break;
-      
+
       case "relacion":
         error = validateRequired(value, "Relación");
         break;
@@ -273,12 +327,12 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
         error = validateRequired(value, "Nombre del padre");
         if (!error) error = validateLength(value, 2, 50, "Nombre del padre");
         break;
-      
+
       case "apellidoPat":
         error = validateRequired(value, "Apellido Paterno");
         if (!error) error = validateLength(value, 2, 50, "Apellido Paterno");
         break;
-      
+
       case "apellidoMat":
         // Solo validar longitud si se ingresa algo, no requerido
         if (value && value.trim() !== "") {
@@ -309,19 +363,19 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
     const newPadreErrors: FormErrors = {};
-    
+
     // Validar campos principales del estudiante
     newErrors.nombres = validateRequired(form.nombres, "Nombres");
     if (!newErrors.nombres) newErrors.nombres = validateLength(form.nombres, 2, 50, "Nombres");
-    
+
     newErrors.apellidoPat = validateRequired(form.apellidoPat, "Apellido Paterno");
     if (!newErrors.apellidoPat) newErrors.apellidoPat = validateLength(form.apellidoPat, 2, 50, "Apellido Paterno");
-    
+
     // Apellido materno es opcional, solo validar longitud si se ingresa
     if (form.apellidoMat && form.apellidoMat.trim() !== "") {
       newErrors.apellidoMat = validateLength(form.apellidoMat, 2, 50, "Apellido Materno");
     }
-    
+
     newErrors.identificacion = validateRequired(form.identificacion, "CI");
     if (!newErrors.identificacion && !validateCI(form.identificacion)) {
       newErrors.identificacion =
@@ -340,7 +394,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
       newErrors.telefono_referencia = "Teléfono inválido (7-15 dígitos)";
     }
 
-    newErrors.fecha_nacimiento = validateDate(form.fecha_nacimiento);
+    newErrors.fecha_nacimiento = validateFechaNacimiento(form.fecha_nacimiento);
     newErrors.sexo = validateRequired(form.sexo, "Sexo");
     newErrors.nacionalidad = validateRequired(
       form.nacionalidad,
@@ -357,15 +411,15 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
     if (crearNuevoPadre) {
       newPadreErrors.nombres = validateRequired(nuevoPadre.nombres, "Nombre del padre");
       if (!newPadreErrors.nombres) newPadreErrors.nombres = validateLength(nuevoPadre.nombres, 2, 50, "Nombre del padre");
-      
+
       newPadreErrors.apellidoPat = validateRequired(nuevoPadre.apellidoPat, "Apellido Paterno");
       if (!newPadreErrors.apellidoPat) newPadreErrors.apellidoPat = validateLength(nuevoPadre.apellidoPat, 2, 50, "Apellido Paterno");
-      
+
       // Apellido materno del padre es opcional
       if (nuevoPadre.apellidoMat && nuevoPadre.apellidoMat.trim() !== "") {
         newPadreErrors.apellidoMat = validateLength(nuevoPadre.apellidoMat, 2, 50, "Apellido Materno");
       }
-      
+
       newPadreErrors.telefono = validateRequired(nuevoPadre.telefono, "Teléfono");
       if (!newPadreErrors.telefono && !validatePhone(nuevoPadre.telefono)) {
         newPadreErrors.telefono = "Teléfono inválido (7-15 dígitos)";
@@ -443,10 +497,10 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               fullWidth
               margin="normal"
             />
-            
-            <TextField 
-              label="Primer Apellido *" 
-              name="apellidoPat" 
+
+            <TextField
+              label="Primer Apellido *"
+              name="apellidoPat"
               value={form.apellidoPat}
               onChange={handleChange}
               error={!!errors.apellidoPat}
@@ -454,10 +508,10 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               fullWidth
               margin="normal"
             />
-            
-            <TextField 
-              label="Segundo Apellido" 
-              name="apellidoMat" 
+
+            <TextField
+              label="Segundo Apellido"
+              name="apellidoMat"
               value={form.apellidoMat}
               onChange={handleChange}
               error={!!errors.apellidoMat}
@@ -522,7 +576,7 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
               value={form.fecha_nacimiento}
               onChange={handleChange}
               error={!!errors.fecha_nacimiento}
-              helperText={errors.fecha_nacimiento}
+              helperText={errors.fecha_nacimiento || "Edad permitida: 5 a 18 años"}
               InputLabelProps={{ shrink: true }}
               fullWidth
               margin="normal"
@@ -617,9 +671,9 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
                   fullWidth
                   margin="normal"
                 />
-                <TextField 
-                  label="Primer Apellido *" 
-                  name="apellidoPat" 
+                <TextField
+                  label="Primer Apellido *"
+                  name="apellidoPat"
                   value={nuevoPadre.apellidoPat}
                   onChange={handleNuevoPadreChange}
                   error={!!padreErrors.apellidoPat}
@@ -627,9 +681,9 @@ export default function FormEstudiante({ open, onClose, onCreate }: Props) {
                   fullWidth
                   margin="normal"
                 />
-                <TextField 
-                  label="Segundo Apellido" 
-                  name="apellidoMat" 
+                <TextField
+                  label="Segundo Apellido"
+                  name="apellidoMat"
                   value={nuevoPadre.apellidoMat}
                   onChange={handleNuevoPadreChange}
                   error={!!padreErrors.apellidoMat}
