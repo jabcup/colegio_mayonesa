@@ -35,8 +35,8 @@ import { AvisosModule } from './avisos/avisos.module';
       type: 'mysql',
       host: 'localhost',
       port: 3306,
-      username: '',
-      password: '',
+      username: 'root',
+      password: '82002',
       database: 'colegio',
       autoLoadEntities: true,
       synchronize: false,
@@ -75,4 +75,3 @@ import { AvisosModule } from './avisos/avisos.module';
   ],
 })
 export class AppModule {}
-

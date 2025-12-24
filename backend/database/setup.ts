@@ -5,8 +5,8 @@ const setupDataSource = new DataSource({
   type: 'mysql',
   host: 'localhost',
   port: 3306,
-  username: '',
-  password: '',
+  username: 'root',
+  password: '82002',
   database: 'colegio',
   synchronize: true,
   logging: true,
@@ -24,4 +24,3 @@ setupDataSource
     console.error('❌ Error al sincronizar la base de datos:', error);
     process.exit(1);
   });
-

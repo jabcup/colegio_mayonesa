@@ -20,6 +20,12 @@ export class RolesService {
   async getRoles(): Promise<Roles[]> {
     return this.rolRepository.find();
   }
+  async getRolesActivos(): Promise<Roles[]> {
+    return this.rolRepository.find({
+      where: { estado: 'activo' },
+    });
+  }
+
   async findOne(id: number): Promise<Roles> {
     const rol = await this.rolRepository.findOneBy({ id });
     if (!rol) throw new NotFoundException('Rol no encontrado');
