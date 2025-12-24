@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import {
   Dialog,
@@ -14,18 +16,37 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onCreate: (data: any) => void;
-  loading?: boolean; // Prop opcional para mostrar carga
+  loading?: boolean;
 }
 
 interface FormErrors {
   [key: string]: string;
 }
 
-export default function FormPadre({ open, onClose, onCreate, loading = false }: Props) {    
+// ✅ Regex: solo letras + espacios (2 a 20)
+const SOLO_LETRAS_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñ ]{2,20}$/;
+
+// ✅ Limpia espacios dobles y trim
+const limpiarEspacios = (texto: string) => texto.replace(/\s+/g, " ").trim();
+
+// ✅ Capital Case
+const capitalizar = (texto: string) =>
+  texto
+    .toLowerCase()
+    .split(" ")
+    .map((palabra) => palabra.charAt(0).toUpperCase() + palabra.slice(1))
+    .join(" ");
+
+export default function FormPadre({
+  open,
+  onClose,
+  onCreate,
+  loading = false,
+}: Props) {
   const [form, setForm] = useState({
     nombres: "",
     apellidoPat: "",
-    apellidoMat: "", // Opcional
+    apellidoMat: "",
     telefono: "",
   });
 
@@ -33,41 +54,44 @@ export default function FormPadre({ open, onClose, onCreate, loading = false }: 
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-    
-    // Validación en tiempo real
-    validateField(name, value);
+
+    let nuevoValor = value;
+
+    // 👉 Normalizar solo para nombres/apellidos
+    if (["nombres", "apellidoPat", "apellidoMat"].includes(name)) {
+      nuevoValor = capitalizar(limpiarEspacios(value));
+    }
+
+    setForm({ ...form, [name]: nuevoValor });
+    validateField(name, nuevoValor);
   };
 
   const validateField = (name: string, value: string) => {
     let error = "";
-    
+
     switch (name) {
       case "nombres":
-        if (!value.trim()) {
+        if (!value) {
           error = "Nombres es requerido";
-        } else if (value.length < 2 || value.length > 50) {
-          error = "Nombres debe tener entre 2 y 50 caracteres";
+        } else if (!SOLO_LETRAS_REGEX.test(value)) {
+          error = "Solo letras, sin números ni símbolos (máx. 20)";
         }
         break;
-      
+
       case "apellidoPat":
-        if (!value.trim()) {
+        if (!value) {
           error = "Apellido Paterno es requerido";
-        } else if (value.length < 2 || value.length > 50) {
-          error = "Apellido Paterno debe tener entre 2 y 50 caracteres";
+        } else if (!SOLO_LETRAS_REGEX.test(value)) {
+          error = "Solo letras, sin números ni símbolos (máx. 20)";
         }
         break;
-      
+
       case "apellidoMat":
-        // Opcional, solo validar longitud si se ingresa algo
-        if (value && value.trim() !== "") {
-          if (value.length < 2 || value.length > 50) {
-            error = "Apellido Materno debe tener entre 2 y 50 caracteres";
-          }
+        if (value && !SOLO_LETRAS_REGEX.test(value)) {
+          error = "Solo letras, sin números ni símbolos (máx. 20)";
         }
         break;
-      
+
       case "telefono":
         if (!value.trim()) {
           error = "Teléfono es requerido";
@@ -76,72 +100,53 @@ export default function FormPadre({ open, onClose, onCreate, loading = false }: 
         }
         break;
     }
-    
-    setErrors(prev => ({
-      ...prev,
-      [name]: error
-    }));
+
+    setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
-    
-    // Validar nombres
-    if (!form.nombres.trim()) {
+
+    if (!form.nombres) {
       newErrors.nombres = "Nombres es requerido";
-    } else if (form.nombres.length < 2 || form.nombres.length > 50) {
-      newErrors.nombres = "Nombres debe tener entre 2 y 50 caracteres";
+    } else if (!SOLO_LETRAS_REGEX.test(form.nombres)) {
+      newErrors.nombres = "Solo letras, sin números ni símbolos (máx. 20)";
     }
-    
-    // Validar apellido paterno
-    if (!form.apellidoPat.trim()) {
+
+    if (!form.apellidoPat) {
       newErrors.apellidoPat = "Apellido Paterno es requerido";
-    } else if (form.apellidoPat.length < 2 || form.apellidoPat.length > 50) {
-      newErrors.apellidoPat = "Apellido Paterno debe tener entre 2 y 50 caracteres";
+    } else if (!SOLO_LETRAS_REGEX.test(form.apellidoPat)) {
+      newErrors.apellidoPat = "Solo letras, sin números ni símbolos (máx. 20)";
     }
-    
-    // Validar apellido materno (opcional)
-    if (form.apellidoMat && form.apellidoMat.trim() !== "") {
-      if (form.apellidoMat.length < 2 || form.apellidoMat.length > 50) {
-        newErrors.apellidoMat = "Apellido Materno debe tener entre 2 y 50 caracteres";
-      }
+
+    if (form.apellidoMat && !SOLO_LETRAS_REGEX.test(form.apellidoMat)) {
+      newErrors.apellidoMat = "Solo letras, sin números ni símbolos (máx. 20)";
     }
-    
-    // Validar teléfono
-    if (!form.telefono.trim()) {
+
+    if (!form.telefono) {
       newErrors.telefono = "Teléfono es requerido";
     } else if (!/^[0-9]{7,15}$/.test(form.telefono)) {
       newErrors.telefono = "Teléfono inválido (7-15 dígitos)";
     }
-    
+
     setErrors(newErrors);
-    
-    // Verificar si hay errores
-    return Object.values(newErrors).every(error => error === "");
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = () => {
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     const payload = {
-      nombres: form.nombres.trim(),
-      apellidoPat: form.apellidoPat.trim(),
-      apellidoMat: form.apellidoMat.trim(),
-      telefono: form.telefono.trim(),
+      nombres: form.nombres,
+      apellidoPat: form.apellidoPat,
+      telefono: form.telefono,
+      ...(form.apellidoMat && { apellidoMat: form.apellidoMat }),
     };
-
-    // Agregar apellidoMat solo si tiene valor
-    if (form.apellidoMat && form.apellidoMat.trim() !== "") {
-      payload.apellidoMat = form.apellidoMat.trim();
-    }
 
     onCreate(payload);
   };
 
   const handleClose = () => {
-    // Limpiar formulario al cerrar
     setForm({
       nombres: "",
       apellidoPat: "",
@@ -158,7 +163,9 @@ export default function FormPadre({ open, onClose, onCreate, loading = false }: 
 
       <DialogContent>
         {loading ? (
-          <div style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
+          <div
+            style={{ display: "flex", justifyContent: "center", padding: 40 }}
+          >
             <CircularProgress />
           </div>
         ) : (
@@ -172,9 +179,8 @@ export default function FormPadre({ open, onClose, onCreate, loading = false }: 
               helperText={errors.nombres}
               fullWidth
               margin="normal"
-              disabled={loading}
             />
-            
+
             <TextField
               label="Apellido Paterno *"
               name="apellidoPat"
@@ -184,9 +190,8 @@ export default function FormPadre({ open, onClose, onCreate, loading = false }: 
               helperText={errors.apellidoPat}
               fullWidth
               margin="normal"
-              disabled={loading}
             />
-            
+
             <TextField
               label="Apellido Materno"
               name="apellidoMat"
@@ -196,9 +201,8 @@ export default function FormPadre({ open, onClose, onCreate, loading = false }: 
               helperText={errors.apellidoMat || "Opcional"}
               fullWidth
               margin="normal"
-              disabled={loading}
             />
-            
+
             <TextField
               label="Teléfono *"
               name="telefono"
@@ -208,14 +212,10 @@ export default function FormPadre({ open, onClose, onCreate, loading = false }: 
               helperText={errors.telefono || "7-15 dígitos"}
               fullWidth
               margin="normal"
-              disabled={loading}
-              inputProps={{ 
-                maxLength: 15,
-                inputMode: "numeric"
-              }}
+              inputProps={{ maxLength: 15, inputMode: "numeric" }}
             />
-            
-            <FormHelperText sx={{ mt: 2, color: 'text.secondary' }}>
+
+            <FormHelperText sx={{ mt: 2 }}>
               * Campos obligatorios
             </FormHelperText>
           </>
@@ -226,11 +226,7 @@ export default function FormPadre({ open, onClose, onCreate, loading = false }: 
         <Button onClick={handleClose} disabled={loading}>
           Cancelar
         </Button>
-        <Button 
-          variant="contained" 
-          onClick={handleSubmit}
-          disabled={loading}
-        >
+        <Button variant="contained" onClick={handleSubmit} disabled={loading}>
           {loading ? "Registrando..." : "Registrar"}
         </Button>
       </DialogActions>
