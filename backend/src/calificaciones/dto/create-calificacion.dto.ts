@@ -47,6 +47,11 @@ export class CreateCalificacionDto {
     description: 'Año escolar',
   })
   @IsNotEmpty()
+<<<<<<< HEAD
+=======
+  @Min(0)
+  @Max(100)
+>>>>>>> z
   @Type(() => Number)
   @IsNumber()
   @Min(2000)
