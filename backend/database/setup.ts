@@ -5,13 +5,8 @@ const setupDataSource = new DataSource({
   type: 'mysql',
   host: 'localhost',
   port: 3306,
-<<<<<<< HEAD
   username: 'root',
   password: '82002',
-=======
-  username: 'endeavour',
-  password: 'qwerty',
->>>>>>> j
   database: 'colegio',
   synchronize: true,
   logging: true,
