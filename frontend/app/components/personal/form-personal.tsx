@@ -73,7 +73,7 @@ export default function PersonalForm({
 
   useEffect(() => {
     api
-      .get("/roles/MostrarRoles")
+      .get("/roles/RolesActivos")
       .then((r) => setRoles(r.data))
       .catch(() => alert("Error al cargar roles"));
   }, []);

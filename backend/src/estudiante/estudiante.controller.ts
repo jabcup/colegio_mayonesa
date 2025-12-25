@@ -17,7 +17,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 // Rutas Publicas
 import { Public } from 'src/auth/public.decorator';
 
-// @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('estudiante')
 export class EstudianteController {
   constructor(private readonly estudianteService: EstudianteService) {}
@@ -29,13 +29,13 @@ export class EstudianteController {
   async createEstudianteFull(@Body() dto: CreateEstudianteFullDto) {
     return this.estudianteService.createEstudianteFull(dto);
   }
-
+  @Public()
   @Get('MostrarEstudiantes')
   @ApiOperation({ summary: 'Mostrar Estudiantes' })
   listarEstudiantes() {
     return this.estudianteService.mostrarEstudiantes();
   }
-
+  @Public()
   @Get('MostrarEstudiante/:idEstudiante')
   @ApiOperation({ summary: 'Mostrar Estudiante' })
   async mostrarEstudiante(@Param('idEstudiante') id: number) {
