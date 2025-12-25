@@ -30,7 +30,6 @@ import { Usuarios } from 'src/usuarios/usuarios.entity';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Public } from 'src/auth/public.decorator';
 
-@UseGuards(JwtAuthGuard)
 @Injectable()
 class SoloIdPersonalPipe implements PipeTransform {
   transform(value: any) {
@@ -61,7 +60,7 @@ async function esCajero(
 
   return usuario?.rol?.nombre === 'Cajero' && usuario.estado === 'activo';
 }
-
+@UseGuards(JwtAuthGuard)
 @ApiTags('Pagos')
 @Controller('pagos')
 export class PagosController {

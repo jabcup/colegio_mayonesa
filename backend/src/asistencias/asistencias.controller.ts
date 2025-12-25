@@ -54,6 +54,7 @@ export class AsistenciasController {
     return this.asistenciasService.remove(+id);
   }
 
+  @Public()
   @Get('BuscarAsistenciasPorCursoYMateria/:idCurso/:idMateria')
   buscarAsistenciasPorCursoYMateria(
     @Param('idCurso') idCurso: string,
